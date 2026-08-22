@@ -1,0 +1,58 @@
+- type: entity
+  id: MedievalAncientNocturneBloodArrowAction
+  name: medieval-ancient-nocturne-blood-arrow-name
+  description: medieval-ancient-nocturne-blood-arrow-desc
+  components:
+  - type: ManaDrainSpell
+    manaDrain: 15
+    canUseWithoutMana: true
+    manaLowMessage: medieval-spell-speach-not-enough-mana-fire-spell
+    damageOnUseWithoutMana:
+      groups:
+        Burn: 5
+  - type: SpellCastEffect
+    effectProto: MagicArrowSpellCastEffectBeginner
+  - type: MedievalTargetSpell
+  - type: Action
+    useDelay: 4
+    itemIconStyle: BigAction
+    sound: !type:SoundPathSpecifier
+      path: /Audio/Imperial/Medieval/arrow_cast.ogg
+    icon:
+      sprite: Imperial/Medieval/Nocturn/BloodArrow/action.rsi
+      state: blood-arrow
+  - type: TargetAction
+    checkCanAccess: false
+    range: 60
+  - type: WorldTargetAction
+    event: !type:MedievalProjectileSpellEvent
+      projectilePrototype:
+        0: BloodArrow
+      speechPoints:
+        0:
+          speech: medieval-spell-speach-magic-arrow
+          color: "#5B6EE1"
+          hideChat: true
+
+- type: entity
+  id: BloodArrow
+  parent: BulletRocket
+  name: BloodArrow
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Nocturn/BloodArrow/projectile.rsi
+    layers:
+    - state: blood-arrow
+      shader: unshaded
+  - type: StaminaDamageOnCollide
+    damage: 1
+  - type: Explosive
+    explosionType: Cryo
+    maxIntensity: 1
+    intensitySlope: 1
+    totalIntensity: 0
+    maxTileBreak: 0
+  - type: Projectile
+    damage:
+      types:
+        Piercing: 45
