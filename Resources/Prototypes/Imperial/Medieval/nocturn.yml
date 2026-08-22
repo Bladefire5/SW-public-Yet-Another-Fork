@@ -340,6 +340,38 @@
   femaleFirstNames: NamesReptilianFemale
   naming: FirstDashFirst
 
+- type: entity
+  id: MobAncientDrou
+  parent: MobDrou
+  name: Древний ноктюрн
+  components:
+  - type: HumanoidAppearance
+    species: AncientDrou
+  - type: ActionGrant
+    actions:
+    - MedievalAncientNocturneBloodArrowAction
+
+- type: entity
+  id: MobAncientDrouDummy
+  parent: MobDrouDummy
+  components:
+  - type: HumanoidAppearance
+    species: AncientDrou
+
+- type: species
+  id: AncientDrou
+  name: Древний ноктюрн
+  roundStart: false
+  prototype: MobAncientDrou
+  sprites: MobDrouSprites
+  defaultSkinTone: "#999ec2"
+  markingLimits: MobDrouMarkingLimits
+  dollPrototype: MobAncientDrouDummy
+  skinColoration: TintedHues
+  maleFirstNames: NamesReptilianMale
+  femaleFirstNames: NamesReptilianFemale
+  naming: FirstDashFirst
+
 - type: speciesBaseSprites
   id: MobDrouSprites
   sprites:
