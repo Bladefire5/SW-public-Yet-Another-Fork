@@ -350,6 +350,9 @@
   - type: ActionGrant
     actions:
     - MedievalAncientNocturneBloodArrowAction
+    - MedievalAncientNocturneBatAction
+    - MedievalAncientNocturneHypnosisAction
+  - type: AncientNocturne
 
 - type: entity
   id: MobAncientDrouDummy
