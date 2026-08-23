@@ -27,6 +27,7 @@ public sealed partial class ManaSystem : EntitySystem
 
         SubscribeLocalEvent<ManaDrainSpellComponent, MedievalBeforeCastSpellEvent>(OnBeforeCast);
         SubscribeLocalEvent<ManaDrainSpellComponent, MedievalAfterCastSpellEvent>(OnAfterCast);
+        SubscribeLocalEvent<ManaDrainSpellComponent, MedievalFailCastSpellEvent>(OnFailedCast);
         SubscribeLocalEvent<ManaMaxModifierComponent, ComponentStartup>(MaxManaModify);
         SubscribeLocalEvent<ManaRegenModifierComponent, ComponentStartup>(RegenModify);
     }
@@ -104,38 +105,61 @@ public sealed partial class ManaSystem : EntitySystem
             return;
         }
 
+        if (args.IsContinuation)
+        {
+            args.HasResourceReservation = manaComponent.CastedSpells.ContainsKey(uid);
+            args.Cancelled = !args.HasResourceReservation;
+            return;
+        }
+
+        if (manaComponent.CastedSpells.ContainsKey(uid))
+        {
+            args.Cancelled = true;
+            return;
+        }
+
         if (manaComponent.Mana - GetAllSpellsManaDrain(manaComponent.CastedSpells) - component.ManaDrain < 0)
         {
-            if (component.CanUseWithoutMana) manaComponent.CastedSpells.TryAdd(uid, component.ManaDrain);
+            if (component.CanUseWithoutMana)
+            {
+                manaComponent.CastedSpells.Add(uid, component.ManaDrain);
+                args.HasResourceReservation = true;
+            }
             if (_timing.IsFirstTimePredicted && _net.IsServer) _popupSystem.PopupEntity(Loc.GetString(component.ManaLowMessage), args.Performer, args.Performer, PopupType.LargeCaution);
 
             args.Cancelled = !component.CanUseWithoutMana;
 
             return;
         }
-        manaComponent.CastedSpells.Clear();
-        manaComponent.CastedSpells.TryAdd(uid, component.ManaDrain);
+        manaComponent.CastedSpells.Add(uid, component.ManaDrain);
+        args.HasResourceReservation = true;
     }
 
     private void OnAfterCast(EntityUid uid, ManaDrainSpellComponent component, ref MedievalAfterCastSpellEvent args)
     {
-        if (!TryComp<ManaComponent>(args.Performer, out var manaComponent)) return;
+        if (!TryComp<ManaComponent>(args.Performer, out var manaComponent) ||
+            !manaComponent.CastedSpells.Remove(uid, out var manaDrain))
+            return;
 
-        manaComponent.CastedSpells.Remove(uid);
-
-        if (manaComponent.Mana - component.ManaDrain < 0)
+        if (manaComponent.Mana - manaDrain < 0)
             _damageableSystem.TryChangeDamage(args.Performer, component.DamageOnUseWithoutMana, true, false);
 
-        TryChargeMana(args.Performer, -component.ManaDrain);
+        TryChargeMana(args.Performer, -manaDrain);
 
         if (args.ShowManaPopup && _timing.IsFirstTimePredicted && _net.IsServer)
         {
             _popupSystem.PopupEntity(
-                Loc.GetString("medieval-mana-cast-spell", ("manaCost", component.ManaDrain)),
+                Loc.GetString("medieval-mana-cast-spell", ("manaCost", manaDrain)),
                 args.Performer,
                 args.Performer,
                 PopupType.Large);
         }
+    }
+
+    private void OnFailedCast(EntityUid uid, ManaDrainSpellComponent component, MedievalFailCastSpellEvent args)
+    {
+        if (TryComp<ManaComponent>(args.Performer, out var manaComponent))
+            manaComponent.CastedSpells.Remove(uid);
     }
 
     #region Helpers

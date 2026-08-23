@@ -37,9 +37,20 @@ public sealed class NocturnBloodSpellSystem : EntitySystem
             return;
         }
 
+        if (args.IsContinuation)
+        {
+            args.HasResourceReservation = nocturn.CastedBloodSpells.ContainsKey(uid);
+            args.Cancelled = !args.HasResourceReservation;
+            return;
+        }
+
+        if (nocturn.CastedBloodSpells.ContainsKey(uid))
+        {
+            args.Cancelled = true;
+            return;
+        }
+
         var reservedBlood = nocturn.CastedBloodSpells.Values.Sum();
-        if (nocturn.CastedBloodSpells.TryGetValue(uid, out var existingReservation))
-            reservedBlood -= existingReservation;
 
         if (nocturn.BloodLevel - reservedBlood < component.BloodDrain)
         {
@@ -52,7 +63,8 @@ public sealed class NocturnBloodSpellSystem : EntitySystem
             return;
         }
 
-        nocturn.CastedBloodSpells[uid] = component.BloodDrain;
+        nocturn.CastedBloodSpells.Add(uid, component.BloodDrain);
+        args.HasResourceReservation = true;
     }
 
     private void OnAfterCast(
