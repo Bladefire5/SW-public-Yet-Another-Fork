@@ -51,8 +51,9 @@ public sealed class NocturnBloodSpellSystem : EntitySystem
         }
 
         var reservedBlood = nocturn.CastedBloodSpells.Values.Sum();
+        var availableBlood = nocturn.BloodLevel - nocturn.MinimumBloodLevelForSpells - reservedBlood;
 
-        if (nocturn.BloodLevel - reservedBlood < component.BloodDrain)
+        if (availableBlood < component.BloodDrain)
         {
             _popup.PopupEntity(
                 Loc.GetString("medieval-nocturn-not-enough-blood"),
@@ -76,13 +77,15 @@ public sealed class NocturnBloodSpellSystem : EntitySystem
             !nocturn.CastedBloodSpells.Remove(uid, out var bloodCost))
             return;
 
-        nocturn.BloodLevel = MathF.Max(0f, nocturn.BloodLevel - bloodCost);
+        var availableBlood = MathF.Max(0f, nocturn.BloodLevel - nocturn.MinimumBloodLevelForSpells);
+        var spentBlood = MathF.Min(bloodCost, availableBlood);
+        nocturn.BloodLevel -= spentBlood;
         Dirty(args.Performer, nocturn);
 
         if (args.ShowManaPopup)
         {
             _popup.PopupEntity(
-                Loc.GetString("medieval-nocturn-blood-cast-spell", ("bloodCost", component.BloodDrain)),
+                Loc.GetString("medieval-nocturn-blood-cast-spell", ("bloodCost", spentBlood)),
                 args.Performer,
                 args.Performer,
                 PopupType.Large);
