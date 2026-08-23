@@ -35,16 +35,21 @@ public sealed partial class MedievalMagicSystem
         var performer = GetEntity(args.Performer);
         var sender = GetEntity(args.Sender.Value);
 
+        var spellCasterComponent = EnsureComp<MedievalSpellCasterComponent>(performer);
+        if (!TryComp<ActionComponent>(sender, out var actionComponent)) return;
+
+        var isContinuation = spellCasterComponent.SpellStack.ContainsKey(sender);
+        if (actionComponent.Cooldown.HasValue &&
+            actionComponent.Cooldown.Value.End >= _timing.CurTime &&
+            !isContinuation)
+            return;
+
         if (!PassesSpellPrerequisites(
                 sender,
                 performer,
                 Transform(performer).Coordinates,
-                isContinuation: true))
+                isContinuation))
             return;
-
-        if (!TryComp<MedievalSpellCasterComponent>(performer, out var spellCasterComponent)) return;
-        if (!TryComp<ActionComponent>(sender, out var actionComponent)) return;
-        if (actionComponent.Cooldown.HasValue && actionComponent.Cooldown.Value.End >= _timing.CurTime) return;
 
         if (!spellCasterComponent.TargetStack.TryAdd(sender, args.Targets))
             spellCasterComponent.TargetStack[sender] = spellCasterComponent.TargetStack[sender].Concat(args.Targets).ToList();

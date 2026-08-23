@@ -97,7 +97,10 @@ public sealed class AncientNocturneSystem : EntitySystem
         {
             BreakOnMove = true,
             BreakOnDamage = true,
-            NeedHand = false
+            NeedHand = false,
+            DuplicateCondition = DuplicateConditions.SameEvent,
+            CancelDuplicate = true,
+            BlockDuplicate = false
         };
 
         if (_doAfter.TryStartDoAfter(doAfterArgs))

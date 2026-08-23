@@ -124,6 +124,12 @@ public abstract partial class SharedMedievalMagicSystem : EntitySystem
 
     protected void RaiseSpellCastFailed(EntityUid action, EntityUid performer)
     {
+        if (TryComp<MedievalSpellCasterComponent>(performer, out var caster))
+        {
+            caster.TargetStack.Remove(action);
+            caster.SpellStack.Remove(action);
+        }
+
         RaiseLocalEvent(action, new MedievalFailCastSpellEvent
         {
             Action = action,
