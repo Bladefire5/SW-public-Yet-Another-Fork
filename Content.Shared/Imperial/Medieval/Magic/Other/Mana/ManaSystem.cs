@@ -128,7 +128,14 @@ public sealed partial class ManaSystem : EntitySystem
 
         TryChargeMana(args.Performer, -component.ManaDrain);
 
-        if (_timing.IsFirstTimePredicted && _net.IsServer) _popupSystem.PopupEntity(Loc.GetString("medieval-mana-cast-spell", ("manaCost", component.ManaDrain)), args.Performer, args.Performer, PopupType.Large);
+        if (args.ShowManaPopup && _timing.IsFirstTimePredicted && _net.IsServer)
+        {
+            _popupSystem.PopupEntity(
+                Loc.GetString("medieval-mana-cast-spell", ("manaCost", component.ManaDrain)),
+                args.Performer,
+                args.Performer,
+                PopupType.Large);
+        }
     }
 
     #region Helpers

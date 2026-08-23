@@ -136,9 +136,9 @@ namespace Content.Server.Nocturn
 
                     comp.EndTime = comp.StartTime + TimeSpan.FromSeconds(1f);
 
-                    if (comp.BloodLevel > 400f)
+                    if (comp.BloodLevel > comp.MaximumBloodLevel)
                     {
-                        comp.BloodLevel = 400f;
+                        comp.BloodLevel = comp.MaximumBloodLevel;
                     }
 
                     if (comp.BloodLevel >= 200f && TryComp<DamageableComponent>(comp.Owner, out var damageable) && damageable.TotalDamage < 61f && damageable.TotalDamage > 5f)

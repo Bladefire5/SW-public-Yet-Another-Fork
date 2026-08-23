@@ -1,15 +1,10 @@
 - type: entity
   id: MedievalAncientNocturneHypnosisAction
-  name: medieval-ancient-nocturne-hypnosis-name
-  description: medieval-ancient-nocturne-hypnosis-desc
+  name: Hypnosis
+  description: Attempt to bend the victim to your will and put them to sleep.
   components:
-  - type: ManaDrainSpell
-    manaDrain: 80
-    canUseWithoutMana: false
-    manaLowMessage: medieval-spell-speach-not-enough-mana-fire-spell
-    damageOnUseWithoutMana:
-      groups:
-        Burn: 18
+  - type: NocturnBloodDrainSpell
+    bloodDrain: 40
   - type: SpellCastEffect
     effectProto: SleepSpellCastEffectBeginner
   - type: MedievalTargetSpell
@@ -36,8 +31,8 @@
 
 - type: entity
   id: MedievalAncientNocturneHypnosisProjectile
-  name: medieval-ancient-nocturne-hypnosis-name
-  description: medieval-ancient-nocturne-hypnosis-desc
+  name: hypnosis
+  description: An irresistible hypnotic impulse.
   parent: BaseBulletTrigger
   components:
   - type: Sprite

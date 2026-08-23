@@ -228,6 +228,13 @@ public sealed partial class ChatSystem : SharedChatSystem
 
         message = SanitizeInGameICMessage(source, message, out var emoteStr, shouldCapitalize, shouldPunctuate, shouldCapitalizeTheWordI);
 
+        var beforeMessage = new BeforeInGameICMessageEvent(message);
+        RaiseLocalEvent(source, ref beforeMessage);
+        if (beforeMessage.Handled)
+            return;
+
+        message = beforeMessage.Message;
+
         // Was there an emote in the message? If so, send it.
         if (player != null && emoteStr != message && emoteStr != null)
         {
@@ -1004,6 +1011,19 @@ public sealed class CheckIgnoreSpeechBlockerEvent : EntityEventArgs
     {
         Sender = sender;
         IgnoreBlocker = ignoreBlocker;
+    }
+}
+
+[ByRefEvent]
+public struct BeforeInGameICMessageEvent
+{
+    public string Message;
+    public bool Handled;
+
+    public BeforeInGameICMessageEvent(string message)
+    {
+        Message = message;
+        Handled = false;
     }
 }
 
