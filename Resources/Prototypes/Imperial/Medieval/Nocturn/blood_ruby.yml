@@ -1,0 +1,14 @@
+- type: entity
+  id: MedievalBloodRuby
+  parent: BaseItem
+  name: blood ruby
+  description: A white ruby waiting for its owner's blood.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Nocturn/BloodRuby/blood_ruby.rsi
+    state: icon
+  - type: Item
+    size: Tiny
+    sprite: Imperial/Medieval/Nocturn/BloodRuby/blood_ruby.rsi
+  - type: BloodRuby
+  - type: Undrowable

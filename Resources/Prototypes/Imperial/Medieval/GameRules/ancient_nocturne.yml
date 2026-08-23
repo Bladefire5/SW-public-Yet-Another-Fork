@@ -1,0 +1,43 @@
+- type: entity
+  parent: BaseGameRule
+  id: MedievalAncientNocturneSpawnRule
+  components:
+  - type: GameRule
+  - type: AncientNocturneSpawnRule
+    spawnCount: 3
+    spawnerPrototype: MedievalAncientNocturneGhostRoleSpawner
+
+- type: ghostRoleRaffleSettings
+  id: MedievalAncientNocturneRaffle
+  settings:
+    initialDuration: 30
+    joinExtendsDurationBy: 0
+    maxDuration: 30
+
+- type: entity
+  parent: MarkerBase
+  id: MedievalAncientNocturneSpawnMarker
+  components:
+  - type: Sprite
+    layers:
+    - sprite: Imperial/Medieval/Markers/cross.rsi
+      state: def
+  - type: AncientNocturneSpawnMarker
+
+- type: entity
+  parent: MarkerBase
+  id: MedievalAncientNocturneGhostRoleSpawner
+  components:
+  - type: GhostRole
+    name: ghost-role-information-ancient-nocturne-name
+    description: ghost-role-information-ancient-nocturne-description
+    rules: ghost-role-information-ancient-nocturne-rules
+    raffle:
+      settings: MedievalAncientNocturneRaffle
+  - type: GhostRoleMobSpawner
+    prototype: MobAncientDrou
+  - type: Sprite
+    sprite: Imperial/Other/ErtCall/imperial_jobs.rsi
+    layers:
+    - state: green
+    - state: cburn

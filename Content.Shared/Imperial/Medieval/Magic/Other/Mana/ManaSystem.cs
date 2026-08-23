@@ -132,7 +132,14 @@ public sealed partial class ManaSystem : EntitySystem
 
         TryChangeMana(args.Performer, manaComponent.Mana - component.ManaDrain, manaComponent);
 
-        if (_timing.IsFirstTimePredicted && _net.IsServer) _popupSystem.PopupEntity(Loc.GetString("medieval-mana-cast-spell", ("manaCost", component.ManaDrain)), args.Performer, args.Performer, PopupType.Large);
+        if (args.ShowManaPopup && _timing.IsFirstTimePredicted && _net.IsServer)
+        {
+            _popupSystem.PopupEntity(
+                Loc.GetString("medieval-mana-cast-spell", ("manaCost", component.ManaDrain)),
+                args.Performer,
+                args.Performer,
+                PopupType.Large);
+        }
     }
 
     private void OnFailCast(EntityUid uid, ManaDrainSpellComponent component, ref MedievalFailCastSpellEvent args)

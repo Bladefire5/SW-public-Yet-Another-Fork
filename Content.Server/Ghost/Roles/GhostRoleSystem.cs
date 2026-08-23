@@ -786,7 +786,7 @@ public sealed class GhostRoleSystem : EntitySystem
         var mob = Spawn(component.Prototype, Transform(uid).Coordinates);
         _transform.AttachToGridOrMap(mob);
 
-        var spawnedEvent = new GhostRoleSpawnerUsedEvent(uid, mob);
+        var spawnedEvent = new GhostRoleSpawnerUsedEvent(uid, mob, args.Player);
         RaiseLocalEvent(mob, spawnedEvent);
 
         if (ghostRole.MakeSentient)

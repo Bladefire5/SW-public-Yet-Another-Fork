@@ -347,12 +347,29 @@
   components:
   - type: HumanoidAppearance
     species: AncientDrou
+  - type: Loadout
+    prototypes:
+    - MedievalAncientNocturneGear
   - type: ActionGrant
     actions:
     - MedievalAncientNocturneBloodArrowAction
     - MedievalAncientNocturneBatAction
     - MedievalAncientNocturneHypnosisAction
+    - MedievalAncientNocturneEmergencyTeleportAction
+    - MedievalAncientNocturneConversionAction
   - type: AncientNocturne
+  - type: BloodRubyOwner
+  - type: AncientNocturneMindConnection
+
+- type: startingGear
+  id: MedievalAncientNocturneGear
+  equipment:
+    jumpsuit: MedievalClothingUniformJumpsuitShitCloth41
+    shoes: MedievalShoesSapogiHigh
+    back: MedievalClothingBackpackSatchelLeather
+  storage:
+    back:
+    - MedievalBloodRuby
 
 - type: entity
   id: MobAncientDrouDummy

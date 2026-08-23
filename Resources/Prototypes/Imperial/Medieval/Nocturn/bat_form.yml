@@ -1,8 +1,10 @@
 - type: entity
   id: MedievalAncientNocturneBatAction
-  name: medieval-ancient-nocturne-bat-action-name
-  description: medieval-ancient-nocturne-bat-action-desc
+  name: Transform into a bat
+  description: Transform into a bat for 20 seconds. Cost 20 blood units.
   components:
+  - type: NocturnBloodDrainSpell
+    bloodDrain: 20
   - type: Action
     itemIconStyle: BigAction
     icon:
@@ -13,8 +15,8 @@
 
 - type: entity
   id: MedievalAncientNocturneRevertAction
-  name: medieval-ancient-nocturne-revert-action-name
-  description: medieval-ancient-nocturne-revert-action-desc
+  name: Transform into a nocturne
+  description: Return to your original form early.
   components:
   - type: Action
     itemIconStyle: BigAction
@@ -27,8 +29,8 @@
 - type: entity
   id: MedievalAncientNocturneBat
   parent: MobBat
-  name: medieval-ancient-nocturne-bat-name
-  description: medieval-ancient-nocturne-bat-desc
+  name: bat
+  description: She has very large fangs and bloodthirsty red eyes. You should not stay near her.
   categories: [ HideSpawnMenu ]
   components:
   - type: Grammar

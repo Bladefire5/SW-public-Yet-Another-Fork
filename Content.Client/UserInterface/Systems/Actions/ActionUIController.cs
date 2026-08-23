@@ -773,6 +773,37 @@ public sealed class ActionUIController : UIController, IOnStateChanged<GameplayS
         }
     }
 
+    public List<EntityUid?> GetActionOrder()
+    {
+        return new List<EntityUid?>(_actions);
+    }
+
+    public void RestoreActionOrder(IReadOnlyList<EntityUid?> savedOrder)
+    {
+        if (_actionsSystem == null)
+            return;
+
+        var currentActions = _actionsSystem.GetClientActions().ToList();
+        var available = currentActions.Select(action => action.Owner).ToHashSet();
+
+        _actions.Clear();
+        foreach (var action in savedOrder)
+        {
+            if (action is { } actionUid && available.Remove(actionUid))
+                _actions.Add(actionUid);
+        }
+
+        currentActions.Sort(ActionComparer);
+        foreach (var action in currentActions)
+        {
+            if (action.Comp.AutoPopulate && available.Remove(action.Owner))
+                _actions.Add(action.Owner);
+        }
+
+        _container?.SetActionData(_actionsSystem, _actions.ToArray());
+        QueueWindowUpdate();
+    }
+
     /// <summary>
     /// If currently targeting with this slot, stops targeting.
     /// If currently targeting with no slot or a different slot, switches to
