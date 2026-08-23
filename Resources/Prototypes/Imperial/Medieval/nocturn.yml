@@ -347,6 +347,8 @@
   components:
   - type: HumanoidAppearance
     species: AncientDrou
+  - type: LocalLight
+    radius: 6
   - type: Loadout
     prototypes:
     - MedievalAncientNocturneGear
