@@ -64,32 +64,13 @@
   items:
   - productEntity: FoodPizzaPineapple
 
-    # минимальное кол-во репутации для покупки
-    # по умолчанию 0
-    minReputation: 10
-
     # цена предмета
     cost: 10
   - productEntity: FoodBurgerBacon
     cost: 5
 
-    # на какой позиции в рейтинге гильдии
-    # должен находиться игрок, чтобы купить
-    # по умолчанию 0 - на любом месте
-    minReputationPlace: 1
-
-    # сколько дают репутации за покупку этого предмета
-    # по умолчанию 2
-    reputationForBuying: 0.2
-
-    # в квесте нужно указать reputationReward: ...
   - productEntity: MedievalQuestContractLegionMelee
     cost: 0
-
-    # позволяет "отделить" северных торговцев от южных
-    # можно указать какой ActionId должен быть
-    # в компоненте MedievalJobSpawnComponent
-    spawnOnActionWhitelist: ActionSpellwardSpawnTradeLegion
 
     # если не указывать, то будут использоваться имя и описание предмета
     name: тест квеста

@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+/*
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
@@ -72,3 +73,4 @@ public sealed partial class TradingSystem
         }
     }
 }
+*/

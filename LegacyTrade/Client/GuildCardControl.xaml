@@ -1,4 +1,5 @@
-﻿<Control xmlns="https://spacestation14.io" MinSize="200 200">
+<!--
+<Control xmlns="https://spacestation14.io" MinSize="200 200">
     <Button MaxWidth="194" StyleClasses="ButtonSquare" Name="GuildButton" HorizontalExpand="True" VerticalExpand="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5">
         <PanelContainer>
             <BoxContainer Orientation="Vertical">
@@ -13,3 +14,4 @@
         <TextureRect HorizontalExpand="True" Name="ReputationBar" Stretch="Scale" VerticalAlignment="Bottom" SetHeight="0" Modulate="#00FF00" TexturePath="/Textures/Imperial/Medieval/Interface/Trading/progressbar.png"></TextureRect>
     </PanelContainer>
 </Control>
+-->

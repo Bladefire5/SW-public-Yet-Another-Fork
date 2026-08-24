@@ -1,4 +1,5 @@
-﻿using Content.Shared.Imperial.Medieval.Trading.Prototypes;
+/*
+using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 
 namespace Content.Shared.Imperial.Medieval.Trading;
 
@@ -19,3 +20,4 @@ public static class TradingHelpers
         return (int)MathF.Round(basePrice * (1 - discount), MidpointRounding.AwayFromZero);
     }
 }
+*/

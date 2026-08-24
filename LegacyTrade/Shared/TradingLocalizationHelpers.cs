@@ -1,4 +1,5 @@
-﻿using Content.Shared.Imperial.Medieval.Trading.Prototypes;
+/*
+using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 using Content.Shared.Store;
 using Robust.Shared.Prototypes;
 
@@ -22,3 +23,4 @@ public static class TradingLocalisationHelpers
                    : string.Empty);
     }
 }
+*/

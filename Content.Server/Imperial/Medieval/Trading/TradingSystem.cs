@@ -1,142 +1,181 @@
-﻿using System.Linq;
-using Content.Server.Imperial.ImperialStore;
+using System.Linq;
 using Content.Server.Popups;
 using Content.Server.Stack;
-using Content.Server.Store.Components;
 using Content.Shared.FixedPoint;
 using Content.Shared.GameTicking;
 using Content.Shared.Imperial.Medieval.Trading;
-using Content.Shared.Imperial.Medieval.Trading.Prototypes;
-using Content.Shared.Implants.Components;
 using Content.Shared.Interaction;
 using Content.Shared.Mind;
 using Content.Shared.Stacks;
-using Content.Shared.Store.Components;
 using Content.Shared.UserInterface;
+using Robust.Shared.Containers;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
-using Robust.Shared.Utility;
+using Robust.Shared.Timing;
 
 namespace Content.Server.Imperial.Medieval.Trading;
 
-public partial class TradingSystem : EntitySystem
+public sealed partial class TradingSystem : EntitySystem
 {
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
-    [Dependency] private readonly IRobustRandom _robustRandom = default!;
+    [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly PopupSystem _popup = default!;
+    [Dependency] private readonly SharedMindSystem _mind = default!;
+    [Dependency] private readonly SharedContainerSystem _containers = default!;
+    [Dependency] private readonly StackSystem _stack = default!;
 
-
-    [ViewVariables]
-    public List<Guild> Guilds = new();
+    private EntityUid? _market;
 
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<TradingComponent, ActivatableUIOpenAttemptEvent>(OnStoreOpenAttempt);
-        SubscribeLocalEvent<MedievalCurrencyComponent, AfterInteractEvent>(OnAfterInteract);
         SubscribeLocalEvent<TradingComponent, BeforeActivatableUIOpenEvent>(BeforeActivatableUiOpen);
-
-        SubscribeLocalEvent<TradingComponent, MapInitEvent>(OnMapInit);
+        SubscribeLocalEvent<MedievalCurrencyComponent, AfterInteractEvent>(OnAfterInteract);
         SubscribeLocalEvent<RoundStartedEvent>(OnRoundStart);
+        SubscribeLocalEvent<RoundRestartCleanupEvent>(OnRoundRestart);
 
         InitializeUi();
     }
 
-    private void OnRoundStart(RoundStartedEvent args)
+    public override void Update(float frameTime)
     {
-        CreateGuilds();
+        base.Update(frameTime);
+
+        if (!TryGetMarket(out var market))
+            return;
+
+        var config = _prototypeManager.Index(market.Comp.Config);
+        if (_timing.CurTime < market.Comp.NextStep)
+            return;
+
+        while (_timing.CurTime >= market.Comp.NextStep)
+        {
+            RunMarketStep(market, config);
+            market.Comp.NextStep += TimeSpan.FromSeconds(config.StepInterval);
+        }
+
+        UpdateAllInterfaces(market);
     }
 
-    private void OnMapInit(EntityUid uid, TradingComponent component, MapInitEvent args)
+    private void OnRoundStart(RoundStartedEvent args)
     {
-        RefreshAllGuilds(component);
+        CreateMarket();
+    }
+
+    private void OnRoundRestart(RoundRestartCleanupEvent args)
+    {
+        _market = null;
     }
 
     private void OnStoreOpenAttempt(EntityUid uid, TradingComponent component, ActivatableUIOpenAttemptEvent args)
     {
-
-        if (!component.OwnerOnly)
+        if (!_mind.TryGetMind(args.User, out var mindId, out _))
+        {
+            args.Cancel();
             return;
+        }
 
-        component.AccountOwner ??= args.User;
-        DebugTools.Assert(component.AccountOwner != null);
+        if (component.AccountOwner != null && component.AccountOwner != mindId &&
+            (!_mind.TryGetMind(component.AccountOwner.Value, out var previousMind, out _) || previousMind != mindId))
+        {
+            if (component.OwnerOnly)
+            {
+                _popup.PopupEntity(Loc.GetString("store-not-account-owner", ("store", uid)), uid, args.User);
+                args.Cancel();
+                return;
+            }
+        }
 
-        if (component.AccountOwner == args.User)
-            return;
-
-        _popup.PopupEntity(Loc.GetString("store-not-account-owner", ("store", uid)), uid, args.User);
-        args.Cancel();
+        component.AccountOwner = mindId;
+        _containers.EnsureContainer<Robust.Shared.Containers.Container>(uid, TradingComponent.MarketContainerId);
     }
 
     private void OnAfterInteract(EntityUid uid, MedievalCurrencyComponent component, AfterInteractEvent args)
     {
-        if (args.Handled || !args.CanReach)
+        if (args.Handled || !args.CanReach || !TryComp<TradingComponent>(args.Target, out var store))
             return;
-        if (!TryComp<TradingComponent>(args.Target, out var store))
-            return;
+
         if (!TryAddCurrency((uid, component), (args.Target.Value, store)))
             return;
 
         args.Handled = true;
-        var msg = Loc.GetString("store-currency-inserted", ("used", args.Used), ("target", args.Target));
-        _popup.PopupEntity(msg, args.Target.Value, args.User);
+        _popup.PopupEntity(
+            Loc.GetString("store-currency-inserted", ("used", args.Used), ("target", args.Target)),
+            args.Target.Value,
+            args.User);
     }
 
-
-    public bool TryAddCurrency(Entity<MedievalCurrencyComponent?> currency, Entity<TradingComponent?> store)
+    public bool TryAddCurrency(
+        Entity<MedievalCurrencyComponent?> currency,
+        Entity<TradingComponent?> store)
     {
-        if (!Resolve(currency.Owner, ref currency.Comp))
-            return false;
-
-        if (!Resolve(store.Owner, ref store.Comp))
+        if (!Resolve(currency.Owner, ref currency.Comp) || !Resolve(store.Owner, ref store.Comp))
             return false;
 
         var value = currency.Comp.Price;
         if (TryComp(currency.Owner, out StackComponent? stack) && stack.Count != 1)
         {
-            value = currency.Comp.Price
-                .ToDictionary(v => v.Key, p => p.Value * stack.Count);
+            value = currency.Comp.Price.ToDictionary(entry => entry.Key, entry => entry.Value * stack.Count);
         }
 
-        if (!TryAddCurrency(value, store, store.Comp))
+        if (!TryAddCurrency(value, store.Owner, store.Comp))
             return false;
 
         currency.Comp.Price.Clear();
         if (stack != null)
             _stack.SetCount(currency.Owner, 0, stack);
 
-        QueueDel(currency);
+        QueueDel(currency.Owner);
         return true;
     }
 
-    public bool TryAddCurrency(Dictionary<string, FixedPoint2> currency, EntityUid uid, TradingComponent? store = null)
+    public bool TryAddCurrency(
+        Dictionary<string, FixedPoint2> currency,
+        EntityUid uid,
+        TradingComponent? store = null)
     {
         if (!Resolve(uid, ref store))
             return false;
 
-        foreach (var type in currency)
+        foreach (var type in currency.Keys)
         {
-            if (store.Currency != type.Key)
+            if (store.Currency != type)
                 return false;
         }
 
-        foreach (var (type, value) in currency)
+        foreach (var value in currency.Values)
         {
             store.Balance += value.Int();
         }
 
-        UpdateUserInterface(null, uid, store);
+        foreach (var user in _ui.GetActors(uid, TradingUiKey.Key))
+        {
+            UpdateUserInterface(user, uid, store);
+        }
         return true;
     }
 
-
-
-    private void CreateGuilds()
+    private bool TryGetMarket(out Entity<TradingMarketComponent> market)
     {
-        Guilds = _prototypeManager.EnumeratePrototypes<GuildTypePrototype>()
-            .SelectMany(gt => Enumerable.Range(0, gt.MaximumGuilds)
-                .Select(_ => new Guild(gt, _robustRandom, _prototypeManager)))
-            .ToList();
+        if (_market is { } marketUid && TryComp<TradingMarketComponent>(marketUid, out var component))
+        {
+            market = (marketUid, component);
+            return true;
+        }
+
+        var query = EntityQueryEnumerator<TradingMarketComponent>();
+        if (query.MoveNext(out marketUid, out component))
+        {
+            _market = marketUid;
+            market = (marketUid, component);
+            return true;
+        }
+
+        market = default;
+        return false;
     }
 }

@@ -1,68 +1,61 @@
-﻿<DefaultWindow
+<DefaultWindow
     xmlns="https://spacestation14.io"
-    xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
-    Title="{Loc 'store-ui-default-title'}"
-    MinSize="512 512"
-    SetSize="863 712">
-    <BoxContainer Name="GuildTab" Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
-        <ScrollContainer HorizontalExpand="True" VerticalExpand="True">
-            <GridContainer HorizontalAlignment="Center" Columns="3" HorizontalExpand="True" VerticalExpand="True" Name="ControlContainer"/>
-        </ScrollContainer>
-    </BoxContainer>
-
-    <BoxContainer Name="TradingTab" Visible="False" Orientation="Vertical">
-        <BoxContainer Orientation="Vertical" VerticalExpand="True">
-            <BoxContainer Margin="4,4,4,4" Orientation="Horizontal">
-                <Button
-                    Name="BackButton"
-                    MinWidth="64"
-                    HorizontalAlignment="Right"
-                    Text="{Loc 'store-ui-back-button-text'}"
-                    Margin="0 0 5 0"/>
-                <RichTextLabel
-                    Name="BalanceInfo"
-                    HorizontalAlignment="Left"
-                    Access="Public"
-                    HorizontalExpand="True" />
-                <Button
-                    Name="WithdrawButton"
-                    MinWidth="64"
-                    HorizontalAlignment="Right"
-                    Text="{Loc 'store-ui-default-withdraw-text'}" />
-            </BoxContainer>
-            <LineEdit Name="SearchBar" Margin="4" PlaceHolder="Search" HorizontalExpand="True"/>
-                <PanelContainer VerticalExpand="True">
-                <PanelContainer.PanelOverride>
-                    <gfx:StyleBoxFlat BackgroundColor="#000000FF" />
-                </PanelContainer.PanelOverride>
-                <BoxContainer Orientation="Horizontal" VerticalExpand="True">
-                    <ScrollContainer
-                        Name="TradingItemsScroll"
-                        HScrollEnabled="False"
-                        HorizontalExpand="True"
-                        MinSize="100 256"
-                        SizeFlagsStretchRatio="2"
-                        VerticalExpand="True">
-                        <BoxContainer
-                            Name="TradingItemsContainer"
-                            MinSize="100 256"
-                            Orientation="Vertical"
-                            SizeFlagsStretchRatio="2"
-                            VerticalExpand="True">
-                            <!--  Listings are added here by code  -->
-                        </BoxContainer>
+    Title="Рынок гильдий"
+    MinSize="900 620"
+    SetSize="1120 760">
+    <BoxContainer Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True" Margin="6">
+        <BoxContainer Orientation="Horizontal" Margin="0 0 0 6">
+            <RichTextLabel Name="BalanceInfo" HorizontalExpand="True" />
+            <Button Name="WithdrawButton" Text="Снять средства" MinWidth="140" />
+        </BoxContainer>
+        <BoxContainer Orientation="Horizontal" Margin="0 0 0 6">
+            <Button Name="CommonButton" Text="Общие" MinWidth="140" />
+            <Button Name="UniqueButton" Text="Уникальные" MinWidth="140" Margin="6 0 0 0" />
+            <Button Name="ManagementButton" Text="Управление заказами" MinWidth="210" Margin="6 0 0 0" />
+        </BoxContainer>
+        <LineEdit Name="SearchBar" PlaceHolder="Поиск по всем товарам" HorizontalExpand="True" Margin="0 0 0 6" />
+        <BoxContainer Name="MarketView" Orientation="Horizontal" HorizontalExpand="True" VerticalExpand="True">
+            <PanelContainer MinWidth="160" Margin="0 0 6 0">
+                <ScrollContainer HScrollEnabled="False" VerticalExpand="True">
+                    <BoxContainer Name="CategoryContainer" Orientation="Vertical" HorizontalExpand="True" />
+                </ScrollContainer>
+            </PanelContainer>
+            <ScrollContainer HScrollEnabled="False" HorizontalExpand="True" VerticalExpand="True" Margin="0 0 6 0">
+                <GridContainer Name="ItemsGrid" Columns="3" HorizontalExpand="True" />
+            </ScrollContainer>
+            <PanelContainer MinWidth="300" MaxWidth="340">
+                <BoxContainer Orientation="Vertical" Margin="8" VerticalExpand="True">
+                    <Label Name="SelectedName" Text="Выберите товар" HorizontalExpand="True" />
+                    <PanelContainer Name="SelectedPreview" MinSize="96 96" Margin="0 6" />
+                    <Button Name="ExamineButton" Text="Осмотреть" />
+                    <RichTextLabel Name="SelectedStats" MinHeight="72" />
+                    <BoxContainer Orientation="Horizontal" Margin="0 4">
+                        <LineEdit Name="BuyPrice" PlaceHolder="Цена заказа" HorizontalExpand="True" />
+                        <Button Name="CreateBuyOrderButton" Text="Заказ" MinWidth="76" Margin="4 0 0 0" />
+                    </BoxContainer>
+                    <Label Text="Заявки рынка" Margin="0 4" />
+                    <ScrollContainer HScrollEnabled="False" VerticalExpand="True">
+                        <BoxContainer Name="OffersContainer" Orientation="Vertical" HorizontalExpand="True" />
                     </ScrollContainer>
                 </BoxContainer>
             </PanelContainer>
         </BoxContainer>
-
-        <BoxContainer Orientation="Vertical" Name="Footer">
-            <PanelContainer StyleClasses="LowDivider"/>
-            <BoxContainer Orientation="Horizontal" Margin="10 2 5 0" VerticalAlignment="Bottom" HorizontalExpand="True">
-                <Label HorizontalExpand="False" HorizontalAlignment="Left" Name="ReputationLabel"/>
-                <Label HorizontalExpand="True" HorizontalAlignment="Left" Name="ReputationDiscoundLabel" Margin="5 0 0 0 " Text="" FontColorOverride="#00FF00"/>
-                <Button HorizontalAlignment="Right" Name="ReputationLeaderboardButton" Text="{Loc 'trading-ui-reputation-leaderboard'}"/>
+        <ScrollContainer Name="ManagementView" HScrollEnabled="False" HorizontalExpand="True" VerticalExpand="True" Visible="False">
+            <BoxContainer Orientation="Vertical" HorizontalExpand="True">
+                <Label Text="Активные лоты и заказы" Margin="4" />
+                <BoxContainer Name="ManagedOffersContainer" Orientation="Vertical" HorizontalExpand="True" />
+                <Label Text="Предметы, полученные по заказам" Margin="4 12 4 4" />
+                <BoxContainer Name="StoredItemsContainer" Orientation="Vertical" HorizontalExpand="True" />
             </BoxContainer>
-        </BoxContainer>
+        </ScrollContainer>
+        <PanelContainer Name="OfferCreationPanel" Margin="0 6 0 0">
+            <BoxContainer Orientation="Horizontal" Margin="6">
+                <Label Text="Предмет в активной руке:" VerticalAlignment="Center" />
+                <Label Name="HeldCategory" Text="Появится: —" VerticalAlignment="Center" Margin="6 0" MinWidth="190" />
+                <LineEdit Name="HeldPrice" PlaceHolder="Цена" MinWidth="130" Margin="6 0" />
+                <Button Name="CreateSellOfferButton" Text="Выставить лот" MinWidth="130" />
+                <Button Name="CreateHeldBuyOrderButton" Text="Создать заказ по образцу" MinWidth="190" Margin="6 0 0 0" />
+            </BoxContainer>
+        </PanelContainer>
     </BoxContainer>
 </DefaultWindow>

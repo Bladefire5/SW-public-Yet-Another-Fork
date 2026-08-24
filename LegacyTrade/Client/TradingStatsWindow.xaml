@@ -1,4 +1,5 @@
-﻿<DefaultWindow
+<!--
+<DefaultWindow
     xmlns="https://spacestation14.io"
     Title="{Loc trading-ui-stats-title}" MinSize="240 300">
     <BoxContainer HorizontalExpand="True" Orientation="Vertical" VerticalExpand="True">
@@ -7,3 +8,4 @@
         </ScrollContainer>
     </BoxContainer>
 </DefaultWindow>
+-->

@@ -1,0 +1,64 @@
+using Content.Shared.Imperial.Medieval.Trading;
+using Content.Shared.Imperial.Medieval.Trading.Prototypes;
+using Robust.Shared.Containers;
+using Robust.Shared.Prototypes;
+
+namespace Content.Server.Imperial.Medieval.Trading;
+
+[RegisterComponent]
+public sealed partial class TradingMarketComponent : Component
+{
+    public const string EscrowContainerId = "trading-market-escrow";
+
+    public Dictionary<Guid, TradingCommodity> Commodities = new();
+    public Dictionary<EntProtoId, Guid> CommonCommodities = new();
+    public List<Guild> Guilds = new();
+    public Dictionary<Guid, TradingMarketOffer> Offers = new();
+    public long NextSequence;
+    public TimeSpan NextStep;
+    public Container Escrow = default!;
+    public ProtoId<TradingMarketConfigPrototype> Config = "MedievalMarket";
+}
+
+public sealed class TradingCommodity
+{
+    public Guid Id;
+    public EntProtoId Product;
+    public TradingMarketSection Sections;
+    public int StandardPrice;
+    public float Demand;
+    public float Supply;
+    public int BaselineStackCount = 1;
+    public bool HasStack;
+    public bool Permanent;
+    public bool GuildEligible;
+    public float QualityMultiplier = 1f;
+    public string Signature = string.Empty;
+    public string DisplayName = string.Empty;
+    public string Description = string.Empty;
+    public HashSet<ProtoId<GuildTypePrototype>> Categories = new();
+}
+
+public sealed class TradingMarketOffer
+{
+    public Guid Id;
+    public Guid CommodityId;
+    public EntProtoId Product;
+    public TradingOfferSide Side;
+    public TradingParticipantKind ParticipantKind;
+    public string ParticipantName = string.Empty;
+    public int Price;
+    public Guid? GuildId;
+    public EntityUid? Pit;
+    public EntityUid? ImmediateRecipient;
+    public EntityUid? Item;
+    public long Sequence;
+    public TimeSpan? ExpiresAt;
+    public float SupplyContribution;
+}
+
+[RegisterComponent]
+public sealed partial class TradingMarketViewerComponent : Component
+{
+    public HashSet<EntityUid> VisibleItems = new();
+}
