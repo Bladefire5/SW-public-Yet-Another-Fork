@@ -28,6 +28,7 @@ public sealed class TradingCommodity
     public int StandardPrice;
     public float Demand;
     public float Supply;
+    public float GuildOfferProgress;
     public int BaselineStackCount = 1;
     public bool HasStack;
     public bool Permanent;
@@ -53,7 +54,6 @@ public sealed class TradingMarketOffer
     public EntityUid? ImmediateRecipient;
     public EntityUid? Item;
     public long Sequence;
-    public TimeSpan? ExpiresAt;
     public float SupplyContribution;
 }
 

@@ -24,13 +24,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float InitialSupply = 25f;
 
     [DataField]
-    public float MaximumIndicator = 100f;
-
-    [DataField]
     public float DemandRecovery = 0.75f;
-
-    [DataField]
-    public float GuildOfferLifetime = 300f;
 
     [DataField]
     public float SupplyPlacementImpact = 3f;
@@ -58,4 +52,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
 
     [DataField]
     public int MaximumPrice = 1000000;
+
+    [DataField(required: true)]
+    public List<float> QualityPriceMultipliers = new();
 }

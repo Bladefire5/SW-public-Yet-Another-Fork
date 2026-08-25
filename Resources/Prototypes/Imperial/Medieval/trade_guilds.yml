@@ -11,9 +11,7 @@
   initialSteps: 4
   initialDemand: 50
   initialSupply: 25
-  maximumIndicator: 100
   demandRecovery: 0.75
-  guildOfferLifetime: 300
   supplyPlacementImpact: 3
   supplyTradeImpact: 1
   demandTradeImpact: 2
@@ -23,6 +21,13 @@
   minimumPriceFactor: 0.25
   maximumPriceFactor: 3
   maximumPrice: 1000000
+  qualityPriceMultipliers:
+  - 0.5
+  - 0.5
+  - 0.75
+  - 1
+  - 1.125
+  - 1.25
 
 - type: guildIcon
   id: MagicGuild1

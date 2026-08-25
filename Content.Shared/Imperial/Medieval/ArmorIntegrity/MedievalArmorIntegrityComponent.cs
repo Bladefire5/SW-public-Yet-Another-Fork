@@ -51,7 +51,15 @@ public sealed partial class MedievalArmorIntegrityComponent : Component
     };
 
     [DataField]
-    public List<float> QualityMultipliers = new(ItemQualityDurabilityMultipliers.Values);
+    public List<float> QualityMultipliers = new()
+    {
+        0.5f,
+        0.5f,
+        0.75f,
+        1f,
+        1.125f,
+        1.25f,
+    };
 
     [DataField]
     public bool QualityMultiplierApplied;
