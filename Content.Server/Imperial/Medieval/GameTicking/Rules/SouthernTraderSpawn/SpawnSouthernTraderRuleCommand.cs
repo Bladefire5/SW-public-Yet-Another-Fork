@@ -11,7 +11,7 @@ public sealed class SpawnSouthernTraderRuleCommand : IConsoleCommand
     private const string RulePrototype = "MedievalSouthernTraderSpawnRule";
 
     [Dependency] private readonly IEntityManager _entityManager = default!;
-    [Dependency] private readonly GameTicker _gameTicker = default!;
+    [Dependency] private readonly IEntitySystemManager _entitySystemManager = default!;
 
     public string Command => "spawnsoutherntrader";
     public string Description => "Spawns a Southern Lands trader and transfers the command user into it.";
@@ -25,9 +25,10 @@ public sealed class SpawnSouthernTraderRuleCommand : IConsoleCommand
             return;
         }
 
-        var ruleUid = _gameTicker.AddGameRule(RulePrototype);
+        var gameTicker = _entitySystemManager.GetEntitySystem<GameTicker>();
+        var ruleUid = gameTicker.AddGameRule(RulePrototype);
         var rule = _entityManager.GetComponent<SouthernTraderSpawnRuleComponent>(ruleUid);
         rule.Performer = performer;
-        _gameTicker.StartGameRule(ruleUid);
+        gameTicker.StartGameRule(ruleUid);
     }
 }

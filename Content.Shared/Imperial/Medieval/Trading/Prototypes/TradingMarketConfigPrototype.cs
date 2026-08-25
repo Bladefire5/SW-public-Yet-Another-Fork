@@ -30,12 +30,6 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float DemandRecovery = 0.75f;
 
     [DataField]
-    public float GuildActionChance = 0.7f;
-
-    [DataField]
-    public int MaximumGuildOffers = 10;
-
-    [DataField]
     public float GuildOfferLifetime = 300f;
 
     [DataField]

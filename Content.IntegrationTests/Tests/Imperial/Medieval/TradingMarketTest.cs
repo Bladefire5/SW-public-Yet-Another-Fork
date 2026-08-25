@@ -25,6 +25,13 @@ public sealed class TradingMarketTest
     private static readonly ProtoId<CurrencyPrototype> Revent = "Revent";
 
     [Test]
+    public void ClientMarketStateDoesNotExposeStandardPrice()
+    {
+        Assert.That(typeof(TradingMarketItemState).GetField("StandardPrice"), Is.Null);
+        Assert.That(typeof(TradingMarketItemState).GetProperty("StandardPrice"), Is.Null);
+    }
+
+    [Test]
     public async Task TrophySaleCreditsTheUsedPit()
     {
         await using var pair = await PoolManager.GetServerClient();
@@ -93,6 +100,22 @@ public sealed class TradingMarketTest
                 Assert.That(offer.Item, Is.Not.Null);
                 Assert.That(server.EntMan.EntityExists(offer.Item));
                 Assert.That(market.Escrow.Contains(offer.Item!.Value), Is.True);
+            }
+
+            foreach (var guild in market.Guilds)
+            {
+                foreach (var product in guild.Items.Select(item => item.ProductEntity).Distinct())
+                {
+                    if (!market.CommonCommodities.TryGetValue(product, out var commodityId))
+                        continue;
+
+                    var guildOffers = market.Offers.Values.Count(offer =>
+                        offer.ParticipantKind == TradingParticipantKind.Guild &&
+                        offer.GuildId == guild.Id &&
+                        offer.CommodityId == commodityId);
+                    Assert.That(guildOffers, Is.EqualTo(1),
+                        $"Guild {guild.Name} must have one offer for {product}");
+                }
             }
 
             Assert.That(market.CommonCommodities.ContainsKey(WeakReliefStone), Is.True);

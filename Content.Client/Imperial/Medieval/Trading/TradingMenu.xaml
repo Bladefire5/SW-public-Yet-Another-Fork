@@ -27,7 +27,6 @@
                 <BoxContainer Orientation="Vertical" Margin="8" VerticalExpand="True">
                     <Label Name="SelectedName" Text="Выберите товар" HorizontalExpand="True" />
                     <PanelContainer Name="SelectedPreview" MinSize="96 96" Margin="0 6" />
-                    <Button Name="ExamineButton" Text="Осмотреть" />
                     <RichTextLabel Name="SelectedStats" MinHeight="72" />
                     <BoxContainer Orientation="Horizontal" Margin="0 4">
                         <LineEdit Name="BuyPrice" PlaceHolder="Цена заказа" HorizontalExpand="True" />

@@ -45,7 +45,6 @@ public sealed class TradingMarketItemState
     public bool IsCommonBaseline;
     public bool HasStack;
     public int BaselineStackCount;
-    public int StandardPrice;
     public float Demand;
     public float Supply;
     public int? LowestSellPrice;
@@ -65,7 +64,6 @@ public sealed class TradingMarketItemState
         bool isCommonBaseline,
         bool hasStack,
         int baselineStackCount,
-        int standardPrice,
         float demand,
         float supply,
         int? lowestSellPrice,
@@ -84,7 +82,6 @@ public sealed class TradingMarketItemState
         IsCommonBaseline = isCommonBaseline;
         HasStack = hasStack;
         BaselineStackCount = baselineStackCount;
-        StandardPrice = standardPrice;
         Demand = demand;
         Supply = supply;
         LowestSellPrice = lowestSellPrice;

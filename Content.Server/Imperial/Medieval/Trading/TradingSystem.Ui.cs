@@ -109,7 +109,6 @@ public sealed partial class TradingSystem
                     commodity.Permanent,
                     commodity.HasStack,
                     commodity.BaselineStackCount,
-                    commodity.StandardPrice,
                     commodity.Demand,
                     commodity.Supply,
                     asks.Count == 0 ? null : asks.Min(offer => offer.Price),

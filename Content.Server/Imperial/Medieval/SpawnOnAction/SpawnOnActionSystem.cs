@@ -1,4 +1,3 @@
-using Content.Shared.Coordinates;
 using Content.Shared.Imperial.SpawnOnAction.Events;
 using Robust.Server.GameObjects;
 using Content.Shared.Imperial.SpawnOnAction.Components;
@@ -26,12 +25,8 @@ public sealed partial class SpawnOnActionSystem : EntitySystem
         if (ev.Handled) return;
         if (comp.IsFirst)
         {
-            comp.Object = Spawn(comp.Prototype, uid.ToCoordinates());
+            comp.Object = Spawn(comp.Prototype, ev.Target);
             comp.IsFirst = false;
-            _transform.SetWorldPosition(
-            comp.Object.Value,
-            ev.Target.Position
-        );
         }
         else
         {

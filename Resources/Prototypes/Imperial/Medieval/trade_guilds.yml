@@ -13,8 +13,6 @@
   initialSupply: 25
   maximumIndicator: 100
   demandRecovery: 0.75
-  guildActionChance: 0.7
-  maximumGuildOffers: 10
   guildOfferLifetime: 300
   supplyPlacementImpact: 3
   supplyTradeImpact: 1

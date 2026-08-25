@@ -110,16 +110,8 @@ public sealed partial class TradingSystem
             }
         }
 
-        foreach (var guild in market.Comp.Guilds)
-        {
-            if (_random.NextFloat() > config.GuildActionChance)
-                continue;
-
-            if (market.Comp.Offers.Values.Count(offer => offer.GuildId == guild.Id) >= config.MaximumGuildOffers)
-                continue;
-
-            TryCreateGuildOffer(market, guild, config);
-        }
+        EnsureGuildOffers(market, config);
+        CreateGuildVariantBuyOffers(market, config);
 
         MatchAll(market, config);
     }
@@ -140,32 +132,55 @@ public sealed partial class TradingSystem
         }
     }
 
+    private void EnsureGuildOffers(
+        Entity<TradingMarketComponent> market,
+        TradingMarketConfigPrototype config)
+    {
+        foreach (var commodityId in market.Comp.CommonCommodities.Values)
+        {
+            if (market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
+                EnsureGuildOffersForCommodity(market, commodity, config);
+        }
+    }
+
+    private void EnsureGuildOffersForCommodity(
+        Entity<TradingMarketComponent> market,
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        if (!commodity.Permanent ||
+            !market.Comp.CommonCommodities.TryGetValue(commodity.Product, out var commonId) ||
+            commonId != commodity.Id)
+        {
+            return;
+        }
+
+        foreach (var guild in market.Comp.Guilds)
+        {
+            if (!guild.Items.Any(item => item.ProductEntity == commodity.Product) ||
+                market.Comp.Offers.Values.Any(offer =>
+                    offer.GuildId == guild.Id && offer.CommodityId == commodity.Id))
+            {
+                continue;
+            }
+
+            TryCreateGuildOffer(market, guild, commodity, config);
+        }
+    }
+
     private void TryCreateGuildOffer(
         Entity<TradingMarketComponent> market,
         Guild guild,
-        TradingMarketConfigPrototype config)
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config,
+        TradingOfferSide? sideOverride = null)
     {
-        var candidates = guild.Items
-            .Select(item => item.ProductEntity)
-            .Distinct()
-            .Where(product => market.Comp.CommonCommodities.ContainsKey(product))
-            .Select(product => market.Comp.Commodities[market.Comp.CommonCommodities[product]])
-            .ToList();
-
-        if (candidates.Count == 0)
-            return;
-
-        var sellWeight = candidates.Sum(commodity => 0.2f + commodity.Demand / config.MaximumIndicator * 1.5f);
-        var buyWeight = candidates.Sum(commodity =>
-            (0.2f + commodity.Demand / config.MaximumIndicator) *
-            Math.Max(0.1f, 1.1f - commodity.Supply / config.MaximumIndicator));
-        var side = _random.NextFloat(0f, sellWeight + buyWeight) < sellWeight
+        var sellWeight = 0.2f + commodity.Demand / config.MaximumIndicator * 1.5f;
+        var buyWeight = (0.2f + commodity.Demand / config.MaximumIndicator) *
+                        Math.Max(0.1f, 1.1f - commodity.Supply / config.MaximumIndicator);
+        var side = sideOverride ?? (_random.NextFloat(0f, sellWeight + buyWeight) < sellWeight
             ? TradingOfferSide.Sell
-            : TradingOfferSide.Buy;
-
-        var commodity = PickCommodity(candidates, side, config);
-        if (side == TradingOfferSide.Buy)
-            commodity = PickGuildBuyVariant(market, commodity);
+            : TradingOfferSide.Buy);
         var price = GetGuildPrice(commodity, side, config);
         EntityUid? item = null;
 
@@ -195,58 +210,40 @@ public sealed partial class TradingSystem
         }, config);
     }
 
-    private TradingCommodity PickGuildBuyVariant(
+    private void CreateGuildVariantBuyOffers(
         Entity<TradingMarketComponent> market,
-        TradingCommodity baseline)
-    {
-        var variants = market.Comp.Commodities.Values
-            .Where(commodity => commodity.Product == baseline.Product &&
-                                commodity.GuildEligible &&
-                                !commodity.Permanent &&
-                                market.Comp.Offers.Values.Any(offer =>
-                                    offer.CommodityId == commodity.Id &&
-                                    offer.Side == TradingOfferSide.Sell))
-            .ToList();
-        if (variants.Count == 0)
-            return baseline;
-
-        var baselineWeight = 1f;
-        var totalWeight = baselineWeight + variants.Sum(commodity => Math.Max(0.1f, commodity.QualityMultiplier));
-        var roll = _random.NextFloat(0f, totalWeight);
-        if (roll <= baselineWeight)
-            return baseline;
-
-        roll -= baselineWeight;
-        foreach (var commodity in variants)
-        {
-            roll -= Math.Max(0.1f, commodity.QualityMultiplier);
-            if (roll <= 0f)
-                return commodity;
-        }
-
-        return variants[^1];
-    }
-
-    private TradingCommodity PickCommodity(
-        List<TradingCommodity> candidates,
-        TradingOfferSide side,
         TradingMarketConfigPrototype config)
     {
-        var weights = candidates.Select(commodity => side == TradingOfferSide.Sell
-                ? 0.2f + commodity.Demand / config.MaximumIndicator * 1.5f
-                : (0.2f + commodity.Demand / config.MaximumIndicator) *
-                  Math.Max(0.1f, 1.1f - commodity.Supply / config.MaximumIndicator))
-            .ToList();
-        var roll = _random.NextFloat(0f, weights.Sum());
-
-        for (var index = 0; index < candidates.Count; index++)
+        foreach (var guild in market.Comp.Guilds)
         {
-            roll -= weights[index];
-            if (roll <= 0f)
-                return candidates[index];
-        }
+            var candidates = market.Comp.Commodities.Values
+                .Where(commodity =>
+                    !commodity.Permanent &&
+                    commodity.GuildEligible &&
+                    guild.Items.Any(item => item.ProductEntity == commodity.Product) &&
+                    market.Comp.Offers.Values.Any(offer =>
+                        offer.CommodityId == commodity.Id && offer.Side == TradingOfferSide.Sell) &&
+                    market.Comp.Offers.Values.All(offer =>
+                        offer.CommodityId != commodity.Id || offer.GuildId != guild.Id))
+                .ToList();
+            if (candidates.Count == 0)
+                continue;
 
-        return candidates[^1];
+            var roll = _random.NextFloat(0f, candidates.Sum(commodity =>
+                Math.Max(0.1f, commodity.QualityMultiplier)));
+            var selected = candidates[^1];
+            foreach (var commodity in candidates)
+            {
+                roll -= Math.Max(0.1f, commodity.QualityMultiplier);
+                if (roll > 0f)
+                    continue;
+
+                selected = commodity;
+                break;
+            }
+
+            TryCreateGuildOffer(market, guild, selected, config, TradingOfferSide.Buy);
+        }
     }
 
     private int GetGuildPrice(
@@ -323,10 +320,12 @@ public sealed partial class TradingSystem
             }
 
             if (ask == null || bid == null)
-                return;
+                break;
 
             CompleteTrade(market, commodity, ask, bid, config);
         }
+
+        EnsureGuildOffersForCommodity(market, commodity, config);
     }
 
     private static bool IsSameParticipant(TradingMarketOffer first, TradingMarketOffer second)
