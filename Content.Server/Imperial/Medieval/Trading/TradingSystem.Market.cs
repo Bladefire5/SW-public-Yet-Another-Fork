@@ -1,5 +1,5 @@
-using System.Linq;
 using System.Globalization;
+using System.Linq;
 using Content.Shared.Imperial.Medieval.ArmorIntegrity;
 using Content.Shared.Imperial.Medieval.Chemistry;
 using Content.Shared.Imperial.Medieval.SmithingSystem;
@@ -24,7 +24,6 @@ public sealed partial class TradingSystem
 
         var uid = Spawn(null, MapCoordinates.Nullspace);
         var market = EnsureComp<TradingMarketComponent>(uid);
-        market.Escrow = _containers.EnsureContainer<Robust.Shared.Containers.Container>(uid, TradingMarketComponent.EscrowContainerId);
         _market = uid;
 
         var config = _prototypeManager.Index(market.Config);
@@ -60,7 +59,6 @@ public sealed partial class TradingSystem
                         BaselineStackCount = stack?.Count ?? 1,
                         HasStack = stack != null,
                         Permanent = true,
-                        GuildEligible = true,
                         Signature = $"common:{item.ProductEntity.Id}",
                         DisplayName = FormatStackName(prototype.Name, stack?.Count),
                         Description = prototype.Description,
@@ -111,7 +109,6 @@ public sealed partial class TradingSystem
         }
 
         EnsureGuildOffers(market, config);
-        CreateGuildVariantBuyOffers(market, config);
 
         MatchAll(market, config);
     }
@@ -140,24 +137,46 @@ public sealed partial class TradingSystem
         }
 
         var candidates = market.Comp.Guilds
-            .Where(guild =>
-                guild.Items.Any(item => item.ProductEntity == commodity.Product) &&
-                market.Comp.Offers.Values.All(offer =>
-                    offer.GuildId != guild.Id || offer.CommodityId != commodity.Id))
+            .Where(guild => guild.Items.Any(item => item.ProductEntity == commodity.Product))
             .ToList();
         if (candidates.Count == 0)
-        {
-            commodity.GuildOfferProgress = 0f;
             return;
-        }
 
-        commodity.GuildOfferProgress += GetDemandShare(commodity.Demand, commodity.Supply);
-        while (commodity.GuildOfferProgress >= 1f && candidates.Count > 0)
+        var current = market.Comp.Offers.Values.Count(offer =>
+            offer.CommodityId == commodity.Id &&
+            offer.ParticipantKind == TradingParticipantKind.Guild &&
+            offer.Side == TradingOfferSide.Sell);
+        var target = GetGuildOfferTarget(commodity, config);
+        for (var index = current; index < target; index++)
         {
-            var guild = _random.PickAndTake(candidates);
+            var guild = _random.Pick(candidates);
             TryCreateGuildOffer(market, guild, commodity, config);
-            commodity.GuildOfferProgress -= 1f;
         }
+    }
+
+    internal static float GetExpectedGuildOfferCount(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        var price = Math.Max(1, commodity.StandardPrice);
+        var referencePrice = Math.Max(1, config.LiquidityReferencePrice);
+        var expected = config.LiquidityReferenceOfferCount *
+                       MathF.Pow((float) referencePrice / price, config.LiquidityPriceExponent);
+        return Math.Clamp(expected, config.MinimumGuildOfferCount, config.MaximumGuildOfferCount);
+    }
+
+    internal static int GetGuildOfferTarget(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        return (int) MathF.Round(GetExpectedGuildOfferCount(commodity, config));
+    }
+
+    internal static float GetMarketImpactScale(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        return config.MarketImpactReferenceOfferCount / GetExpectedGuildOfferCount(commodity, config);
     }
 
     internal static float GetDemandShare(float demand, float supply)
@@ -170,116 +189,41 @@ public sealed partial class TradingSystem
         Entity<TradingMarketComponent> market,
         Guild guild,
         TradingCommodity commodity,
-        TradingMarketConfigPrototype config,
-        TradingOfferSide? sideOverride = null)
+        TradingMarketConfigPrototype config)
     {
-        var total = commodity.Demand + commodity.Supply;
-        var sellChance = total > 0f ? commodity.Demand / total : 0.5f;
-        var side = sideOverride ?? (_random.Prob(sellChance)
-            ? TradingOfferSide.Sell
-            : TradingOfferSide.Buy);
-        var price = GetGuildPrice(commodity, side, config);
-        EntityUid? item = null;
-
-        if (side == TradingOfferSide.Sell)
-        {
-            item = Spawn(commodity.Product, MapCoordinates.Nullspace);
-            if (!_containers.Insert(item.Value, market.Comp.Escrow, force: true))
-            {
-                QueueDel(item.Value);
-                return;
-            }
-        }
+        var price = GetGuildSellPrice(commodity, config);
+        var highestBid = market.Comp.Offers.Values
+            .Where(offer => offer.CommodityId == commodity.Id && offer.Side == TradingOfferSide.Buy)
+            .Select(offer => offer.Price)
+            .DefaultIfEmpty(0)
+            .Max();
+        price = Math.Clamp(Math.Max(price, Math.Max(2, highestBid + 1)), 1, config.MaximumPrice);
 
         AddOffer(market, new TradingMarketOffer
         {
             Id = Guid.NewGuid(),
             CommodityId = commodity.Id,
             Product = commodity.Product,
-            Side = side,
+            Side = TradingOfferSide.Sell,
             ParticipantKind = TradingParticipantKind.Guild,
             ParticipantName = guild.Name,
             Price = price,
             GuildId = guild.Id,
-            Item = item,
             Sequence = market.Comp.NextSequence++,
         }, config);
     }
 
-    private void CreateGuildVariantBuyOffers(
-        Entity<TradingMarketComponent> market,
-        TradingMarketConfigPrototype config)
-    {
-        var eligibleCommodities = market.Comp.Commodities.Values
-            .Where(commodity =>
-                !commodity.Permanent &&
-                commodity.GuildEligible &&
-                market.Comp.Offers.Values.Any(offer =>
-                    offer.CommodityId == commodity.Id && offer.Side == TradingOfferSide.Sell) &&
-                market.Comp.Guilds.Any(guild =>
-                    guild.Items.Any(item => item.ProductEntity == commodity.Product) &&
-                    market.Comp.Offers.Values.All(offer =>
-                        offer.CommodityId != commodity.Id || offer.GuildId != guild.Id)))
-            .ToList();
-        foreach (var commodity in eligibleCommodities)
-        {
-            commodity.GuildOfferProgress += GetDemandShare(commodity.Demand, commodity.Supply);
-        }
-
-        foreach (var guild in market.Comp.Guilds)
-        {
-            var candidates = eligibleCommodities
-                .Where(commodity =>
-                    commodity.GuildOfferProgress >= 1f &&
-                    guild.Items.Any(item => item.ProductEntity == commodity.Product) &&
-                    market.Comp.Offers.Values.All(offer =>
-                        offer.CommodityId != commodity.Id || offer.GuildId != guild.Id))
-                .ToList();
-            if (candidates.Count == 0)
-                continue;
-
-            var roll = _random.NextFloat(0f, candidates.Sum(commodity =>
-                Math.Max(0.1f, commodity.QualityMultiplier)));
-            var selected = candidates[^1];
-            foreach (var commodity in candidates)
-            {
-                roll -= Math.Max(0.1f, commodity.QualityMultiplier);
-                if (roll > 0f)
-                    continue;
-
-                selected = commodity;
-                break;
-            }
-
-            TryCreateGuildOffer(market, guild, selected, config, TradingOfferSide.Buy);
-            selected.GuildOfferProgress -= 1f;
-        }
-
-        foreach (var commodity in eligibleCommodities)
-        {
-            if (market.Comp.Guilds.All(guild =>
-                    !guild.Items.Any(item => item.ProductEntity == commodity.Product) ||
-                    market.Comp.Offers.Values.Any(offer =>
-                        offer.CommodityId == commodity.Id && offer.GuildId == guild.Id)))
-            {
-                commodity.GuildOfferProgress = 0f;
-            }
-        }
-    }
-
-    private int GetGuildPrice(
+    private int GetGuildSellPrice(
         TradingCommodity commodity,
-        TradingOfferSide side,
         TradingMarketConfigPrototype config)
     {
         var total = commodity.Demand + commodity.Supply;
         var pressure = total > 0f ? (commodity.Demand - commodity.Supply) / total : 0f;
         var center = 1f + pressure * config.PricePressure;
-        var spread = side == TradingOfferSide.Sell ? config.PriceSpread / 2f : -config.PriceSpread / 2f;
-        var noise = _random.NextFloat(-config.PriceNoise, config.PriceNoise);
+        var spread = config.PriceSpread / 2f;
+        var noise = _random.NextFloat(0f, config.PriceNoise);
         var factor = Math.Clamp(center + spread + noise, config.MinimumPriceFactor, config.MaximumPriceFactor);
-        var quality = side == TradingOfferSide.Buy ? commodity.QualityMultiplier : 1f;
-        return Math.Clamp((int) MathF.Round(commodity.StandardPrice * quality * factor), 1, config.MaximumPrice);
+        return Math.Clamp((int) MathF.Round(commodity.StandardPrice * factor), 1, config.MaximumPrice);
     }
 
     private void AddOffer(
@@ -289,7 +233,7 @@ public sealed partial class TradingSystem
     {
         if (offer.Side == TradingOfferSide.Sell && market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
         {
-            offer.SupplyContribution = config.SupplyPlacementImpact *
+            offer.SupplyContribution = config.SupplyPlacementImpact * GetMarketImpactScale(commodity, config) *
                                        Math.Clamp((float) commodity.StandardPrice / offer.Price, 0.25f, 4f);
             commodity.Supply += offer.SupplyContribution;
         }
@@ -332,7 +276,10 @@ public sealed partial class TradingSystem
             foreach (var candidateAsk in asks)
             {
                 var candidateBid = bids.FirstOrDefault(value =>
-                    value.Price >= candidateAsk.Price && !IsSameParticipant(value, candidateAsk));
+                    value.Price >= candidateAsk.Price &&
+                    !IsSameParticipant(value, candidateAsk) &&
+                    !(candidateAsk.ParticipantKind == TradingParticipantKind.Trader &&
+                      value.ParticipantKind == TradingParticipantKind.Guild));
                 if (candidateBid == null)
                     continue;
 
@@ -366,6 +313,7 @@ public sealed partial class TradingSystem
         TradingMarketConfigPrototype config)
     {
         var executionPrice = ask.Sequence < bid.Sequence ? ask.Price : bid.Price;
+        ArchiveTrade(commodity, ask, bid);
 
         if (bid.Pit is { } buyerPit && TryComp<TradingComponent>(buyerPit, out var buyer))
             buyer.Balance += bid.Price - executionPrice;
@@ -380,15 +328,61 @@ public sealed partial class TradingSystem
             else
                 QueueDel(item);
         }
+        else if (ask.ParticipantKind == TradingParticipantKind.Guild &&
+                 bid.Pit is { } destination &&
+                 TryComp<TradingComponent>(destination, out var destinationPit))
+        {
+            var spawnedItem = Spawn(ask.Product, MapCoordinates.Nullspace);
+            DeliverItem(destination, destinationPit, spawnedItem, bid.ImmediateRecipient);
+        }
 
         RemoveOfferRecord(market, ask);
         RemoveOfferRecord(market, bid);
 
-        commodity.Supply = Math.Max(0f, commodity.Supply - ask.SupplyContribution - config.SupplyTradeImpact);
-        var demandImpact = config.DemandTradeImpact *
+        var impactScale = GetMarketImpactScale(commodity, config);
+        commodity.Supply = Math.Max(
+            0f,
+            commodity.Supply - ask.SupplyContribution - config.SupplyTradeImpact * impactScale);
+        var demandImpact = config.DemandTradeImpact * impactScale *
                            Math.Clamp((float) executionPrice / commodity.StandardPrice, 0.25f, 4f);
         commodity.Demand = Math.Max(0f, commodity.Demand - demandImpact);
         TryRemoveCommodity(market, commodity);
+    }
+
+    private void ArchiveTrade(
+        TradingCommodity commodity,
+        TradingMarketOffer ask,
+        TradingMarketOffer bid)
+    {
+        if (ask.ParticipantKind != TradingParticipantKind.Trader ||
+            bid.ParticipantKind != TradingParticipantKind.Trader)
+        {
+            return;
+        }
+
+        var displayName = commodity.DisplayName;
+        if (ask.Item is { } item && Exists(item))
+        {
+            var metadata = MetaData(item);
+            var stackCount = TryComp<StackComponent>(item, out var stack) ? stack.Count : (int?) null;
+            displayName = FormatStackName(metadata.EntityName, stackCount);
+        }
+
+        if (!ask.IsImmediate &&
+            ask.Pit is { } sellerPit &&
+            TryComp<TradingComponent>(sellerPit, out var seller))
+        {
+            seller.MarketArchive.Add(
+                $"ваш лот {displayName} был куплен торговцем {bid.ParticipantName} за {ask.Price} ревентов");
+        }
+
+        if (!bid.IsImmediate &&
+            bid.Pit is { } buyerPit &&
+            TryComp<TradingComponent>(buyerPit, out var buyer))
+        {
+            buyer.MarketArchive.Add(
+                $"Ваш заказ {displayName} был выполнен торговцем {ask.ParticipantName} за {bid.Price} ревентов");
+        }
     }
 
     internal void RemoveOffer(
@@ -460,13 +454,19 @@ public sealed partial class TradingSystem
         var stackCount = TryComp<StackComponent>(item, out var stack) ? stack.Count : 1;
         var hasStack = stack != null;
         var isRecipe = HasComp<MedievalRandomChemistryRecipeComponent>(item);
-        var isEquipment = HasComp<MedievalMeleeResourceComponent>(item) || HasComp<MedievalArmorIntegrityComponent>(item);
-        var pristine = isEquipment && IsPristineEquipment(item);
+        var isEquipment = HasComp<MedievalMeleeResourceComponent>(item) ||
+                          HasComp<MedievalArmorIntegrityComponent>(item);
+        var isDamagedEquipment = IsDamagedEquipment(item);
+        var matchesCommon = !isRecipe &&
+                            hasCommon &&
+                            common != null &&
+                            common.HasStack == hasStack &&
+                            common.BaselineStackCount == stackCount &&
+                            (!isEquipment || !isDamagedEquipment);
 
-        if (!isRecipe && !isEquipment && hasCommon && common != null &&
-            common.HasStack == hasStack && common.BaselineStackCount == stackCount)
+        if (matchesCommon)
         {
-            commodity = common;
+            commodity = common!;
             return true;
         }
 
@@ -475,6 +475,7 @@ public sealed partial class TradingSystem
             !value.Permanent && value.Signature == signature);
         if (existing != null)
         {
+            existing.IsDamagedEquipment = isDamagedEquipment;
             commodity = existing;
             return true;
         }
@@ -483,15 +484,6 @@ public sealed partial class TradingSystem
             return false;
 
         var config = _prototypeManager.Index(market.Comp.Config);
-        var qualityMultiplier = GetItemQualityMultiplier(item, config);
-        var sections = TradingMarketSection.Unique;
-        var guildEligible = false;
-        if (!isRecipe && isEquipment && pristine && hasCommon && common != null)
-        {
-            sections |= TradingMarketSection.Common;
-            guildEligible = true;
-        }
-
         var standardPrice = hasCommon && common != null
             ? common.StandardPrice
             : Math.Clamp(fallbackPrice, 1, config.MaximumPrice);
@@ -500,14 +492,13 @@ public sealed partial class TradingSystem
         {
             Id = Guid.NewGuid(),
             Product = product,
-            Sections = sections,
+            Sections = TradingMarketSection.Unique,
             StandardPrice = standardPrice,
             Demand = hasCommon && common != null ? common.Demand : config.InitialDemand,
             Supply = 0f,
             BaselineStackCount = stackCount,
             HasStack = hasStack,
-            GuildEligible = guildEligible,
-            QualityMultiplier = qualityMultiplier,
+            IsDamagedEquipment = isDamagedEquipment,
             Signature = signature,
             DisplayName = FormatStackName(metadata.EntityName, hasStack ? stackCount : null),
             Description = metadata.EntityDescription,
@@ -519,32 +510,25 @@ public sealed partial class TradingSystem
         return true;
     }
 
-    private bool IsPristineEquipment(EntityUid item)
+    private bool IsDamagedEquipment(EntityUid item)
     {
-        if (TryComp<MedievalMeleeResourceComponent>(item, out var weapon) && weapon.Resource <= 80f)
-            return false;
+        var equipment = false;
+        var damaged = false;
 
-        if (TryComp<MedievalArmorIntegrityComponent>(item, out var armor) &&
-            (!MathHelper.CloseTo(armor.MaxArmorHP, armor.ContainerArmorHP) ||
-             !MathHelper.CloseTo(armor.CurrentArmorHP, armor.ContainerArmorHP)))
+        if (TryComp<MedievalMeleeResourceComponent>(item, out var weapon))
         {
-            return false;
+            equipment = true;
+            damaged |= weapon.Resource <= 80f;
         }
 
-        return HasComp<MedievalMeleeResourceComponent>(item) || HasComp<MedievalArmorIntegrityComponent>(item);
-    }
+        if (TryComp<MedievalArmorIntegrityComponent>(item, out var armor))
+        {
+            equipment = true;
+            damaged |= !MathHelper.CloseTo(armor.MaxArmorHP, armor.ContainerArmorHP) ||
+                       !MathHelper.CloseTo(armor.CurrentArmorHP, armor.ContainerArmorHP);
+        }
 
-    private float GetItemQualityMultiplier(
-        EntityUid item,
-        TradingMarketConfigPrototype config)
-    {
-        if (!TryComp<SmithQualityComponent>(item, out var quality))
-            return 1f;
-
-        var index = (int) quality.Quality;
-        return index >= 0 && index < config.QualityPriceMultipliers.Count
-            ? config.QualityPriceMultipliers[index]
-            : 1f;
+        return equipment && damaged;
     }
 
     private string BuildItemSignature(EntityUid item, EntProtoId product, int stackCount)

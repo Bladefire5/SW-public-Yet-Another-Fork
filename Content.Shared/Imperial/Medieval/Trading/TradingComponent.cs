@@ -28,6 +28,8 @@ public sealed partial class TradingComponent : Component
 
     public List<EntityUid> StoredMarketItems = new();
 
+    public List<string> MarketArchive = new();
+
     [ViewVariables(VVAccess.ReadWrite), DataField]
     public bool OwnerOnly;
 

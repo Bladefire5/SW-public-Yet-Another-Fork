@@ -19,6 +19,9 @@ public sealed class TradingBoundUserInterface : BoundUserInterface
         _menu = this.CreateWindow<TradingMenu>();
         _menu.OnBuy += commodity => SendMessage(new TradingBuyMessage(commodity));
         _menu.OnSell += commodity => SendMessage(new TradingSellMessage(commodity));
+        _menu.OnBuyOffer += offer => SendMessage(new TradingBuyOfferMessage(offer));
+        _menu.OnSellOffer += offer => SendMessage(new TradingSellOfferMessage(offer));
+        _menu.OnSelectCommodity += commodity => SendMessage(new TradingSelectCommodityMessage(commodity));
         _menu.OnCreateSellOffer += price => SendMessage(new TradingCreateSellOfferMessage(price));
         _menu.OnCreateBuyOffer += (commodity, price) => SendMessage(new TradingCreateBuyOfferMessage(commodity, price));
         _menu.OnCreateBuyOfferFromHeld += price => SendMessage(new TradingCreateBuyOfferFromHeldMessage(price));

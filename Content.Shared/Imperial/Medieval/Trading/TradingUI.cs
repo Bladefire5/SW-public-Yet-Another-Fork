@@ -45,6 +45,7 @@ public sealed class TradingMarketItemState
     public bool IsCommonBaseline;
     public bool HasStack;
     public int BaselineStackCount;
+    public bool IsDamagedEquipment;
     public float Demand;
     public float Supply;
     public int? LowestSellPrice;
@@ -64,6 +65,7 @@ public sealed class TradingMarketItemState
         bool isCommonBaseline,
         bool hasStack,
         int baselineStackCount,
+        bool damagedEquipment,
         float demand,
         float supply,
         int? lowestSellPrice,
@@ -82,6 +84,7 @@ public sealed class TradingMarketItemState
         IsCommonBaseline = isCommonBaseline;
         HasStack = hasStack;
         BaselineStackCount = baselineStackCount;
+        IsDamagedEquipment = damagedEquipment;
         Demand = demand;
         Supply = supply;
         LowestSellPrice = lowestSellPrice;
@@ -152,6 +155,7 @@ public sealed class TradingUpdateState : BoundUserInterfaceState
     public List<TradingMarketItemState> Items;
     public List<TradingMarketOfferState> Offers;
     public List<TradingStoredItemState> StoredItems;
+    public List<string> Archive;
     public int Balance;
     public ProtoId<CurrencyPrototype> Currency;
 
@@ -159,12 +163,14 @@ public sealed class TradingUpdateState : BoundUserInterfaceState
         List<TradingMarketItemState> items,
         List<TradingMarketOfferState> offers,
         List<TradingStoredItemState> storedItems,
+        List<string> archive,
         int balance,
         ProtoId<CurrencyPrototype> currency)
     {
         Items = items;
         Offers = offers;
         StoredItems = storedItems;
+        Archive = archive;
         Balance = balance;
         Currency = currency;
     }
@@ -181,6 +187,24 @@ public sealed class TradingBuyMessage(Guid commodityId) : BoundUserInterfaceMess
 
 [Serializable, NetSerializable]
 public sealed class TradingSellMessage(Guid commodityId) : BoundUserInterfaceMessage
+{
+    public Guid CommodityId = commodityId;
+}
+
+[Serializable, NetSerializable]
+public sealed class TradingBuyOfferMessage(Guid offerId) : BoundUserInterfaceMessage
+{
+    public Guid OfferId = offerId;
+}
+
+[Serializable, NetSerializable]
+public sealed class TradingSellOfferMessage(Guid offerId) : BoundUserInterfaceMessage
+{
+    public Guid OfferId = offerId;
+}
+
+[Serializable, NetSerializable]
+public sealed class TradingSelectCommodityMessage(Guid commodityId) : BoundUserInterfaceMessage
 {
     public Guid CommodityId = commodityId;
 }

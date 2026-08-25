@@ -27,6 +27,24 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float DemandRecovery = 0.75f;
 
     [DataField]
+    public int LiquidityReferencePrice = 5;
+
+    [DataField]
+    public int LiquidityReferenceOfferCount = 60;
+
+    [DataField]
+    public float LiquidityPriceExponent = 0.4f;
+
+    [DataField]
+    public int MinimumGuildOfferCount = 2;
+
+    [DataField]
+    public int MaximumGuildOfferCount = 120;
+
+    [DataField]
+    public float MarketImpactReferenceOfferCount = 6f;
+
+    [DataField]
     public float SupplyPlacementImpact = 3f;
 
     [DataField]
@@ -52,7 +70,4 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
 
     [DataField]
     public int MaximumPrice = 1000000;
-
-    [DataField(required: true)]
-    public List<float> QualityPriceMultipliers = new();
 }
