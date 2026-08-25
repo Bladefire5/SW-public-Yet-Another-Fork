@@ -11,6 +11,7 @@ using Content.Shared.Stacks;
 using Content.Shared.MedievalMeleeResource.Components;
 using Content.Shared.Store;
 using Robust.Shared.GameObjects;
+using Robust.Shared.Containers;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
@@ -277,6 +278,59 @@ public sealed class TradingMarketTest
             Assert.That(recipeCommodity.Sections, Is.EqualTo(TradingMarketSection.Unique));
             Assert.That(recipeCommodity.GuildEligible, Is.False);
             Assert.That(market.CommonCommodities.ContainsKey("MedievalChemistryRecipe"), Is.False);
+        });
+
+        await pair.CleanReturnAsync();
+    }
+
+    [Test]
+    public async Task DeletingPitRemovesOffersAndDropsStoredItems()
+    {
+        await using var pair = await PoolManager.GetServerClient();
+        var server = pair.Server;
+        var testMap = await pair.CreateTestMap();
+
+        await server.WaitAssertion(() =>
+        {
+            var system = server.System<TradingSystem>();
+            system.CreateMarket();
+
+            var query = server.EntMan.EntityQueryEnumerator<TradingMarketComponent>();
+            Assert.That(query.MoveNext(out var marketUid, out var market), Is.True);
+            var commodity = market.Commodities.Values.First(value => value.Permanent && !value.HasStack);
+            var pitUid = server.EntMan.SpawnEntity(null, testMap.GridCoords);
+            var pit = server.EntMan.EnsureComponent<TradingComponent>(pitUid);
+            pit.Balance = commodity.StandardPrice;
+
+            var sellItem = server.EntMan.SpawnEntity(commodity.Product, testMap.GridCoords);
+            Assert.That(system.TryCreateTraderSellOffer(
+                (marketUid, market),
+                (pitUid, pit),
+                "Trader",
+                sellItem,
+                commodity.StandardPrice,
+                out _), Is.True);
+            Assert.That(system.CreateTraderBuyOffer(
+                (marketUid, market),
+                (pitUid, pit),
+                "Trader",
+                commodity,
+                commodity.StandardPrice), Is.True);
+
+            var storedItem = server.EntMan.SpawnEntity(commodity.Product, testMap.GridCoords);
+            var containers = server.EntMan.System<SharedContainerSystem>();
+            var container = containers.EnsureContainer<Container>(pitUid, TradingComponent.MarketContainerId);
+            Assert.That(containers.Insert(storedItem, container, force: true), Is.True);
+            pit.StoredMarketItems.Add(storedItem);
+            var dropCoordinates = server.EntMan.System<SharedTransformSystem>().GetMapCoordinates(pitUid);
+
+            server.EntMan.DeleteEntity(pitUid);
+
+            Assert.That(market.Offers.Values.Any(offer => offer.Pit == pitUid), Is.False);
+            Assert.That(server.EntMan.EntityExists(sellItem), Is.True);
+            Assert.That(server.EntMan.EntityExists(storedItem), Is.True);
+            Assert.That(server.EntMan.System<SharedTransformSystem>().GetMapCoordinates(sellItem), Is.EqualTo(dropCoordinates));
+            Assert.That(server.EntMan.System<SharedTransformSystem>().GetMapCoordinates(storedItem), Is.EqualTo(dropCoordinates));
         });
 
         await pair.CleanReturnAsync();

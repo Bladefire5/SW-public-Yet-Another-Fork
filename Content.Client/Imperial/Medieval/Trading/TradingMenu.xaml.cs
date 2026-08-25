@@ -509,13 +509,8 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void RetryMissingPreviews(TradingUpdateState state)
     {
-        if (_previewRetry >= 20 ||
-            state.Items.All(item => item.PreviewEntity == null || ResolvePreview(item) != null) &&
-            state.Offers.All(offer => offer.PreviewEntity == null || ResolvePreview(offer.PreviewEntity) != null) &&
-            state.StoredItems.All(item => ResolvePreview(item.Item) != null))
-        {
+        if (_previewRetry >= 20 || !HasMissingPreviews(state))
             return;
-        }
 
         Timer.Spawn(100, () =>
         {
@@ -528,6 +523,15 @@ public sealed partial class TradingMenu : DefaultWindow
             RebuildManagement();
             RetryMissingPreviews(state);
         }, _previewRetryCancellation.Token);
+    }
+
+    private bool HasMissingPreviews(TradingUpdateState state)
+    {
+        return state.Items.Any(item => item.PreviewEntity != null && ResolvePreview(item) == null) ||
+               state.Offers.Any(offer => offer.IsOwn &&
+                                         offer.PreviewEntity != null &&
+                                         ResolvePreview(offer.PreviewEntity) == null) ||
+               state.StoredItems.Any(item => ResolvePreview(item.Item) == null);
     }
 
     protected override void FrameUpdate(FrameEventArgs args)

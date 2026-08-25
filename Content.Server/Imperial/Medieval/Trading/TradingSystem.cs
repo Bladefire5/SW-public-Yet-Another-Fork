@@ -34,11 +34,37 @@ public sealed partial class TradingSystem : EntitySystem
 
         SubscribeLocalEvent<TradingComponent, ActivatableUIOpenAttemptEvent>(OnStoreOpenAttempt);
         SubscribeLocalEvent<TradingComponent, BeforeActivatableUIOpenEvent>(BeforeActivatableUiOpen);
+        SubscribeLocalEvent<TradingComponent, EntityTerminatingEvent>(OnTradingPitTerminating);
         SubscribeLocalEvent<MedievalCurrencyComponent, AfterInteractEvent>(OnAfterInteract);
         SubscribeLocalEvent<RoundStartedEvent>(OnRoundStart);
         SubscribeLocalEvent<RoundRestartCleanupEvent>(OnRoundRestart);
 
         InitializeUi();
+    }
+
+    private void OnTradingPitTerminating(
+        Entity<TradingComponent> pit,
+        ref EntityTerminatingEvent args)
+    {
+        if (TryGetMarket(out var market))
+        {
+            var config = _prototypeManager.Index(market.Comp.Config);
+            var offers = market.Comp.Offers.Values
+                .Where(offer => offer.Pit == pit.Owner)
+                .Select(offer => offer.Id)
+                .ToList();
+
+            foreach (var offer in offers)
+            {
+                RemoveOffer(market, offer, false, config);
+            }
+        }
+
+        pit.Comp.MarketOffers.Clear();
+        pit.Comp.StoredMarketItems.Clear();
+
+        if (_containers.TryGetContainer(pit.Owner, TradingComponent.MarketContainerId, out var container))
+            _containers.EmptyContainer(container, true, Transform(pit.Owner).Coordinates);
     }
 
     public override void Update(float frameTime)
