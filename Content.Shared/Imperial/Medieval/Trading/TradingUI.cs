@@ -210,6 +210,12 @@ public sealed class TradingSelectCommodityMessage(Guid commodityId) : BoundUserI
 }
 
 [Serializable, NetSerializable]
+public sealed class TradingSelectOfferMessage(Guid offerId) : BoundUserInterfaceMessage
+{
+    public Guid OfferId = offerId;
+}
+
+[Serializable, NetSerializable]
 public sealed class TradingCreateSellOfferMessage(int price) : BoundUserInterfaceMessage
 {
     public int Price = price;

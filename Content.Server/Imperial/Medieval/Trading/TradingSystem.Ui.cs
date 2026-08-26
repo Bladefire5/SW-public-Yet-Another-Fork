@@ -39,6 +39,7 @@ public sealed partial class TradingSystem
         SubscribeLocalEvent<TradingComponent, TradingBuyOfferMessage>(OnBuyOfferRequest);
         SubscribeLocalEvent<TradingComponent, TradingSellOfferMessage>(OnSellOfferRequest);
         SubscribeLocalEvent<TradingComponent, TradingSelectCommodityMessage>(OnSelectCommodity);
+        SubscribeLocalEvent<TradingComponent, TradingSelectOfferMessage>(OnSelectOffer);
         SubscribeLocalEvent<TradingComponent, TradingCreateSellOfferMessage>(OnCreateSellOffer);
         SubscribeLocalEvent<TradingComponent, TradingCreateBuyOfferMessage>(OnCreateBuyOffer);
         SubscribeLocalEvent<TradingComponent, TradingCreateBuyOfferFromHeldMessage>(OnCreateBuyOfferFromHeld);
@@ -221,7 +222,32 @@ public sealed partial class TradingSystem
         if (!TryGetMarket(out var market) || !market.Comp.Commodities.ContainsKey(args.CommodityId))
             return;
 
-        EnsureComp<TradingMarketViewerComponent>(args.Actor).SelectedCommodity = args.CommodityId;
+        var viewer = EnsureComp<TradingMarketViewerComponent>(args.Actor);
+        viewer.SelectedCommodity = args.CommodityId;
+        viewer.SelectedOffer = null;
+        UpdateUserInterface(args.Actor, uid, component);
+    }
+
+    private void OnSelectOffer(EntityUid uid, TradingComponent component, TradingSelectOfferMessage args)
+    {
+        if (!TryGetMarket(out var market))
+            return;
+
+        var viewer = EnsureComp<TradingMarketViewerComponent>(args.Actor);
+        if (!market.Comp.Offers.TryGetValue(args.OfferId, out var offer) ||
+            offer.Side != TradingOfferSide.Sell ||
+            offer.ParticipantKind != TradingParticipantKind.Trader ||
+            offer.Pit == uid ||
+            offer.CommodityId != viewer.SelectedCommodity ||
+            offer.Item is not { } item ||
+            !Exists(item))
+        {
+            viewer.SelectedOffer = null;
+            UpdateUserInterface(args.Actor, uid, component);
+            return;
+        }
+
+        viewer.SelectedOffer = offer.Id;
         UpdateUserInterface(args.Actor, uid, component);
     }
 
@@ -487,7 +513,13 @@ public sealed partial class TradingSystem
             return;
         }
 
-        if (!TryResolveCommodityForItem(market, item, msg.Price, true, out var commodity) ||
+        if (!TryResolveCommodityForItem(
+                market,
+                item,
+                msg.Price,
+                true,
+                out var commodity,
+                forceIntactEquipment: true) ||
             !CreateTraderBuyOffer(
                 market,
                 (uid, component),
@@ -768,6 +800,23 @@ public sealed partial class TradingSystem
         desired.UnionWith(market.Comp.Offers.Values
             .Where(offer => offer.Pit == store && offer.Item is { } item && Exists(item))
             .Select(offer => offer.Item!.Value));
+
+        if (viewer.SelectedOffer is { } selectedOffer &&
+            market.Comp.Offers.TryGetValue(selectedOffer, out var offer) &&
+            offer.CommodityId == viewer.SelectedCommodity &&
+            offer.Side == TradingOfferSide.Sell &&
+            offer.ParticipantKind == TradingParticipantKind.Trader &&
+            offer.Pit != store &&
+            offer.Item is { } selectedItem &&
+            Exists(selectedItem))
+        {
+            desired.Add(selectedItem);
+        }
+        else
+        {
+            viewer.SelectedOffer = null;
+        }
+
         desired.UnionWith(component.StoredMarketItems.Where(Exists));
 
         foreach (var item in viewer.VisibleItems.Except(desired).ToList())

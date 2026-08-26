@@ -611,7 +611,8 @@ public sealed partial class TradingSystem
         int fallbackPrice,
         bool create,
         out TradingCommodity commodity,
-        int? stackCountOverride = null)
+        int? stackCountOverride = null,
+        bool forceIntactEquipment = false)
     {
         commodity = default!;
         if (MetaData(item).EntityPrototype?.ID is not { } product || IsTrophy(product))
@@ -635,7 +636,7 @@ public sealed partial class TradingSystem
         var isEquipment = hasAppliedQuality ||
                           HasComp<MedievalMeleeResourceComponent>(item) ||
                           HasComp<MedievalArmorIntegrityComponent>(item);
-        var isDamagedEquipment = IsDamagedEquipment(item);
+        var isDamagedEquipment = !forceIntactEquipment && IsDamagedEquipment(item);
         var matchesCommon = !isRecipe &&
                             hasCommon &&
                             common != null &&

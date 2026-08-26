@@ -37,6 +37,7 @@ public sealed partial class TradingMenu : DefaultWindow
     public event Action<Guid>? OnBuyOffer;
     public event Action<Guid>? OnSellOffer;
     public event Action<Guid>? OnSelectCommodity;
+    public event Action<Guid>? OnSelectOffer;
     public event Action<int>? OnCreateSellOffer;
     public event Action<Guid, int>? OnCreateBuyOffer;
     public event Action<int>? OnCreateBuyOfferFromHeld;
@@ -48,6 +49,8 @@ public sealed partial class TradingMenu : DefaultWindow
     private TradingMarketSection _section = TradingMarketSection.Common;
     private ProtoId<GuildTypePrototype>? _category;
     private Guid? _selected;
+    private Guid? _selectedOffer;
+    private bool _updateSelectedPrice = true;
     private CurrencyPrototype? _currency;
     private StoreWithdrawWindow? _withdrawWindow;
     private bool _management;
@@ -81,8 +84,20 @@ public sealed partial class TradingMenu : DefaultWindow
         if (_selected == null || state.Items.All(item => item.CommodityId != _selected.Value))
             _selected = state.Items.FirstOrDefault(item => HasSection(item, _section))?.CommodityId;
 
-        if (_selected != previousSelection && _selected is { } selected)
-            OnSelectCommodity?.Invoke(selected);
+        if (_selected != previousSelection)
+        {
+            _selectedOffer = null;
+            _updateSelectedPrice = true;
+            if (_selected is { } selected)
+                OnSelectCommodity?.Invoke(selected);
+        }
+
+        if (_selectedOffer is { } selectedOffer &&
+            state.Offers.All(offer => offer.Id != selectedOffer))
+        {
+            _selectedOffer = null;
+            _updateSelectedPrice = true;
+        }
 
         RebuildItems();
         RebuildSelected();
@@ -98,6 +113,8 @@ public sealed partial class TradingMenu : DefaultWindow
         _section = section;
         _category = null;
         _selected = _state?.Items.FirstOrDefault(item => HasSection(item, section))?.CommodityId;
+        _selectedOffer = null;
+        _updateSelectedPrice = true;
         if (_selected is { } selected)
             OnSelectCommodity?.Invoke(selected);
         RebuildCategories();
@@ -244,6 +261,8 @@ public sealed partial class TradingMenu : DefaultWindow
         select.OnPressed += _ =>
         {
             _selected = item.CommodityId;
+            _selectedOffer = null;
+            _updateSelectedPrice = true;
             OnSelectCommodity?.Invoke(item.CommodityId);
             RebuildItems();
             RebuildSelected();
@@ -350,10 +369,31 @@ public sealed partial class TradingMenu : DefaultWindow
         if (item == null)
             return;
 
-        SelectedName.Text = item.DisplayName;
+        var selectedOffer = _selectedOffer is { } selectedOfferId
+            ? _state.Offers.FirstOrDefault(offer =>
+                offer.Id == selectedOfferId &&
+                offer.CommodityId == item.CommodityId &&
+                offer.Side == TradingOfferSide.Sell &&
+                offer.ParticipantKind == TradingParticipantKind.Trader &&
+                !offer.IsOwn)
+            : null;
+        if (_selectedOffer != null && selectedOffer == null)
+        {
+            _selectedOffer = null;
+            _updateSelectedPrice = true;
+        }
+
+        SelectedName.Text = selectedOffer?.DisplayName ?? item.DisplayName;
         SelectedName.FontColorOverride = item.IsDamagedEquipment ? Color.FromHex("#e65353") : null;
         SelectedPreview.DisposeAllChildren();
-        SelectedPreview.AddChild(CreateItemPreview(item, new Vector2(96, 96)));
+        SelectedPreview.AddChild(selectedOffer == null
+            ? CreateItemPreview(item, new Vector2(96, 96))
+            : CreateItemPreview(selectedOffer.ProductEntity, selectedOffer.PreviewEntity, new Vector2(96, 96)));
+        if (_updateSelectedPrice)
+        {
+            BuyPrice.Text = (selectedOffer?.Price ?? item.LowestSellPrice)?.ToString() ?? string.Empty;
+            _updateSelectedPrice = false;
+        }
         SelectedStats.SetMarkup(
             $"Лоты: {item.SellOfferCount} · Заказы: {item.BuyOfferCount}");
         CreateBuyOrderButton.Disabled = false;
@@ -375,12 +415,35 @@ public sealed partial class TradingMenu : DefaultWindow
                 Text = offer.Side == TradingOfferSide.Sell ? "Лот" : "Заказ",
                 MinWidth = 54,
             });
-            row.AddChild(new Label
+            Control participant;
+            if (offer.Side == TradingOfferSide.Sell &&
+                offer.ParticipantKind == TradingParticipantKind.Trader &&
+                !offer.IsOwn)
             {
-                Text = offer.ParticipantName,
-                HorizontalExpand = true,
-                ClipText = true,
-            });
+                var selectOffer = new Button
+                {
+                    Text = offer.ParticipantName,
+                    HorizontalExpand = true,
+                    ClipText = true,
+                };
+                selectOffer.OnPressed += _ =>
+                {
+                    _selectedOffer = offer.Id;
+                    _updateSelectedPrice = true;
+                    OnSelectOffer?.Invoke(offer.Id);
+                };
+                participant = selectOffer;
+            }
+            else
+            {
+                participant = new Label
+                {
+                    Text = offer.ParticipantName,
+                    HorizontalExpand = true,
+                    ClipText = true,
+                };
+            }
+            row.AddChild(participant);
             var action = new Button
             {
                 Text = offer.Price.ToString(),
@@ -640,26 +703,30 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void UpdateHeldItem()
     {
+        var itemName = "—";
         var canOffer = false;
-        if (_state == null ||
-            _entities.System<HandsSystem>().GetActiveHandEntity() is not { } held ||
-            !_entities.EntityExists(held) ||
-            !_entities.TryGetComponent<MetaDataComponent>(held, out var metadata) ||
-            metadata.EntityPrototype?.ID is not { } product ||
-            !_entities.HasComponent<ItemComponent>(held))
+        if (_state != null &&
+            _entities.System<HandsSystem>().GetActiveHandEntity() is { } held &&
+            _entities.EntityExists(held) &&
+            _entities.TryGetComponent<MetaDataComponent>(held, out var metadata))
         {
-            UpdateHeldItemAvailability(canOffer);
-            return;
+            itemName = metadata.EntityName;
+            if (metadata.EntityPrototype?.ID is { } product &&
+                _entities.HasComponent<ItemComponent>(held) &&
+                (!_prototypes.TryIndex(product, out var prototype) ||
+                 !prototype.TryGetComponent<MedievalCurrencyComponent>(out _, _entities.ComponentFactory)))
+            {
+                canOffer = true;
+            }
         }
 
-        if (_prototypes.TryIndex(product, out var prototype) &&
-            prototype.TryGetComponent<MedievalCurrencyComponent>(out _, _entities.ComponentFactory))
+        var text = $"Предмет в активной руке: {itemName}";
+        if (HeldItemName.Text != text)
         {
-            UpdateHeldItemAvailability(canOffer);
-            return;
+            HeldItemName.Text = text;
+            HeldItemName.ToolTip = itemName;
         }
 
-        canOffer = true;
         UpdateHeldItemAvailability(canOffer);
     }
 
