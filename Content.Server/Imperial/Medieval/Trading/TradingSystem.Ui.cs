@@ -327,6 +327,7 @@ public sealed partial class TradingSystem
                 (uid, component),
                 MetaData(msg.Actor).EntityName,
                 item,
+                msg.Actor,
                 bid.Price,
                 out var commodityId,
                 true) ||
@@ -421,6 +422,7 @@ public sealed partial class TradingSystem
                 (uid, component),
                 MetaData(msg.Actor).EntityName,
                 tradeItem,
+                msg.Actor,
                 bid.Price,
                 out var commodityId,
                 out var ask,
@@ -470,6 +472,7 @@ public sealed partial class TradingSystem
                 (uid, component),
                 MetaData(msg.Actor).EntityName,
                 item,
+                msg.Actor,
                 msg.Price,
                 out var commodityId))
         {
@@ -627,6 +630,7 @@ public sealed partial class TradingSystem
         Entity<TradingComponent> pit,
         string participantName,
         EntityUid sourceItem,
+        EntityUid seller,
         int price,
         out Guid commodityId,
         bool immediate = false)
@@ -636,6 +640,7 @@ public sealed partial class TradingSystem
             pit,
             participantName,
             sourceItem,
+            seller,
             price,
             out commodityId,
             out _,
@@ -647,6 +652,7 @@ public sealed partial class TradingSystem
         Entity<TradingComponent> pit,
         string participantName,
         EntityUid sourceItem,
+        EntityUid seller,
         int price,
         out Guid commodityId,
         out TradingMarketOffer offer,
@@ -674,6 +680,8 @@ public sealed partial class TradingSystem
             return false;
         }
 
+        EmptyItemContainers(sourceItem, seller);
+
         if (!_containers.Insert(sourceItem, destination, force: true))
         {
             if (previousContainer != null)
@@ -700,6 +708,18 @@ public sealed partial class TradingSystem
         AddOffer(market, offer, config);
         commodityId = commodity.Id;
         return true;
+    }
+
+    private void EmptyItemContainers(EntityUid item, EntityUid seller)
+    {
+        if (!TryComp<ContainerManagerComponent>(item, out var containerManager))
+            return;
+
+        var coordinates = Transform(seller).Coordinates;
+        foreach (var container in _containers.GetAllContainers(item, containerManager))
+        {
+            _containers.EmptyContainer(container, true, coordinates);
+        }
     }
 
     private bool TryFindInventoryItem(
