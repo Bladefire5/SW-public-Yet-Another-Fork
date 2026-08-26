@@ -6,6 +6,7 @@ using Content.Shared.Imperial.Medieval.SmithingSystem;
 using Content.Shared.Imperial.Medieval.SmithingSystem.Behaviours;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
+using Content.Shared.Inventory.VirtualItem;
 using Content.Shared.MedievalMeleeResource.Components;
 using Content.Shared.Prototypes;
 using Content.Shared.Stacks;
@@ -615,8 +616,11 @@ public sealed partial class TradingSystem
         bool forceIntactEquipment = false)
     {
         commodity = default!;
-        if (MetaData(item).EntityPrototype?.ID is not { } product || IsTrophy(product))
+        if (HasComp<VirtualItemComponent>(item) ||
+            MetaData(item).EntityPrototype?.ID is not { } product)
+        {
             return false;
+        }
 
         market.Comp.CommonCommodities.TryGetValue(product, out var commonId);
         TradingCommodity? common = null;

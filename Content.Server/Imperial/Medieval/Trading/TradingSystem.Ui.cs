@@ -653,8 +653,7 @@ public sealed partial class TradingSystem
         var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
             !HasComp<ItemComponent>(sourceItem) ||
-            MetaData(sourceItem).EntityPrototype?.ID is not { } product ||
-            IsTrophy(product))
+            MetaData(sourceItem).EntityPrototype?.ID is not { } product)
         {
             return false;
         }

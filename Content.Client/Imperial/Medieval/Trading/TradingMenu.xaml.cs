@@ -9,6 +9,7 @@ using Content.Shared.FixedPoint;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 using Content.Shared.Input;
+using Content.Shared.Inventory.VirtualItem;
 using Content.Shared.Item;
 using Content.Shared.Popups;
 using Content.Shared.Store;
@@ -708,13 +709,12 @@ public sealed partial class TradingMenu : DefaultWindow
         if (_state != null &&
             _entities.System<HandsSystem>().GetActiveHandEntity() is { } held &&
             _entities.EntityExists(held) &&
+            !_entities.HasComponent<VirtualItemComponent>(held) &&
             _entities.TryGetComponent<MetaDataComponent>(held, out var metadata))
         {
             itemName = metadata.EntityName;
             if (metadata.EntityPrototype?.ID is { } product &&
-                _entities.HasComponent<ItemComponent>(held) &&
-                (!_prototypes.TryIndex(product, out var prototype) ||
-                 !prototype.TryGetComponent<MedievalCurrencyComponent>(out _, _entities.ComponentFactory)))
+                _entities.HasComponent<ItemComponent>(held))
             {
                 canOffer = true;
             }
