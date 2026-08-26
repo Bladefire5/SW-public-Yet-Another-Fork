@@ -10,4 +10,22 @@ public sealed partial class AncientNocturneSpawnRuleComponent : Component
 
     [DataField]
     public EntProtoId SpawnerPrototype = "MedievalAncientNocturneGhostRoleSpawner";
+
+    [DataField]
+    public TimeSpan InquisitionDelay = TimeSpan.FromMinutes(10);
+
+    [DataField]
+    public EntProtoId InquisitionLeaderSpawnerPrototype = "MedievalHellfireInquisitionLeaderGhostRoleSpawner";
+
+    [DataField]
+    public EntProtoId InquisitionKnightSpawnerPrototype = "MedievalHellfireInquisitionKnightGhostRoleSpawner";
+
+    [DataField]
+    public EntProtoId InquisitionChaplainSpawnerPrototype = "MedievalHellfireInquisitionChaplainGhostRoleSpawner";
+
+    [DataField]
+    public int InquisitionKnightCount = 4;
+
+    [DataField]
+    public float InquisitionSpawnOffset = 1f;
 }
