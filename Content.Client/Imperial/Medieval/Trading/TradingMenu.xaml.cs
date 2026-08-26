@@ -235,10 +235,10 @@ public sealed partial class TradingMenu : DefaultWindow
         var select = new Button
         {
             HorizontalExpand = true,
-            MinHeight = 112,
-            SetHeight = 112,
+            MinHeight = 100,
+            SetHeight = 100,
         };
-        select.AddChild(CreateItemPreview(item, new Vector2(88, 88)));
+        select.AddChild(CreateItemPreview(item, new Vector2(80, 80)));
         select.OnPressed += _ =>
         {
             _selected = item.CommodityId;
@@ -249,8 +249,8 @@ public sealed partial class TradingMenu : DefaultWindow
         content.AddChild(select);
         var namePanel = new PanelContainer
         {
-            MinHeight = 36,
-            SetHeight = 36,
+            MinHeight = 48,
+            SetHeight = 48,
             HorizontalExpand = true,
             Margin = new Thickness(0, 3, 0, 0),
             PanelOverride = new StyleBoxFlat
@@ -264,20 +264,20 @@ public sealed partial class TradingMenu : DefaultWindow
                 ContentMarginBottomOverride = 2,
             },
         };
-        namePanel.AddChild(new Label
+        var name = new RichTextLabel
         {
-            Text = item.DisplayName,
             ToolTip = item.DisplayName,
-            MinSize = new Vector2(154, 30),
-            SetSize = new Vector2(154, 30),
+            MinSize = new Vector2(154, 42),
+            SetSize = new Vector2(154, 42),
             HorizontalExpand = true,
             HorizontalAlignment = HAlignment.Center,
             VerticalAlignment = VAlignment.Center,
-            Align = Label.AlignMode.Center,
-            VAlign = Label.VAlignMode.Center,
-            ClipText = true,
-            FontColorOverride = item.IsDamagedEquipment ? Color.FromHex("#e65353") : Color.White,
-        });
+            RectClipContent = true,
+        };
+        name.SetMessage(
+            item.DisplayName,
+            defaultColor: item.IsDamagedEquipment ? Color.FromHex("#e65353") : Color.White);
+        namePanel.AddChild(name);
         content.AddChild(namePanel);
 
         var actions = new BoxContainer
