@@ -35,3 +35,5 @@ ent-TradeTerminal = trade crystal
     .desc = A magical crystal that allows remote trading.
     .suffix = { "Medieval, clothing" }
 
+trading-ui-invalid-offer-price = Invalid offer value
+

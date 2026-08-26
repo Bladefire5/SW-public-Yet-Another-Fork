@@ -13,7 +13,6 @@ using Robust.Server.GameObjects;
 using Robust.Server.GameStates;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
-using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
@@ -346,26 +345,90 @@ public sealed partial class TradingSystem
             bid.Pit == uid ||
             !market.Comp.Commodities.TryGetValue(bid.CommodityId, out var commodity) ||
             !_hands.TryGetActiveItem(msg.Actor, out var held) ||
-            held is not { } item ||
-            !TryResolveCommodityForItem(market, item, bid.Price, false, out var heldCommodity) ||
-            heldCommodity.Id != commodity.Id ||
-            !TryCreateTraderSellOffer(
+            held is not { } item)
+        {
+            return;
+        }
+
+        var requiredStackCount = commodity.HasStack ? commodity.BaselineStackCount : (int?) null;
+        StackComponent? heldStack = null;
+        if (requiredStackCount is { } required &&
+            (!TryComp(item, out heldStack) || heldStack.Count < required))
+        {
+            return;
+        }
+
+        if (!TryResolveCommodityForItem(
+                market,
+                item,
+                bid.Price,
+                false,
+                out var heldCommodity,
+                requiredStackCount) ||
+            heldCommodity.Id != commodity.Id)
+        {
+            return;
+        }
+
+        var tradeItem = item;
+        EntityUid? splitItem = null;
+        var originalStackCount = heldStack?.Count;
+        if (requiredStackCount is { } splitCount && heldStack != null && heldStack.Count > splitCount)
+        {
+            splitItem = _stack.Split(item, splitCount, Transform(uid).Coordinates, heldStack);
+            if (splitItem == null ||
+                !TryResolveCommodityForItem(market, splitItem.Value, bid.Price, false, out var splitCommodity) ||
+                splitCommodity.Id != commodity.Id)
+            {
+                RestoreSplitStack(item, heldStack, originalStackCount, splitItem);
+                return;
+            }
+
+            tradeItem = splitItem.Value;
+        }
+
+        if (!TryCreateTraderSellOffer(
                 market,
                 (uid, component),
                 MetaData(msg.Actor).EntityName,
-                item,
+                tradeItem,
                 bid.Price,
                 out var commodityId,
                 out var ask,
-                true) ||
-            commodityId != bid.CommodityId)
+                true))
         {
+            RestoreSplitStack(item, heldStack, originalStackCount, splitItem);
+            return;
+        }
+
+        if (commodityId != bid.CommodityId)
+        {
+            RemoveOffer(
+                market,
+                ask.Id,
+                true,
+                _prototypeManager.Index(market.Comp.Config),
+                msg.Actor);
+            RestoreSplitStack(item, heldStack, originalStackCount, splitItem);
             return;
         }
 
         CompleteTrade(market, commodity, ask, bid, _prototypeManager.Index(market.Comp.Config));
         _audio.PlayEntity(component.BuySuccessSound, msg.Actor, uid);
         UpdateAllInterfaces(market);
+    }
+
+    private void RestoreSplitStack(
+        EntityUid originalItem,
+        StackComponent? originalStack,
+        int? originalCount,
+        EntityUid? splitItem)
+    {
+        if (originalStack != null && originalCount != null && Exists(originalItem))
+            _stack.SetCount(originalItem, originalCount.Value, originalStack);
+
+        if (splitItem is { } split && Exists(split))
+            QueueDel(split);
     }
 
     private void OnCreateSellOffer(EntityUid uid, TradingComponent component, TradingCreateSellOfferMessage msg)
@@ -496,7 +559,8 @@ public sealed partial class TradingSystem
     {
         offer = default!;
         var config = _prototypeManager.Index(market.Comp.Config);
-        if (price <= 0 ||
+        if (price < 0 ||
+            (price == 0 && immediateRecipient == null) ||
             pit.Comp.Balance < price ||
             !market.Comp.Commodities.ContainsKey(commodity.Id))
         {
@@ -555,7 +619,7 @@ public sealed partial class TradingSystem
         commodityId = default;
         offer = default!;
         var config = _prototypeManager.Index(market.Comp.Config);
-        if (price <= 0 ||
+        if (price < 0 ||
             !HasComp<ItemComponent>(sourceItem) ||
             MetaData(sourceItem).EntityPrototype?.ID is not { } product ||
             IsTrophy(product))

@@ -18,3 +18,5 @@ trading-guild-type-BuilderGuild = строительная
 
 trading-ui-stats-title = Рейтинг
 trading-ui-stats-entry = {$name}: {$reputation}
+
+trading-ui-invalid-offer-price = Недопустимое значение для заявки

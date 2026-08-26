@@ -610,7 +610,8 @@ public sealed partial class TradingSystem
         EntityUid item,
         int fallbackPrice,
         bool create,
-        out TradingCommodity commodity)
+        out TradingCommodity commodity,
+        int? stackCountOverride = null)
     {
         commodity = default!;
         if (MetaData(item).EntityPrototype?.ID is not { } product || IsTrophy(product))
@@ -620,9 +621,19 @@ public sealed partial class TradingSystem
         TradingCommodity? common = null;
         var hasCommon = commonId != Guid.Empty && market.Comp.Commodities.TryGetValue(commonId, out common);
         var stackCount = TryComp<StackComponent>(item, out var stack) ? stack.Count : 1;
+        if (stackCountOverride is { } overrideCount)
+        {
+            if (stack == null || overrideCount <= 0 || overrideCount > stack.Count)
+                return false;
+
+            stackCount = overrideCount;
+        }
+
         var hasStack = stack != null;
         var isRecipe = HasComp<MedievalRandomChemistryRecipeComponent>(item);
-        var isEquipment = HasComp<MedievalMeleeResourceComponent>(item) ||
+        var hasAppliedQuality = TryComp<SmithQualityComponent>(item, out var quality) && quality.Applied;
+        var isEquipment = hasAppliedQuality ||
+                          HasComp<MedievalMeleeResourceComponent>(item) ||
                           HasComp<MedievalArmorIntegrityComponent>(item);
         var isDamagedEquipment = IsDamagedEquipment(item);
         var matchesCommon = !isRecipe &&
@@ -630,7 +641,7 @@ public sealed partial class TradingSystem
                             common != null &&
                             common.HasStack == hasStack &&
                             common.BaselineStackCount == stackCount &&
-                            (!isEquipment || !isDamagedEquipment);
+                            (!isEquipment || (!hasAppliedQuality && !isDamagedEquipment));
 
         if (matchesCommon)
         {
@@ -638,7 +649,7 @@ public sealed partial class TradingSystem
             return true;
         }
 
-        var signature = BuildItemSignature(item, product, stackCount);
+        var signature = BuildItemSignature(item, product, stackCount, isEquipment, isDamagedEquipment);
         var existing = market.Comp.Commodities.Values.FirstOrDefault(value =>
             !value.Permanent && value.Signature == signature);
         if (existing != null)
@@ -699,39 +710,31 @@ public sealed partial class TradingSystem
         return equipment && damaged;
     }
 
-    private string BuildItemSignature(EntityUid item, EntProtoId product, int stackCount)
+    private string BuildItemSignature(
+        EntityUid item,
+        EntProtoId product,
+        int stackCount,
+        bool isEquipment,
+        bool isDamagedEquipment)
     {
-        var metadata = MetaData(item);
         var values = new List<string>
         {
             product.Id,
             stackCount.ToString(CultureInfo.InvariantCulture),
-            metadata.EntityName,
-            metadata.EntityDescription,
         };
 
-        if (TryComp<SmithQualityComponent>(item, out var quality))
+        if (isEquipment)
         {
-            values.Add(quality.Applied.ToString());
-            values.Add(((int) quality.Quality).ToString(CultureInfo.InvariantCulture));
-            values.Add(quality.Modifier.ToString("R", CultureInfo.InvariantCulture));
+            values.Add(isDamagedEquipment.ToString());
+            values.Add(TryComp<SmithQualityComponent>(item, out var quality) && quality.Applied
+                ? ((int) quality.Quality).ToString(CultureInfo.InvariantCulture)
+                : "none");
+            return string.Join('\u001f', values);
         }
 
-        if (TryComp<MedievalMeleeResourceComponent>(item, out var weapon))
-        {
-            values.Add(weapon.Resource.ToString("R", CultureInfo.InvariantCulture));
-            values.Add(weapon.MaxResource.ToString("R", CultureInfo.InvariantCulture));
-        }
-
-        if (TryComp<MedievalArmorIntegrityComponent>(item, out var armor))
-        {
-            var currentArmorHp = armor.CurrentArmorHP;
-            var maxArmorHp = armor.MaxArmorHP;
-            var containerArmorHp = armor.ContainerArmorHP;
-            values.Add(currentArmorHp.ToString("R", CultureInfo.InvariantCulture));
-            values.Add(maxArmorHp.ToString("R", CultureInfo.InvariantCulture));
-            values.Add(containerArmorHp.ToString("R", CultureInfo.InvariantCulture));
-        }
+        var metadata = MetaData(item);
+        values.Add(metadata.EntityName);
+        values.Add(metadata.EntityDescription);
 
         return string.Join('\u001f', values);
     }
