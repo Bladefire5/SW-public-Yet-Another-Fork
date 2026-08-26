@@ -43,6 +43,7 @@ public sealed class TradingMarketItemState
     public int? StackCount;
     public NetEntity? PreviewEntity;
     public bool IsCommonBaseline;
+    public bool CanCreateBuyOrder;
     public bool HasStack;
     public int BaselineStackCount;
     public bool IsDamagedEquipment;
@@ -63,6 +64,7 @@ public sealed class TradingMarketItemState
         int? stackCount,
         NetEntity? previewEntity,
         bool isCommonBaseline,
+        bool canCreateBuyOrder,
         bool hasStack,
         int baselineStackCount,
         bool damagedEquipment,
@@ -82,6 +84,7 @@ public sealed class TradingMarketItemState
         StackCount = stackCount;
         PreviewEntity = previewEntity;
         IsCommonBaseline = isCommonBaseline;
+        CanCreateBuyOrder = canCreateBuyOrder;
         HasStack = hasStack;
         BaselineStackCount = baselineStackCount;
         IsDamagedEquipment = damagedEquipment;

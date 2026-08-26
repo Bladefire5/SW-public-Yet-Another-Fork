@@ -374,9 +374,9 @@ public sealed partial class TradingMenu : DefaultWindow
             ? _state.Offers.FirstOrDefault(offer =>
                 offer.Id == selectedOfferId &&
                 offer.CommodityId == item.CommodityId &&
-                offer.Side == TradingOfferSide.Sell &&
-                offer.ParticipantKind == TradingParticipantKind.Trader &&
-                !offer.IsOwn)
+                !offer.IsOwn &&
+                (offer.Side == TradingOfferSide.Buy ||
+                 offer.ParticipantKind == TradingParticipantKind.Trader))
             : null;
         if (_selectedOffer != null && selectedOffer == null)
         {
@@ -397,7 +397,7 @@ public sealed partial class TradingMenu : DefaultWindow
         }
         SelectedStats.SetMarkup(
             $"Лоты: {item.SellOfferCount} · Заказы: {item.BuyOfferCount}");
-        CreateBuyOrderButton.Disabled = false;
+        CreateBuyOrderButton.Disabled = !item.CanCreateBuyOrder;
 
         var offers = _state.Offers
             .Where(offer => offer.CommodityId == item.CommodityId)
@@ -417,9 +417,9 @@ public sealed partial class TradingMenu : DefaultWindow
                 MinWidth = 54,
             });
             Control participant;
-            if (offer.Side == TradingOfferSide.Sell &&
-                offer.ParticipantKind == TradingParticipantKind.Trader &&
-                !offer.IsOwn)
+            if (!offer.IsOwn &&
+                (offer.Side == TradingOfferSide.Buy ||
+                 offer.ParticipantKind == TradingParticipantKind.Trader))
             {
                 var selectOffer = new Button
                 {
@@ -450,6 +450,8 @@ public sealed partial class TradingMenu : DefaultWindow
                 Text = offer.Price.ToString(),
                 MinWidth = 76,
                 Disabled = offer.IsOwn ||
+                           offer.Side == TradingOfferSide.Buy &&
+                           offer.ParticipantKind == TradingParticipantKind.Guild ||
                            offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
                 StyleBoxOverride = offer.Side == TradingOfferSide.Sell
                     ? CreateActionButtonStyle("#c79612", "#f0d36f")
@@ -476,7 +478,8 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void CreateSelectedBuyOrder()
     {
-        if (_selected == null)
+        if (_selected == null ||
+            _state?.Items.FirstOrDefault(item => item.CommodityId == _selected.Value) is not { CanCreateBuyOrder: true })
             return;
 
         if (!TryParsePrice(BuyPrice.Text, out var price))

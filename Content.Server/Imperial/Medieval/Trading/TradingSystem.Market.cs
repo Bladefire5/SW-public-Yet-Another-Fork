@@ -1,5 +1,8 @@
 using System.Globalization;
 using System.Linq;
+using Content.Server.Imperial.Medieval.Courier;
+using Content.Server.Light.Components;
+using Content.Shared.Imperial.Medieval.Additions;
 using Content.Shared.Imperial.Medieval.ArmorIntegrity;
 using Content.Shared.Imperial.Medieval.Chemistry;
 using Content.Shared.Imperial.Medieval.SmithingSystem;
@@ -7,12 +10,19 @@ using Content.Shared.Imperial.Medieval.SmithingSystem.Behaviours;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 using Content.Shared.Inventory.VirtualItem;
+using Content.Shared.Item;
+using Content.Shared.Light.Components;
 using Content.Shared.MedievalMeleeResource.Components;
+using Content.Shared.Mind.Components;
+using Content.Shared.Mobs.Components;
 using Content.Shared.Prototypes;
 using Content.Shared.Stacks;
+using Content.Shared.Trigger.Components;
+using Robust.Shared.Containers;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
+using Robust.Shared.Spawners;
 
 namespace Content.Server.Imperial.Medieval.Trading;
 
@@ -483,6 +493,28 @@ public sealed partial class TradingSystem
         TradingMarketOffer bid,
         TradingMarketConfigPrototype config)
     {
+        if (ask.Item is { } escrowItem)
+        {
+            if (!CanTransferEscrowItem(ask, escrowItem))
+            {
+                Log.Error(
+                    $"Trading market could not complete trade for sell offer {ask.Id}: escrow item {escrowItem} " +
+                    $"for product {ask.Product} no longer exists or is no longer held by trading pit {ask.Pit}.");
+                RemoveOffer(market, ask.Id, false, config);
+                if (bid.IsImmediate)
+                    RemoveOffer(market, bid.Id, false, config);
+                return;
+            }
+
+            var currentName = MetaData(escrowItem).EntityName;
+            if (!string.Equals(currentName, ask.ListedItemName, StringComparison.Ordinal))
+            {
+                Log.Error(
+                    $"Trading market sell offer {ask.Id} changed item name while in escrow: " +
+                    $"'{ask.ListedItemName}' -> '{currentName}' for item {escrowItem} and product {ask.Product}.");
+            }
+        }
+
         var executionPrice = ask.Sequence < bid.Sequence ? ask.Price : bid.Price;
         ArchiveTrade(commodity, ask, bid);
 
@@ -516,6 +548,21 @@ public sealed partial class TradingSystem
                            Math.Clamp((float) executionPrice / commodity.StandardPrice, 0.25f, 4f);
         commodity.Demand = Math.Max(0f, commodity.Demand - demandImpact);
         TryRemoveCommodity(market, commodity);
+    }
+
+    private bool CanTransferEscrowItem(TradingMarketOffer offer, EntityUid item)
+    {
+        if (!Exists(item) ||
+            TerminatingOrDeleted(item) ||
+            EntityManager.IsQueuedForDeletion(item) ||
+            offer.Pit is not { } sellerPit ||
+            !TryComp<TradingComponent>(sellerPit, out _) ||
+            !_containers.TryGetContainingContainer((item, null, null), out var container))
+        {
+            return false;
+        }
+
+        return container.Owner == sellerPit && container.ID == TradingComponent.MarketContainerId;
     }
 
     private void ArchiveTrade(
@@ -606,6 +653,70 @@ public sealed partial class TradingSystem
         market.Comp.Commodities.Remove(commodity.Id);
     }
 
+    private bool CanOfferItemForSale(EntityUid item)
+    {
+        return Exists(item) &&
+               !TerminatingOrDeleted(item) &&
+               !EntityManager.IsQueuedForDeletion(item) &&
+               HasComp<ItemComponent>(item) &&
+               !HasComp<VirtualItemComponent>(item) &&
+               !HasComp<MobStateComponent>(item) &&
+               !ContainsPlayerMind(item);
+    }
+
+    private bool CanCreateBuyOrderForItem(EntityUid item)
+    {
+        if (!CanOfferItemForSale(item) ||
+            HasComp<TimedDespawnComponent>(item) ||
+            HasComp<MedievalTimedDespawnComponent>(item) ||
+            HasComp<ActiveTimerTriggerComponent>(item) ||
+            HasComp<ActiveTwoStageTriggerComponent>(item))
+        {
+            return false;
+        }
+
+        if (TryComp<ExpendableLightComponent>(item, out var light) &&
+            light.CurrentState != ExpendableLightState.BrandNew)
+        {
+            return false;
+        }
+
+        if (HasComp<LetterComponent>(item))
+            return false;
+
+        return MetaData(item).EntityPrototype is { } prototype &&
+               !prototype.HasComponent<LetterComponent>();
+    }
+
+    private bool ContainsPlayerMind(EntityUid root)
+    {
+        var pending = new Queue<EntityUid>();
+        var visited = new HashSet<EntityUid>();
+        pending.Enqueue(root);
+
+        while (pending.TryDequeue(out var current))
+        {
+            if (!visited.Add(current))
+                continue;
+
+            if (TryComp<MindContainerComponent>(current, out var mind) && mind.HasMind)
+                return true;
+
+            if (!TryComp<ContainerManagerComponent>(current, out var containerManager))
+                continue;
+
+            foreach (var container in _containers.GetAllContainers(current, containerManager))
+            {
+                foreach (var contained in container.ContainedEntities)
+                {
+                    pending.Enqueue(contained);
+                }
+            }
+        }
+
+        return false;
+    }
+
     internal bool TryResolveCommodityForItem(
         Entity<TradingMarketComponent> market,
         EntityUid item,
@@ -682,6 +793,7 @@ public sealed partial class TradingSystem
             Supply = 0f,
             BaselineStackCount = stackCount,
             HasStack = hasStack,
+            CanCreateBuyOrder = CanCreateBuyOrderForItem(item),
             IsDamagedEquipment = isDamagedEquipment,
             Signature = signature,
             DisplayName = FormatStackName(metadata.EntityName, hasStack ? stackCount : null),

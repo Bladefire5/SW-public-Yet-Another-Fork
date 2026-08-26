@@ -29,6 +29,7 @@ public sealed class TradingCommodity
     public int BaselineStackCount = 1;
     public bool HasStack;
     public bool Permanent;
+    public bool CanCreateBuyOrder = true;
     public bool IsDamagedEquipment;
     public string Signature = string.Empty;
     public string DisplayName = string.Empty;
@@ -49,6 +50,7 @@ public sealed class TradingMarketOffer
     public EntityUid? Pit;
     public EntityUid? ImmediateRecipient;
     public EntityUid? Item;
+    public string ListedItemName = string.Empty;
     public bool IsImmediate;
     public long Sequence;
     public float SupplyContribution;
