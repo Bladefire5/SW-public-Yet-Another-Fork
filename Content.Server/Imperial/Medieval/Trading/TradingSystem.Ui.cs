@@ -74,7 +74,10 @@ public sealed partial class TradingSystem
         component.StoredMarketItems.RemoveAll(item => !Exists(item));
         RefreshVisibleMarketItems(user, store, component, market);
         var selectedCommodity = Comp<TradingMarketViewerComponent>(user).SelectedCommodity;
-        var offersByCommodity = market.Comp.Offers.Values.ToLookup(offer => offer.CommodityId);
+        var visibleOffers = market.Comp.Offers.Values
+            .Where(IsOfferVisibleToTrader)
+            .ToList();
+        var offersByCommodity = visibleOffers.ToLookup(offer => offer.CommodityId);
 
         var items = market.Comp.Commodities.Values
             .Select(commodity =>
@@ -125,7 +128,7 @@ public sealed partial class TradingSystem
             })
             .ToList();
 
-        var offers = market.Comp.Offers.Values
+        var offers = visibleOffers
             .Where(offer => offer.CommodityId == selectedCommodity || offer.Pit == store)
             .OrderBy(offer => offer.Product.Id)
             .ThenBy(offer => offer.Side)
@@ -157,6 +160,12 @@ public sealed partial class TradingSystem
                 new List<string>(component.MarketArchive),
                 component.Balance,
                 component.Currency));
+    }
+
+    private static bool IsOfferVisibleToTrader(TradingMarketOffer offer)
+    {
+        return offer.Side != TradingOfferSide.Buy ||
+               offer.ParticipantKind != TradingParticipantKind.Guild;
     }
 
     private TradingMarketOfferState CreateOfferState(
@@ -406,7 +415,6 @@ public sealed partial class TradingSystem
             held is not { } item ||
             !HasComp<ItemComponent>(item) ||
             msg.Price <= 0 ||
-            msg.Price > _prototypeManager.Index(market.Comp.Config).MaximumPrice ||
             component.Balance < msg.Price)
         {
             return;
@@ -485,7 +493,6 @@ public sealed partial class TradingSystem
         offer = default!;
         var config = _prototypeManager.Index(market.Comp.Config);
         if (price <= 0 ||
-            price > config.MaximumPrice ||
             pit.Comp.Balance < price ||
             !market.Comp.Commodities.ContainsKey(commodity.Id))
         {
@@ -544,7 +551,7 @@ public sealed partial class TradingSystem
         commodityId = default;
         offer = default!;
         var config = _prototypeManager.Index(market.Comp.Config);
-        if (price <= 0 || price > config.MaximumPrice ||
+        if (price <= 0 ||
             !HasComp<ItemComponent>(sourceItem) ||
             MetaData(sourceItem).EntityPrototype?.ID is not { } product ||
             IsTrophy(product))

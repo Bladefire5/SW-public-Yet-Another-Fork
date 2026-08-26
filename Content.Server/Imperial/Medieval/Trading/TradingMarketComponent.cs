@@ -12,7 +12,6 @@ public sealed partial class TradingMarketComponent : Component
     public List<Guild> Guilds = new();
     public Dictionary<Guid, TradingMarketOffer> Offers = new();
     public long NextSequence;
-    public TimeSpan NextStep;
     public ProtoId<TradingMarketConfigPrototype> Config = "MedievalMarket";
 }
 
@@ -24,6 +23,9 @@ public sealed class TradingCommodity
     public int StandardPrice;
     public float Demand;
     public float Supply;
+    public int MinReputation;
+    public int ScarcityStepsRemaining;
+    public float ScarcitySupplyStep;
     public int BaselineStackCount = 1;
     public bool HasStack;
     public bool Permanent;
@@ -50,6 +52,7 @@ public sealed class TradingMarketOffer
     public bool IsImmediate;
     public long Sequence;
     public float SupplyContribution;
+    public TimeSpan ExpiresAt;
 }
 
 [RegisterComponent]

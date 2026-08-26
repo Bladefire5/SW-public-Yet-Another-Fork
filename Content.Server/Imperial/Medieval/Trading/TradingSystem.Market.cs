@@ -39,19 +39,19 @@ public sealed partial class TradingSystem
 
             foreach (var item in guildType.Items)
             {
-                if (IsTrophy(item.ProductEntity) || IsAlchemyRecipe(item.ProductEntity))
+                if (item.ProductEntity is not { } product || IsTrophy(product) || IsAlchemyRecipe(product))
                     continue;
 
                 TradingCommodity commodity;
-                if (!market.CommonCommodities.TryGetValue(item.ProductEntity, out var commodityId))
+                if (!market.CommonCommodities.TryGetValue(product, out var commodityId))
                 {
-                    var prototype = _prototypeManager.Index(item.ProductEntity);
+                    var prototype = _prototypeManager.Index(product);
                     prototype.TryGetComponent<StackComponent>(out var stack, EntityManager.ComponentFactory);
                     commodityId = Guid.NewGuid();
                     commodity = new TradingCommodity
                     {
                         Id = commodityId,
-                        Product = item.ProductEntity,
+                        Product = product,
                         Sections = TradingMarketSection.Common,
                         StandardPrice = item.Cost,
                         Demand = config.InitialDemand,
@@ -59,12 +59,12 @@ public sealed partial class TradingSystem
                         BaselineStackCount = stack?.Count ?? 1,
                         HasStack = stack != null,
                         Permanent = true,
-                        Signature = $"common:{item.ProductEntity.Id}",
+                        Signature = $"common:{product.Id}",
                         DisplayName = FormatStackName(prototype.Name, stack?.Count),
                         Description = prototype.Description,
                     };
                     market.Commodities.Add(commodityId, commodity);
-                    market.CommonCommodities.Add(item.ProductEntity, commodityId);
+                    market.CommonCommodities.Add(product, commodityId);
                 }
                 else
                 {
@@ -72,14 +72,87 @@ public sealed partial class TradingSystem
                 }
 
                 commodity.Categories.Add(guildType.ID);
+                commodity.MinReputation = Math.Max(commodity.MinReputation, item.MinReputation);
             }
         }
 
-        market.NextStep = _timing.CurTime + TimeSpan.FromSeconds(config.StepInterval);
-        for (var index = 0; index < config.InitialSteps; index++)
+        InitializeReputationScarcity(market, config);
+        SeedGuildSellOffers((uid, market), config);
+    }
+
+    private static void InitializeReputationScarcity(
+        TradingMarketComponent market,
+        TradingMarketConfigPrototype config)
+    {
+        foreach (var commodity in market.Commodities.Values)
         {
-            RunMarketStep((uid, market), config, false);
+            if (commodity.MinReputation <= 0)
+                continue;
+
+            var demand = Math.Max(float.Epsilon,
+                config.InitialDemand * config.ReputationScarcityDemandMultiplier);
+            var startPressure = GetScarcityStartPressure(commodity, config);
+            var startSupply = GetSupplyForPressure(demand, startPressure);
+            var targetSupply = GetSupplyForPressure(
+                demand,
+                GetGoldenPricePressure(commodity, config));
+            var duration = commodity.MinReputation * config.ReputationScarcityMinutesPerPoint * 60f;
+            var steps = Math.Max(1, (int) MathF.Ceiling(duration / Math.Max(float.Epsilon, config.StepInterval)));
+            var seedSupplyContribution = GetGuildOfferTarget(commodity, config) *
+                                         config.SupplyPlacementImpact *
+                                         GetMarketImpactScale(commodity, config) *
+                                         GetPriceImpactRatio(
+                                             1f / (1f + commodity.MinReputation *
+                                                   config.ReputationScarcityPriceFactorPerPoint));
+
+            commodity.Demand = demand;
+            commodity.Supply = startSupply - seedSupplyContribution;
+            commodity.ScarcityStepsRemaining = steps;
+            commodity.ScarcitySupplyStep = (targetSupply - startSupply) / steps;
         }
+    }
+
+    private static void RecoverReputationScarcity(TradingCommodity commodity)
+    {
+        if (commodity.ScarcityStepsRemaining <= 0)
+            return;
+
+        commodity.Supply += commodity.ScarcitySupplyStep;
+        commodity.ScarcityStepsRemaining--;
+    }
+
+    private static float GetScarcityStartPressure(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        var initialFactor = 1f + commodity.MinReputation * config.ReputationScarcityPriceFactorPerPoint;
+        return (initialFactor - 1f - config.PriceSpread / 2f - GetExpectedLowestPriceNoise(commodity, config)) /
+               Math.Max(float.Epsilon, config.PricePressure);
+    }
+
+    private static float GetGoldenPricePressure(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        return -(config.PriceSpread / 2f + GetExpectedLowestPriceNoise(commodity, config)) /
+               Math.Max(float.Epsilon, config.PricePressure);
+    }
+
+    private static float GetExpectedLowestPriceNoise(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config)
+    {
+        var offerCount = Math.Max(1, GetGuildOfferTarget(commodity, config));
+        return -config.PriceNoise * (offerCount - 1f) / (offerCount + 1f);
+    }
+
+    private static float GetSupplyForPressure(float demand, float pressure)
+    {
+        var denominator = 1f + pressure;
+        if (MathHelper.CloseTo(denominator, 0f))
+            denominator = denominator < 0f ? -float.Epsilon : float.Epsilon;
+
+        return demand * (1f - pressure) / denominator;
     }
 
     private bool IsTrophy(EntProtoId product)
@@ -96,61 +169,148 @@ public sealed partial class TradingSystem
 
     private void RunMarketStep(
         Entity<TradingMarketComponent> market,
-        TradingMarketConfigPrototype config,
-        bool recoverDemand = true)
+        TradingMarketConfigPrototype config)
     {
-        if (recoverDemand)
+        ExpireGuildOffers(market, config);
+
+        foreach (var commodity in market.Comp.Commodities.Values)
         {
-            foreach (var commodity in market.Comp.Commodities.Values)
-            {
-                var recoveryScale = GetDemandShare(commodity.Demand + config.DemandRecovery, commodity.Supply);
-                commodity.Demand += config.DemandRecovery * recoveryScale;
-            }
+            RecoverReputationScarcity(commodity);
+
+            var recoveryScale = GetDemandShare(commodity.Demand + config.DemandRecovery, commodity.Supply);
+            commodity.Demand += config.DemandRecovery * recoveryScale;
         }
 
-        EnsureGuildOffers(market, config);
-
+        CreateGuildActivity(market, config);
         MatchAll(market, config);
     }
 
-    private void EnsureGuildOffers(
+    private void ExpireGuildOffers(
+        Entity<TradingMarketComponent> market,
+        TradingMarketConfigPrototype config)
+    {
+        var expired = market.Comp.Offers.Values
+            .Where(offer => offer.ParticipantKind == TradingParticipantKind.Guild &&
+                            offer.ExpiresAt <= _timing.CurTime)
+            .Select(offer => offer.Id)
+            .ToList();
+
+        foreach (var offerId in expired)
+        {
+            RemoveOffer(market, offerId, true, config);
+        }
+    }
+
+    private void SeedGuildSellOffers(
         Entity<TradingMarketComponent> market,
         TradingMarketConfigPrototype config)
     {
         foreach (var commodityId in market.Comp.CommonCommodities.Values)
         {
-            if (market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
-                EnsureGuildOffersForCommodity(market, commodity, config);
+            if (!market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
+                continue;
+
+            var candidates = GetGuildCandidates(market, commodity);
+            if (candidates.Count == 0)
+                continue;
+
+            for (var index = 0; index < GetGuildOfferTarget(commodity, config); index++)
+            {
+                TryCreateGuildOffer(
+                    market,
+                    _random.Pick(candidates),
+                    commodity,
+                    TradingOfferSide.Sell,
+                    config);
+            }
         }
     }
 
-    private void EnsureGuildOffersForCommodity(
+    private void CreateGuildActivity(
         Entity<TradingMarketComponent> market,
-        TradingCommodity commodity,
         TradingMarketConfigPrototype config)
     {
-        if (!commodity.Permanent ||
-            !market.Comp.CommonCommodities.TryGetValue(commodity.Product, out var commonId) ||
-            commonId != commodity.Id)
+        foreach (var commodityId in market.Comp.CommonCommodities.Values)
         {
-            return;
+            if (!market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
+                continue;
+
+            var candidates = GetGuildCandidates(market, commodity);
+            var expectedSellCount = GetGuildOfferTarget(commodity, config);
+            var sellTarget = Math.Max(
+                expectedSellCount,
+                (int) MathF.Ceiling(expectedSellCount * config.GuildSellOfferCapacityMultiplier));
+            var currentSells = GetGuildOfferCount(market, commodity, TradingOfferSide.Sell);
+            CreateGuildOffers(
+                market,
+                commodity,
+                candidates,
+                TradingOfferSide.Sell,
+                config.GuildSellOfferChance,
+                Math.Max(0, sellTarget - currentSells),
+                config);
+
+            var buyTarget = Math.Max(1, (int) MathF.Ceiling(expectedSellCount * config.GuildBuyOrderShare));
+            var currentBuys = GetGuildOfferCount(market, commodity, TradingOfferSide.Buy);
+            CreateGuildOffers(
+                market,
+                commodity,
+                candidates,
+                TradingOfferSide.Buy,
+                config.GuildBuyOrderChance,
+                Math.Max(0, buyTarget - currentBuys),
+                config);
         }
+    }
 
-        var candidates = market.Comp.Guilds
-            .Where(guild => guild.Items.Any(item => item.ProductEntity == commodity.Product))
+    private List<Guild> GetGuildCandidates(
+        Entity<TradingMarketComponent> market,
+        TradingCommodity commodity)
+    {
+        return market.Comp.Guilds
+            .Where(guild => guild.Items.Any(item => item.ProductEntity is { } product &&
+                                                   product == commodity.Product))
             .ToList();
-        if (candidates.Count == 0)
-            return;
+    }
 
-        var current = market.Comp.Offers.Values.Count(offer =>
+    private static int GetGuildOfferCount(
+        Entity<TradingMarketComponent> market,
+        TradingCommodity commodity,
+        TradingOfferSide side)
+    {
+        return market.Comp.Offers.Values.Count(offer =>
             offer.CommodityId == commodity.Id &&
             offer.ParticipantKind == TradingParticipantKind.Guild &&
-            offer.Side == TradingOfferSide.Sell);
-        var target = GetGuildOfferTarget(commodity, config);
-        for (var index = current; index < target; index++)
+            offer.Side == side);
+    }
+
+    private void CreateGuildOffers(
+        Entity<TradingMarketComponent> market,
+        TradingCommodity commodity,
+        List<Guild> candidates,
+        TradingOfferSide side,
+        float chance,
+        int availableSlots,
+        TradingMarketConfigPrototype config)
+    {
+        if (availableSlots <= 0 || candidates.Count == 0)
+            return;
+
+        var demandScale = Math.Max(0f, commodity.Demand) /
+                          Math.Max(float.Epsilon, config.InitialDemand);
+        var creationChance = Math.Clamp(chance * demandScale, 0f, 1f);
+
+        for (var index = 0; index < availableSlots; index++)
         {
-            var guild = _random.Pick(candidates);
-            TryCreateGuildOffer(market, guild, commodity, config);
+            if (_random.NextFloat() >= creationChance)
+                continue;
+
+            TryCreateGuildOffer(
+                market,
+                _random.Pick(candidates),
+                commodity,
+                side,
+                config);
         }
     }
 
@@ -182,48 +342,53 @@ public sealed partial class TradingSystem
     internal static float GetDemandShare(float demand, float supply)
     {
         var total = demand + supply;
-        return total > 0f ? demand / total : 1f;
+        return total > 0f ? Math.Clamp(demand / total, 0f, 1f) : 1f;
     }
 
     private void TryCreateGuildOffer(
         Entity<TradingMarketComponent> market,
         Guild guild,
         TradingCommodity commodity,
+        TradingOfferSide side,
         TradingMarketConfigPrototype config)
     {
-        var price = GetGuildSellPrice(commodity, config);
-        var highestBid = market.Comp.Offers.Values
-            .Where(offer => offer.CommodityId == commodity.Id && offer.Side == TradingOfferSide.Buy)
-            .Select(offer => offer.Price)
-            .DefaultIfEmpty(0)
-            .Max();
-        price = Math.Clamp(Math.Max(price, Math.Max(2, highestBid + 1)), 1, config.MaximumPrice);
-
         AddOffer(market, new TradingMarketOffer
         {
             Id = Guid.NewGuid(),
             CommodityId = commodity.Id,
             Product = commodity.Product,
-            Side = TradingOfferSide.Sell,
+            Side = side,
             ParticipantKind = TradingParticipantKind.Guild,
             ParticipantName = guild.Name,
-            Price = price,
+            Price = GetGuildPrice(commodity, side, config),
             GuildId = guild.Id,
             Sequence = market.Comp.NextSequence++,
+            ExpiresAt = _timing.CurTime + TimeSpan.FromSeconds(_random.NextFloat(
+                config.GuildOfferMinimumLifetime,
+                Math.Max(config.GuildOfferMinimumLifetime, config.GuildOfferMaximumLifetime))),
         }, config);
     }
 
-    private int GetGuildSellPrice(
+    private int GetGuildPrice(
         TradingCommodity commodity,
+        TradingOfferSide side,
         TradingMarketConfigPrototype config)
     {
-        var total = commodity.Demand + commodity.Supply;
-        var pressure = total > 0f ? (commodity.Demand - commodity.Supply) / total : 0f;
+        var total = Math.Max(commodity.Demand + commodity.Supply, float.Epsilon);
+        var pressure = (commodity.Demand - commodity.Supply) / total;
         var center = 1f + pressure * config.PricePressure;
-        var spread = config.PriceSpread / 2f;
-        var noise = _random.NextFloat(0f, config.PriceNoise);
-        var factor = Math.Clamp(center + spread + noise, config.MinimumPriceFactor, config.MaximumPriceFactor);
-        return Math.Clamp((int) MathF.Round(commodity.StandardPrice * factor), 1, config.MaximumPrice);
+        var spread = side == TradingOfferSide.Sell ? config.PriceSpread / 2f : -config.PriceSpread / 2f;
+        var noise = _random.NextFloat(-config.PriceNoise, config.PriceNoise);
+        var factor = Math.Max(config.MinimumPriceFactor, center + spread + noise);
+        return RoundMarketPrice(commodity.StandardPrice * (double) factor);
+    }
+
+    private static int RoundMarketPrice(double price)
+    {
+        if (double.IsNaN(price) || price <= 1d)
+            return 1;
+
+        return price >= int.MaxValue ? int.MaxValue : (int) Math.Round(price);
     }
 
     private void AddOffer(
@@ -234,13 +399,18 @@ public sealed partial class TradingSystem
         if (offer.Side == TradingOfferSide.Sell && market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
         {
             offer.SupplyContribution = config.SupplyPlacementImpact * GetMarketImpactScale(commodity, config) *
-                                       Math.Clamp((float) commodity.StandardPrice / offer.Price, 0.25f, 4f);
+                                       GetPriceImpactRatio((float) commodity.StandardPrice / offer.Price);
             commodity.Supply += offer.SupplyContribution;
         }
 
         market.Comp.Offers.Add(offer.Id, offer);
         if (offer.Pit is { } pit && TryComp<TradingComponent>(pit, out var trading))
             trading.MarketOffers.Add(offer.Id);
+    }
+
+    private static float GetPriceImpactRatio(float priceFactor)
+    {
+        return Math.Clamp(priceFactor, 0.25f, 4f);
     }
 
     private void MatchAll(
@@ -340,9 +510,7 @@ public sealed partial class TradingSystem
         RemoveOfferRecord(market, bid);
 
         var impactScale = GetMarketImpactScale(commodity, config);
-        commodity.Supply = Math.Max(
-            0f,
-            commodity.Supply - ask.SupplyContribution - config.SupplyTradeImpact * impactScale);
+        commodity.Supply -= ask.SupplyContribution + config.SupplyTradeImpact * impactScale;
         var demandImpact = config.DemandTradeImpact * impactScale *
                            Math.Clamp((float) executionPrice / commodity.StandardPrice, 0.25f, 4f);
         commodity.Demand = Math.Max(0f, commodity.Demand - demandImpact);
@@ -404,7 +572,7 @@ public sealed partial class TradingSystem
         if (offer.Side == TradingOfferSide.Sell &&
             market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
         {
-            commodity.Supply = Math.Max(0f, commodity.Supply - offer.SupplyContribution);
+            commodity.Supply -= offer.SupplyContribution;
         }
 
         if (offer.Item is { } item && returnEscrow)
@@ -486,7 +654,7 @@ public sealed partial class TradingSystem
         var config = _prototypeManager.Index(market.Comp.Config);
         var standardPrice = hasCommon && common != null
             ? common.StandardPrice
-            : Math.Clamp(fallbackPrice, 1, config.MaximumPrice);
+            : Math.Max(fallbackPrice, 1);
         var metadata = MetaData(item);
         commodity = new TradingCommodity
         {

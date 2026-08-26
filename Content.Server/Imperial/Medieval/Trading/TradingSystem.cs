@@ -1,4 +1,6 @@
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Content.Server.Popups;
 using Content.Server.Stack;
 using Content.Shared.FixedPoint;
@@ -13,6 +15,7 @@ using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
+using Timer = Robust.Shared.Timing.Timer;
 
 namespace Content.Server.Imperial.Medieval.Trading;
 
@@ -27,6 +30,7 @@ public sealed partial class TradingSystem : EntitySystem
     [Dependency] private readonly StackSystem _stack = default!;
 
     private EntityUid? _market;
+    private CancellationTokenSource? _marketUpdateCancellation;
 
     public override void Initialize()
     {
@@ -37,9 +41,16 @@ public sealed partial class TradingSystem : EntitySystem
         SubscribeLocalEvent<TradingComponent, EntityTerminatingEvent>(OnTradingPitTerminating);
         SubscribeLocalEvent<MedievalCurrencyComponent, AfterInteractEvent>(OnAfterInteract);
         SubscribeLocalEvent<RoundStartedEvent>(OnRoundStart);
+        SubscribeLocalEvent<RoundEndedEvent>(OnRoundEnd);
         SubscribeLocalEvent<RoundRestartCleanupEvent>(OnRoundRestart);
 
         InitializeUi();
+    }
+
+    public override void Shutdown()
+    {
+        StopMarketUpdates();
+        base.Shutdown();
     }
 
     private void OnTradingPitTerminating(
@@ -67,34 +78,60 @@ public sealed partial class TradingSystem : EntitySystem
             _containers.EmptyContainer(container, true, Transform(pit.Owner).Coordinates);
     }
 
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        if (!TryGetMarket(out var market))
-            return;
-
-        var config = _prototypeManager.Index(market.Comp.Config);
-        if (_timing.CurTime < market.Comp.NextStep)
-            return;
-
-        while (_timing.CurTime >= market.Comp.NextStep)
-        {
-            RunMarketStep(market, config);
-            market.Comp.NextStep += TimeSpan.FromSeconds(config.StepInterval);
-        }
-
-        UpdateAllInterfaces(market);
-    }
-
     private void OnRoundStart(RoundStartedEvent args)
     {
+        StopMarketUpdates();
         CreateMarket();
+        _marketUpdateCancellation = new CancellationTokenSource();
+        _ = RunMarketUpdatesAsync(_marketUpdateCancellation.Token);
+    }
+
+    private void OnRoundEnd(RoundEndedEvent args)
+    {
+        StopMarketUpdates();
     }
 
     private void OnRoundRestart(RoundRestartCleanupEvent args)
     {
+        StopMarketUpdates();
         _market = null;
+    }
+
+    private async Task RunMarketUpdatesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (!TryGetMarket(out var market))
+                    return;
+
+                var config = _prototypeManager.Index(market.Comp.Config);
+                var interval = TimeSpan.FromSeconds(config.StepInterval);
+                await Timer.Delay(interval, cancellationToken).WaitAsync(cancellationToken);
+
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!TryGetMarket(out market))
+                    return;
+
+                config = _prototypeManager.Index(market.Comp.Config);
+                RunMarketStep(market, config);
+                UpdateAllInterfaces(market);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private void StopMarketUpdates()
+    {
+        if (_marketUpdateCancellation == null)
+            return;
+
+        _marketUpdateCancellation.Cancel();
+        _marketUpdateCancellation.Dispose();
+        _marketUpdateCancellation = null;
     }
 
     private void OnStoreOpenAttempt(EntityUid uid, TradingComponent component, ActivatableUIOpenAttemptEvent args)
