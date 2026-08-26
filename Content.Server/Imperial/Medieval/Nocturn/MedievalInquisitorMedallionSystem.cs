@@ -16,6 +16,7 @@ public sealed class MedievalInquisitorMedallionSystem : EntitySystem
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
+    [Dependency] private readonly RaceSystem _race = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
     public override void Initialize()
@@ -181,6 +182,13 @@ public sealed class MedievalInquisitorMedallionSystem : EntitySystem
 
     private void HandleYoungNocturneResult(EntityUid user, EntityUid target)
     {
+        if (TryComp<NocturnComponent>(target, out var nocturn) &&
+            nocturn.IsDisguised &&
+            TryComp<HumanoidAppearanceComponent>(target, out var appearance))
+        {
+            _race.RevertToOriginalForm(target, nocturn, appearance);
+        }
+
         EnsureComp<NocturnHumanBloodProhibitionComponent>(target);
 
         var targetMessage = Loc.GetString("medieval-inquisitor-medallion-result-young-nocturne-target");

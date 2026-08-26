@@ -424,6 +424,9 @@ namespace Content.Server.Nocturn
 
         private void ApplyDisguise(EntityUid uid, NocturnComponent component, HumanoidAppearanceComponent appearance)
         {
+            if (component.IsDisguised)
+                return;
+
             appearance.Species = "Human";
             component.BloodDrainPerSecond *= 1.3f;
             component.BloodLevel -= 10;
@@ -438,8 +441,11 @@ namespace Content.Server.Nocturn
             }
         }
 
-        private void RevertToOriginalForm(EntityUid uid, NocturnComponent component, HumanoidAppearanceComponent appearance)
+        public void RevertToOriginalForm(EntityUid uid, NocturnComponent component, HumanoidAppearanceComponent appearance)
         {
+            if (!component.IsDisguised)
+                return;
+
             appearance.Species = "Drou";
             component.BloodDrainPerSecond /= 1.3f;
 
