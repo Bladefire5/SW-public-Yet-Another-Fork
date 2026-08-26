@@ -1,9 +1,11 @@
 using Content.Server.Imperial.Medieval.Skills;
 using Content.Shared.Actions;
+using Content.Shared.Body.Components;
 using Content.Shared.Hands.Components;
 using Content.Shared.Humanoid;
 using Content.Shared.Imperial.Medieval.GhostSkills;
 using Content.Shared.Imperial.Medieval.Skills;
+using Content.Shared.Inventory;
 using Content.Shared.Popups;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
@@ -71,8 +73,10 @@ public sealed class GhostSkillProfileSystem : EntitySystem
     private void OnApplyToRole(Entity<GhostSkillProfileComponent> ent, ref ApplyGhostSkillsToRoleEvent args)
     {
         if (!HasComp<HumanoidAppearanceComponent>(args.Target) &&
-            !HasComp<HandsComponent>(args.Target) &&
-            !HasComp<SkillsComponent>(args.Target))
+            !HasComp<SkillsComponent>(args.Target) &&
+            !(HasComp<BodyComponent>(args.Target) &&
+              HasComp<HandsComponent>(args.Target) &&
+              HasComp<InventoryComponent>(args.Target)))
             return;
 
         _skills.ApplySkills(args.Target, ent.Comp.Levels);

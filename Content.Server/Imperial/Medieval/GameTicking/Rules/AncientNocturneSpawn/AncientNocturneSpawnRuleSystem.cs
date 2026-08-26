@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -7,7 +6,6 @@ using Content.Server.GameTicking.Rules;
 using Content.Server.Ghost.Roles.Events;
 using Content.Server.Humanoid;
 using Content.Server.Preferences.Managers;
-using Content.Shared.GameTicking;
 using Content.Shared.GameTicking.Components;
 using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Markings;
@@ -26,29 +24,12 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
     [Dependency] private readonly IServerPreferencesManager _preferences = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
 
-    private readonly ConcurrentQueue<InquisitionSpawnRequest> _completedInquisitionTimers = new();
-    private uint _roundGeneration;
-
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<AncientNocturneComponent, GhostRoleSpawnerUsedEvent>(OnAncientNocturneSpawned);
         SubscribeLocalEvent<HellfireInquisitionMemberComponent, GhostRoleSpawnerUsedEvent>(OnInquisitorSpawned);
-        SubscribeLocalEvent<RoundRestartCleanupEvent>(OnRoundRestart);
-    }
-
-    public override void Update(float frameTime)
-    {
-        base.Update(frameTime);
-
-        while (_completedInquisitionTimers.TryDequeue(out var request))
-        {
-            if (request.RoundGeneration != _roundGeneration)
-                continue;
-
-            SpawnInquisition(request);
-        }
     }
 
     protected override void Started(
@@ -84,7 +65,7 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
                 colorOverride: Color.MediumPurple,
                 sender: Loc.GetString("medieval-ancient-nocturne-event-sender"));
 
-            StartInquisitionTimer(component);
+            StartInquisitionTimer(uid, component);
         }
 
         GameTicker.EndGameRule(uid, gameRule);
@@ -163,10 +144,9 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
         _humanoidAppearance.LoadProfile(uid, profile, humanoid);
     }
 
-    private void StartInquisitionTimer(AncientNocturneSpawnRuleComponent component)
+    private void StartInquisitionTimer(EntityUid uid, AncientNocturneSpawnRuleComponent component)
     {
         var request = new InquisitionSpawnRequest(
-            _roundGeneration,
             component.InquisitionLeaderSpawnerPrototype,
             component.InquisitionKnightSpawnerPrototype,
             component.InquisitionChaplainSpawnerPrototype,
@@ -176,13 +156,17 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
         var delay = component.InquisitionDelay < TimeSpan.Zero
             ? TimeSpan.Zero
             : component.InquisitionDelay;
-        _ = RunInquisitionTimer(request, delay);
+        _ = RunInquisitionTimer(uid, request, delay);
     }
 
-    private async Task RunInquisitionTimer(InquisitionSpawnRequest request, TimeSpan delay)
+    private async Task RunInquisitionTimer(EntityUid uid, InquisitionSpawnRequest request, TimeSpan delay)
     {
-        await Task.Delay(delay).ConfigureAwait(false);
-        _completedInquisitionTimers.Enqueue(request);
+        await Robust.Shared.Timing.Timer.Delay(delay);
+
+        if (TerminatingOrDeleted(uid) || !TryComp<AncientNocturneSpawnRuleComponent>(uid, out _))
+            return;
+
+        SpawnInquisition(request);
     }
 
     private void SpawnInquisition(InquisitionSpawnRequest request)
@@ -219,14 +203,7 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
         }
     }
 
-    private void OnRoundRestart(RoundRestartCleanupEvent args)
-    {
-        _roundGeneration++;
-        _completedInquisitionTimers.Clear();
-    }
-
     private readonly record struct InquisitionSpawnRequest(
-        uint RoundGeneration,
         EntProtoId LeaderSpawnerPrototype,
         EntProtoId KnightSpawnerPrototype,
         EntProtoId ChaplainSpawnerPrototype,
