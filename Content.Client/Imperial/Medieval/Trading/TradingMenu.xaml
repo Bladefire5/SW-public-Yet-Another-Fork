@@ -56,7 +56,7 @@
         </ScrollContainer>
         <PanelContainer Name="OfferCreationPanel" Margin="0 6 0 0">
             <BoxContainer Orientation="Horizontal" Margin="6">
-                <Label Name="HeldItemName" Text="Предмет в активной руке: —" VerticalAlignment="Center" MinWidth="260" MaxWidth="260" ClipText="True" Margin="0 0 6 0" />
+                <RichTextLabel Name="HeldItemName" Text="Выбран: —" VerticalAlignment="Center" MinSize="260 42" SetSize="260 42" RectClipContent="True" Margin="0 0 6 0" />
                 <LineEdit Name="HeldPrice" PlaceHolder="Цена" HorizontalExpand="True" MinWidth="130" />
                 <Button Name="CreateSellOfferButton" Text="Выставить лот" MinWidth="130" />
                 <Button Name="CreateHeldBuyOrderButton" Text="Создать заказ по образцу" MinWidth="190" Margin="6 0 0 0" />

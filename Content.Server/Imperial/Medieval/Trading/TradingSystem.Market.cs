@@ -17,6 +17,7 @@ using Content.Shared.Mind.Components;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Prototypes;
 using Content.Shared.Stacks;
+using Content.Shared.Tag;
 using Content.Shared.Trigger.Components;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
@@ -653,7 +654,7 @@ public sealed partial class TradingSystem
         market.Comp.Commodities.Remove(commodity.Id);
     }
 
-    private bool CanOfferItemForSale(EntityUid item)
+    private bool CanOfferItemForSale(EntityUid item, TradingMarketConfigPrototype config)
     {
         return Exists(item) &&
                !TerminatingOrDeleted(item) &&
@@ -661,12 +662,13 @@ public sealed partial class TradingSystem
                HasComp<ItemComponent>(item) &&
                !HasComp<VirtualItemComponent>(item) &&
                !HasComp<MobStateComponent>(item) &&
+               !HasBlockedTraderItemTag(item, config) &&
                !ContainsPlayerMind(item);
     }
 
-    private bool CanCreateBuyOrderForItem(EntityUid item)
+    private bool CanCreateBuyOrderForItem(EntityUid item, TradingMarketConfigPrototype config)
     {
-        if (!CanOfferItemForSale(item) ||
+        if (!CanOfferItemForSale(item, config) ||
             HasComp<TimedDespawnComponent>(item) ||
             HasComp<MedievalTimedDespawnComponent>(item) ||
             HasComp<ActiveTimerTriggerComponent>(item) ||
@@ -686,6 +688,20 @@ public sealed partial class TradingSystem
 
         return MetaData(item).EntityPrototype is { } prototype &&
                !prototype.HasComponent<LetterComponent>();
+    }
+
+    private bool HasBlockedTraderItemTag(EntityUid item, TradingMarketConfigPrototype config)
+    {
+        return config.BlockedTraderItemTags.Count > 0 &&
+               _tags.HasAnyTag(item, config.BlockedTraderItemTags);
+    }
+
+    private bool HasBlockedTraderProductTag(EntProtoId product, TradingMarketConfigPrototype config)
+    {
+        return config.BlockedTraderItemTags.Count > 0 &&
+               _prototypeManager.TryIndex(product, out var prototype) &&
+               prototype.TryGetComponent<TagComponent>(out var tags, EntityManager.ComponentFactory) &&
+               _tags.HasAnyTag(tags, config.BlockedTraderItemTags);
     }
 
     private bool ContainsPlayerMind(EntityUid root)
@@ -793,7 +809,7 @@ public sealed partial class TradingSystem
             Supply = 0f,
             BaselineStackCount = stackCount,
             HasStack = hasStack,
-            CanCreateBuyOrder = CanCreateBuyOrderForItem(item),
+            CanCreateBuyOrder = CanCreateBuyOrderForItem(item, config),
             IsDamagedEquipment = isDamagedEquipment,
             Signature = signature,
             DisplayName = FormatStackName(metadata.EntityName, hasStack ? stackCount : null),

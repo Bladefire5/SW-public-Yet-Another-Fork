@@ -1,3 +1,4 @@
+using Content.Shared.Tag;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Imperial.Medieval.Trading.Prototypes;
@@ -10,6 +11,9 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
 
     [DataField]
     public HashSet<ProtoId<GuildTypePrototype>> GuildTypes = new();
+
+    [DataField]
+    public HashSet<ProtoId<TagPrototype>> BlockedTraderItemTags = new();
 
     [DataField]
     public float StepInterval = 30f;

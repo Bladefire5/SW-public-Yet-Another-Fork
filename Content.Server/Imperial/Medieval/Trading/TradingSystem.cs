@@ -9,6 +9,7 @@ using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Interaction;
 using Content.Shared.Mind;
 using Content.Shared.Stacks;
+using Content.Shared.Tag;
 using Content.Shared.UserInterface;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
@@ -28,6 +29,7 @@ public sealed partial class TradingSystem : EntitySystem
     [Dependency] private readonly SharedMindSystem _mind = default!;
     [Dependency] private readonly SharedContainerSystem _containers = default!;
     [Dependency] private readonly StackSystem _stack = default!;
+    [Dependency] private readonly TagSystem _tags = default!;
 
     private EntityUid? _market;
     private CancellationTokenSource? _marketUpdateCancellation;

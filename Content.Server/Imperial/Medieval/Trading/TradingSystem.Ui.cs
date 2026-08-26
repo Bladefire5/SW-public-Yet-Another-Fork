@@ -246,11 +246,11 @@ public sealed partial class TradingSystem
         if (offer.Pit == store || offer.CommodityId != selectedCommodity)
             return false;
 
-        if (offer.Side == TradingOfferSide.Buy)
+        if (offer.Side == TradingOfferSide.Buy ||
+            offer.ParticipantKind == TradingParticipantKind.Guild)
             return true;
 
-        return offer.ParticipantKind == TradingParticipantKind.Trader &&
-               offer.Item is { } item &&
+        return offer.Item is { } item &&
                Exists(item);
     }
 
@@ -509,10 +509,13 @@ public sealed partial class TradingSystem
         TradingComponent component,
         TradingCreateBuyOfferFromHeldMessage msg)
     {
-        if (!TryGetMarket(out var market) ||
-            !_hands.TryGetActiveItem(msg.Actor, out var held) ||
+        if (!TryGetMarket(out var market))
+            return;
+
+        var config = _prototypeManager.Index(market.Comp.Config);
+        if (!_hands.TryGetActiveItem(msg.Actor, out var held) ||
             held is not { } item ||
-            !CanCreateBuyOrderForItem(item) ||
+            !CanCreateBuyOrderForItem(item, config) ||
             msg.Price <= 0 ||
             component.Balance < msg.Price)
         {
@@ -536,7 +539,7 @@ public sealed partial class TradingSystem
             return;
         }
 
-        MatchCommodity(market, commodity, _prototypeManager.Index(market.Comp.Config));
+        MatchCommodity(market, commodity, config);
         UpdateAllInterfaces(market);
     }
 
@@ -600,6 +603,7 @@ public sealed partial class TradingSystem
         if (price < 0 ||
             (price == 0 && immediateRecipient == null) ||
             (!commodity.CanCreateBuyOrder && immediateRecipient == null) ||
+            HasBlockedTraderProductTag(commodity.Product, config) ||
             pit.Comp.Balance < price ||
             !market.Comp.Commodities.ContainsKey(commodity.Id))
         {
@@ -662,8 +666,8 @@ public sealed partial class TradingSystem
         offer = default!;
         var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
-            !CanOfferItemForSale(sourceItem) ||
-            (immediate && !CanCreateBuyOrderForItem(sourceItem)) ||
+            !CanOfferItemForSale(sourceItem, config) ||
+            (immediate && !CanCreateBuyOrderForItem(sourceItem, config)) ||
             MetaData(sourceItem).EntityPrototype?.ID is not { } product)
         {
             return false;
@@ -728,6 +732,7 @@ public sealed partial class TradingSystem
         TradingCommodity selected,
         out EntityUid item)
     {
+        var config = _prototypeManager.Index(market.Comp.Config);
         var pending = new Queue<EntityUid>(_inventory.GetHandOrInventoryEntities(user));
         var visited = new HashSet<EntityUid>();
         while (pending.TryDequeue(out var candidate))
@@ -735,7 +740,7 @@ public sealed partial class TradingSystem
             if (!visited.Add(candidate))
                 continue;
 
-            if (CanCreateBuyOrderForItem(candidate) &&
+            if (CanCreateBuyOrderForItem(candidate, config) &&
                 TryResolveCommodityForItem(market, candidate, selected.StandardPrice, false, out var commodity) &&
                 commodity.Id == selected.Id)
             {

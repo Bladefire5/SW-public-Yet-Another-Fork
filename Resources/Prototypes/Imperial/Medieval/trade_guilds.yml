@@ -7,6 +7,8 @@
   - FoodGuild
   - ClothGuild
   - BuilderGuild
+  blockedTraderItemTags:
+  - MedievalRevent
   stepInterval: 30
   initialDemand: 50
   initialSupply: 25

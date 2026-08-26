@@ -56,6 +56,7 @@ public sealed partial class TradingMenu : DefaultWindow
     private StoreWithdrawWindow? _withdrawWindow;
     private bool _management;
     private bool _archive;
+    private string? _heldItemName;
     private readonly Dictionary<EntProtoId, EntityUid> _prototypeExamineEntities = new();
 
     public TradingMenu()
@@ -374,9 +375,7 @@ public sealed partial class TradingMenu : DefaultWindow
             ? _state.Offers.FirstOrDefault(offer =>
                 offer.Id == selectedOfferId &&
                 offer.CommodityId == item.CommodityId &&
-                !offer.IsOwn &&
-                (offer.Side == TradingOfferSide.Buy ||
-                 offer.ParticipantKind == TradingParticipantKind.Trader))
+                !offer.IsOwn)
             : null;
         if (_selectedOffer != null && selectedOffer == null)
         {
@@ -417,9 +416,7 @@ public sealed partial class TradingMenu : DefaultWindow
                 MinWidth = 54,
             });
             Control participant;
-            if (!offer.IsOwn &&
-                (offer.Side == TradingOfferSide.Buy ||
-                 offer.ParticipantKind == TradingParticipantKind.Trader))
+            if (!offer.IsOwn)
             {
                 var selectOffer = new Button
                 {
@@ -453,8 +450,8 @@ public sealed partial class TradingMenu : DefaultWindow
                 {
                     Text = offer.Price.ToString(),
                     MinWidth = 76,
-                    HorizontalAlignment = HAlignment.Center,
-                    VerticalAlignment = VAlignment.Center,
+                    Align = Label.AlignMode.Center,
+                    VAlign = Label.VAlignMode.Center,
                 });
             }
             else
@@ -737,10 +734,10 @@ public sealed partial class TradingMenu : DefaultWindow
             }
         }
 
-        var text = $"Предмет в активной руке: {itemName}";
-        if (HeldItemName.Text != text)
+        if (_heldItemName != itemName)
         {
-            HeldItemName.Text = text;
+            _heldItemName = itemName;
+            HeldItemName.SetMessage($"Выбран: {itemName}", defaultColor: Color.White);
             HeldItemName.ToolTip = itemName;
         }
 
