@@ -1,0 +1,26 @@
+- type: entity
+  parent: BaseItem
+  id: MedievalInquisitorMedallion
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
+    state: icon
+  - type: Item
+    size: Tiny
+    sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
+    slots:
+    - ears
+
+- type: entity
+  parent: MedievalPaper
+  id: MedievalInquisitionOrder
+  components:
+  - type: Paper
+    content: medieval-inquisition-order-text
+    stampState: paper_stamp-syndicate
+    stampedBy:
+    - stampedName: medieval-inquisition-senior-stamp
+      stampedColor: "#ff0000"
+    editingDisabled: true
