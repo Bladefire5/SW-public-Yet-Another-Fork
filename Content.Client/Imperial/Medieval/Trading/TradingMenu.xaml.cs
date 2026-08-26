@@ -357,7 +357,8 @@ public sealed partial class TradingMenu : DefaultWindow
         CreateBuyOrderButton.Disabled = false;
 
         var offers = _state.Offers
-            .Where(offer => offer.CommodityId == item.CommodityId)
+            .Where(offer => offer.CommodityId == item.CommodityId &&
+                            (offer.Side != TradingOfferSide.Buy || !offer.IsOwn))
             .OrderBy(offer => offer.Side)
             .ThenBy(offer => offer.Side == TradingOfferSide.Sell ? offer.Price : -offer.Price);
         foreach (var offer in offers)

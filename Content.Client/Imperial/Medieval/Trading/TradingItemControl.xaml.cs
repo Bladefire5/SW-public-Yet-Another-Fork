@@ -27,7 +27,7 @@ public sealed partial class TradingItemControl : Control
 
         StoreItemName.Text = _prototypes.TryIndex(data.ProductEntity, out var prototype)
             ? Loc.GetString(prototype.Name)
-            : data.ProductEntity.Id;
+            : data.Name ?? data.ProductEntity?.Id ?? string.Empty;
         StoreItemDescription.SetMarkup(data.Description ?? string.Empty);
         StoreItemTexture.Texture = texture;
         StoreItemBuyButton.Text = price;

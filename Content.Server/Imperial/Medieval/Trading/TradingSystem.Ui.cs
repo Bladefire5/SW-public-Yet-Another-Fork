@@ -84,7 +84,9 @@ public sealed partial class TradingSystem
             {
                 var commodityOffers = offersByCommodity[commodity.Id].ToList();
                 var asks = commodityOffers.Where(offer => offer.Side == TradingOfferSide.Sell).ToList();
-                var bids = commodityOffers.Where(offer => offer.Side == TradingOfferSide.Buy).ToList();
+                var bids = commodityOffers
+                    .Where(offer => offer.Side == TradingOfferSide.Buy && offer.Pit != store)
+                    .ToList();
                 var preview = asks
                     .Where(offer => offer.Item != null && Exists(offer.Item.Value))
                     .OrderBy(offer => offer.Price)
