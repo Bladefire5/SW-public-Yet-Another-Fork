@@ -49,6 +49,8 @@
       0: Alive
       95: Critical
       180: Dead
+  - type: MedievalSpecialDamageReceiver
+    targetType: Werewolf
 
 - type: polymorph
   id: MedievalAncientNocturneBatPolymorph

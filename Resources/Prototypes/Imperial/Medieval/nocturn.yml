@@ -360,6 +360,8 @@
     - MedievalAncientNocturneEmergencyTeleportAction
     - MedievalAncientNocturneConversionAction
   - type: AncientNocturne
+  - type: MedievalSpecialDamageReceiver
+    targetType: Werewolf
   - type: BloodRubyOwner
   - type: AncientNocturneMindConnection
 
