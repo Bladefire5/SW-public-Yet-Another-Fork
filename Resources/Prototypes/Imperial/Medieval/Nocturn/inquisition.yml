@@ -2,6 +2,7 @@
   parent: BaseItem
   id: MedievalInquisitorMedallion
   components:
+  - type: MedievalInquisitorMedallion
   - type: Sprite
     sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
     state: icon

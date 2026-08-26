@@ -242,6 +242,9 @@ namespace Content.Server.Nocturn
         }
         public void OnNocturnDrinkAction(EntityUid uid, NocturnComponent component, NocturnDrinkActionEvent args)
         {
+            if (args.Handled)
+                return;
+
             IngestionBlockerComponent? blocker;
 
             if (_inventory.TryGetSlotEntity(uid, "mask", out var maskUid) &&
