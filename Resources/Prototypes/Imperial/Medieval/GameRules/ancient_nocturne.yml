@@ -6,7 +6,7 @@
   - type: AncientNocturneSpawnRule
     spawnCount: 3
     spawnerPrototype: MedievalAncientNocturneGhostRoleSpawner
-    inquisitionDelay: 600
+    inquisitionDelay: 5 # debug-shortened
     inquisitionLeaderSpawnerPrototype: MedievalHellfireInquisitionLeaderGhostRoleSpawner
     inquisitionKnightSpawnerPrototype: MedievalHellfireInquisitionKnightGhostRoleSpawner
     inquisitionChaplainSpawnerPrototype: MedievalHellfireInquisitionChaplainGhostRoleSpawner
