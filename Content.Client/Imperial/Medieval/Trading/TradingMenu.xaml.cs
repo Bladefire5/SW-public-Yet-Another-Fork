@@ -357,8 +357,7 @@ public sealed partial class TradingMenu : DefaultWindow
         CreateBuyOrderButton.Disabled = false;
 
         var offers = _state.Offers
-            .Where(offer => offer.CommodityId == item.CommodityId &&
-                            (offer.Side != TradingOfferSide.Buy || !offer.IsOwn))
+            .Where(offer => offer.CommodityId == item.CommodityId)
             .OrderBy(offer => offer.Side)
             .ThenBy(offer => offer.Side == TradingOfferSide.Sell ? offer.Price : -offer.Price);
         foreach (var offer in offers)
@@ -380,37 +379,25 @@ public sealed partial class TradingMenu : DefaultWindow
                 HorizontalExpand = true,
                 ClipText = true,
             });
-            if (offer.Side == TradingOfferSide.Sell || HasSection(item, TradingMarketSection.Unique))
+            var action = new Button
             {
-                var action = new Button
-                {
-                    Text = offer.Price.ToString(),
-                    MinWidth = 76,
-                    Disabled = offer.IsOwn ||
-                               offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
-                    StyleBoxOverride = offer.Side == TradingOfferSide.Sell
-                        ? CreateActionButtonStyle("#c79612", "#f0d36f")
-                        : CreateActionButtonStyle("#b13a3a", "#e66b63"),
-                };
-                action.Label.FontColorOverride = Color.White;
-                action.OnPressed += _ =>
-                {
-                    if (offer.Side == TradingOfferSide.Sell)
-                        OnBuyOffer?.Invoke(offer.Id);
-                    else
-                        OnSellOffer?.Invoke(offer.Id);
-                };
-                row.AddChild(action);
-            }
-            else
+                Text = offer.Price.ToString(),
+                MinWidth = 76,
+                Disabled = offer.IsOwn ||
+                           offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
+                StyleBoxOverride = offer.Side == TradingOfferSide.Sell
+                    ? CreateActionButtonStyle("#c79612", "#f0d36f")
+                    : CreateActionButtonStyle("#b13a3a", "#e66b63"),
+            };
+            action.Label.FontColorOverride = Color.White;
+            action.OnPressed += _ =>
             {
-                row.AddChild(new Label
-                {
-                    Text = offer.Price.ToString(),
-                    MinWidth = 76,
-                    Align = Label.AlignMode.Center,
-                });
-            }
+                if (offer.Side == TradingOfferSide.Sell)
+                    OnBuyOffer?.Invoke(offer.Id);
+                else
+                    OnSellOffer?.Invoke(offer.Id);
+            };
+            row.AddChild(action);
             if (offer.IsOwn)
             {
                 var cancel = new Button { Text = "×", MinWidth = 28 };

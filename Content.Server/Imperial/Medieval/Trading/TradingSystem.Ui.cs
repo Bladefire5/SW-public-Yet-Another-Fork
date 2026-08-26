@@ -345,8 +345,10 @@ public sealed partial class TradingSystem
             bid.ParticipantKind != TradingParticipantKind.Trader ||
             bid.Pit == uid ||
             !market.Comp.Commodities.TryGetValue(bid.CommodityId, out var commodity) ||
-            (commodity.Sections & TradingMarketSection.Unique) == 0 ||
-            !TryFindInventoryItem(msg.Actor, market, commodity, out var item) ||
+            !_hands.TryGetActiveItem(msg.Actor, out var held) ||
+            held is not { } item ||
+            !TryResolveCommodityForItem(market, item, bid.Price, false, out var heldCommodity) ||
+            heldCommodity.Id != commodity.Id ||
             !TryCreateTraderSellOffer(
                 market,
                 (uid, component),
