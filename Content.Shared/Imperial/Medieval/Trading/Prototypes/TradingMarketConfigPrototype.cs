@@ -25,16 +25,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float InitialSupply = 25f;
 
     [DataField]
-    public float DemandRecovery = 0.75f;
-
-    [DataField]
     public float ReputationScarcityMinutesPerPoint = 3f;
-
-    [DataField]
-    public float ReputationScarcityDemandMultiplier = 2f;
-
-    [DataField]
-    public float ReputationScarcityPriceFactorPerPoint = 1f;
 
     [DataField]
     public int LiquidityReferencePrice = 5;
@@ -52,10 +43,10 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public int MaximumGuildOfferCount = 120;
 
     [DataField]
-    public float GuildSellOfferChance = 0.5f;
+    public float GuildSellOfferChance = 0.1f;
 
     [DataField]
-    public float GuildBuyOrderChance = 0.25f;
+    public float GuildBuyOrderChance = 0.05f;
 
     [DataField]
     public int MaximumGuildSellOfferCount = 200;
@@ -80,6 +71,9 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
 
     [DataField]
     public float SupplyPlacementImpact = 3f;
+
+    [DataField]
+    public float DemandPlacementImpact = 3f;
 
     [DataField]
     public float SupplyTradeImpact = 1f;

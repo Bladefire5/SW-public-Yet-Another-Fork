@@ -12,17 +12,14 @@
   stepInterval: 30
   initialDemand: 50
   initialSupply: 25
-  demandRecovery: 0.75
   reputationScarcityMinutesPerPoint: 3
-  reputationScarcityDemandMultiplier: 2
-  reputationScarcityPriceFactorPerPoint: 1
   liquidityReferencePrice: 5
   liquidityReferenceOfferCount: 60
   liquidityPriceExponent: 0.4
   minimumGuildOfferCount: 2
   maximumGuildOfferCount: 120
-  guildSellOfferChance: 0.5
-  guildBuyOrderChance: 0.25
+  guildSellOfferChance: 0.1
+  guildBuyOrderChance: 0.05
   maximumGuildSellOfferCount: 200
   maximumGuildBuyOrderCount: 100
   guildSellOfferRemovalChance: 0.01
@@ -31,6 +28,7 @@
   guildOfferMaximumLifetime: 1200
   marketImpactReferenceOfferCount: 6
   supplyPlacementImpact: 3
+  demandPlacementImpact: 3
   supplyTradeImpact: 1
   demandTradeImpact: 2
   pricePressure: 0.45

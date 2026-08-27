@@ -24,8 +24,6 @@ public sealed class TradingCommodity
     public float Demand;
     public float Supply;
     public int MinReputation;
-    public int ScarcityStepsRemaining;
-    public float ScarcitySupplyStep;
     public int BaselineStackCount = 1;
     public bool HasStack;
     public bool Permanent;
@@ -53,6 +51,7 @@ public sealed class TradingMarketOffer
     public bool IsImmediate;
     public long Sequence;
     public float SupplyContribution;
+    public float DemandContribution;
     public TimeSpan ExpiresAt;
 }
 

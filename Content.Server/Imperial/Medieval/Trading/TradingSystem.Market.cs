@@ -133,58 +133,22 @@ public sealed partial class TradingSystem
         TradingMarketComponent market,
         TradingMarketConfigPrototype config)
     {
+        var states = new Dictionary<(int Price, int Reputation), (float Demand, float Supply)>();
         foreach (var commodity in market.Commodities.Values)
         {
             if (commodity.MinReputation <= 0)
                 continue;
 
-            var demand = Math.Max(float.Epsilon,
-                config.InitialDemand * config.ReputationScarcityDemandMultiplier);
-            var startPressure = GetScarcityStartPressure(commodity, config);
-            var startSupply = GetSupplyForPressure(demand, startPressure);
-            var targetSupply = GetSupplyForPressure(
-                demand,
-                GetGoldenPricePressure(commodity, config));
-            var duration = commodity.MinReputation * config.ReputationScarcityMinutesPerPoint * 60f;
-            var steps = Math.Max(1, (int) MathF.Ceiling(duration / Math.Max(float.Epsilon, config.StepInterval)));
-            var seedSupplyContribution = GetGuildOfferTarget(commodity, config) *
-                                         config.SupplyPlacementImpact *
-                                         GetMarketImpactScale(commodity, config) *
-                                         GetPriceImpactRatio(
-                                             1f / (1f + commodity.MinReputation *
-                                                   config.ReputationScarcityPriceFactorPerPoint));
+            var key = (commodity.StandardPrice, commodity.MinReputation);
+            if (!states.TryGetValue(key, out var scarcity))
+            {
+                scarcity = GetReputationScarcityInitialState(commodity, config);
+                states.Add(key, scarcity);
+            }
 
-            commodity.Demand = demand;
-            commodity.Supply = startSupply - seedSupplyContribution;
-            commodity.ScarcityStepsRemaining = steps;
-            commodity.ScarcitySupplyStep = (targetSupply - startSupply) / steps;
+            commodity.Demand = scarcity.Demand;
+            commodity.Supply = scarcity.Supply;
         }
-    }
-
-    private static void RecoverReputationScarcity(TradingCommodity commodity)
-    {
-        if (commodity.ScarcityStepsRemaining <= 0)
-            return;
-
-        commodity.Supply += commodity.ScarcitySupplyStep;
-        commodity.ScarcityStepsRemaining--;
-    }
-
-    private static float GetScarcityStartPressure(
-        TradingCommodity commodity,
-        TradingMarketConfigPrototype config)
-    {
-        var initialFactor = 1f + commodity.MinReputation * config.ReputationScarcityPriceFactorPerPoint;
-        return (initialFactor - 1f - config.PriceSpread / 2f - GetExpectedLowestPriceNoise(commodity, config)) /
-               Math.Max(float.Epsilon, config.PricePressure);
-    }
-
-    private static float GetGoldenPricePressure(
-        TradingCommodity commodity,
-        TradingMarketConfigPrototype config)
-    {
-        return -(config.PriceSpread / 2f + GetExpectedLowestPriceNoise(commodity, config)) /
-               Math.Max(float.Epsilon, config.PricePressure);
     }
 
     private static float GetExpectedLowestPriceNoise(
@@ -195,29 +159,11 @@ public sealed partial class TradingSystem
         return -config.PriceNoise * (offerCount - 1f) / (offerCount + 1f);
     }
 
-    private static float GetSupplyForPressure(float demand, float pressure)
-    {
-        var denominator = 1f + pressure;
-        if (MathHelper.CloseTo(denominator, 0f))
-            denominator = denominator < 0f ? -float.Epsilon : float.Epsilon;
-
-        return demand * (1f - pressure) / denominator;
-    }
-
     private void RunMarketStep(
         Entity<TradingMarketComponent> market,
         TradingMarketConfigPrototype config)
     {
         ExpireGuildOffers(market, config);
-
-        foreach (var commodity in market.Comp.Commodities.Values)
-        {
-            RecoverReputationScarcity(commodity);
-
-            var recoveryScale = GetDemandShare(commodity.Demand + config.DemandRecovery, commodity.Supply);
-            commodity.Demand += config.DemandRecovery * recoveryScale;
-        }
-
         CreateGuildActivity(market, config);
         RemoveUncompetitiveGuildOffers(market, config);
         MatchAll(market, config);
@@ -280,7 +226,6 @@ public sealed partial class TradingSystem
                 commodity,
                 candidates,
                 TradingOfferSide.Sell,
-                config.GuildSellOfferChance,
                 Math.Max(0, config.MaximumGuildSellOfferCount - currentSells),
                 config);
 
@@ -290,7 +235,6 @@ public sealed partial class TradingSystem
                 commodity,
                 candidates,
                 TradingOfferSide.Buy,
-                config.GuildBuyOrderChance,
                 Math.Max(0, config.MaximumGuildBuyOrderCount - currentBuys),
                 config);
         }
@@ -363,18 +307,16 @@ public sealed partial class TradingSystem
         TradingCommodity commodity,
         List<Guild> candidates,
         TradingOfferSide side,
-        float chance,
         int availableSlots,
         TradingMarketConfigPrototype config)
     {
         if (availableSlots <= 0 || candidates.Count == 0)
             return;
 
-        var demandScale = Math.Max(0f, commodity.Demand) /
-                          Math.Max(float.Epsilon, config.InitialDemand);
-        var creationChance = Math.Clamp(chance * demandScale, 0f, 1f);
+        var creationChance = GetGuildOfferCreationChance(commodity, side, config);
+        var attempts = Math.Min(availableSlots, GetGuildOfferTarget(commodity, config));
 
-        for (var index = 0; index < availableSlots; index++)
+        for (var index = 0; index < attempts; index++)
         {
             if (_random.NextFloat() >= creationChance)
                 continue;
@@ -386,6 +328,48 @@ public sealed partial class TradingSystem
                 side,
                 config);
         }
+    }
+
+    internal static float GetGuildOfferCreationChance(
+        TradingCommodity commodity,
+        TradingOfferSide side,
+        TradingMarketConfigPrototype config)
+    {
+        return side == TradingOfferSide.Sell
+            ? GetGuildSellOfferCreationChance(
+                config.GuildSellOfferChance,
+                commodity.Supply,
+                config.InitialSupply)
+            : GetGuildBuyOrderCreationChance(
+                config.GuildBuyOrderChance,
+                commodity.Demand,
+                config.InitialDemand);
+    }
+
+    internal static float GetGuildSellOfferCreationChance(
+        float baseChance,
+        float supply,
+        float initialSupply)
+    {
+        return GetSaturationAdjustedCreationChance(baseChance, supply, initialSupply);
+    }
+
+    internal static float GetGuildBuyOrderCreationChance(
+        float baseChance,
+        float demand,
+        float initialDemand)
+    {
+        return GetSaturationAdjustedCreationChance(baseChance, demand, initialDemand);
+    }
+
+    private static float GetSaturationAdjustedCreationChance(
+        float baseChance,
+        float saturation,
+        float initialSaturation)
+    {
+        var chance = baseChance * Math.Max(float.Epsilon, initialSaturation) /
+                     Math.Max(float.Epsilon, saturation);
+        return Math.Min(chance, baseChance * 2f);
     }
 
     internal static float GetExpectedGuildOfferCount(
@@ -411,12 +395,6 @@ public sealed partial class TradingSystem
         TradingMarketConfigPrototype config)
     {
         return config.MarketImpactReferenceOfferCount / GetExpectedGuildOfferCount(commodity, config);
-    }
-
-    internal static float GetDemandShare(float demand, float supply)
-    {
-        var total = demand + supply;
-        return total > 0f ? Math.Clamp(demand / total, 0f, 1f) : 1f;
     }
 
     internal static float GetGuildOfferRemovalChance(
@@ -498,11 +476,22 @@ public sealed partial class TradingSystem
         TradingMarketOffer offer,
         TradingMarketConfigPrototype config)
     {
-        if (offer.Side == TradingOfferSide.Sell && market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
+        if (market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
         {
-            offer.SupplyContribution = config.SupplyPlacementImpact * GetMarketImpactScale(commodity, config) *
-                                       GetPriceImpactRatio((float) commodity.StandardPrice / offer.Price);
-            commodity.Supply += offer.SupplyContribution;
+            var impactScale = GetMarketImpactScale(commodity, config);
+            if (offer.Side == TradingOfferSide.Sell)
+            {
+                offer.SupplyContribution = config.SupplyPlacementImpact * impactScale *
+                                           GetPriceImpactRatio((float) commodity.StandardPrice / offer.Price);
+                commodity.Supply += offer.SupplyContribution;
+            }
+            else
+            {
+                offer.DemandContribution = config.DemandPlacementImpact * impactScale *
+                                           GetPriceImpactRatio((float) offer.Price /
+                                                               Math.Max(1, commodity.StandardPrice));
+                commodity.Demand += offer.DemandContribution;
+            }
         }
 
         market.Comp.Offers.Add(offer.Id, offer);
@@ -645,10 +634,10 @@ public sealed partial class TradingSystem
         RemoveOfferRecord(market, bid);
 
         var impactScale = GetMarketImpactScale(commodity, config);
-        commodity.Supply -= ask.SupplyContribution + config.SupplyTradeImpact * impactScale;
-        var demandImpact = config.DemandTradeImpact * impactScale *
-                           Math.Clamp((float) executionPrice / commodity.StandardPrice, 0.25f, 4f);
-        commodity.Demand = Math.Max(0f, commodity.Demand - demandImpact);
+        commodity.Supply = Math.Max(0f,
+            commodity.Supply - ask.SupplyContribution - config.SupplyTradeImpact * impactScale);
+        commodity.Demand = Math.Max(0f,
+            commodity.Demand - bid.DemandContribution - config.DemandTradeImpact * impactScale);
         TryRemoveCommodity(market, commodity);
     }
 
@@ -713,16 +702,19 @@ public sealed partial class TradingSystem
         if (!market.Comp.Offers.TryGetValue(id, out var offer))
             return;
 
-        if (offer.Side == TradingOfferSide.Buy && offer.Pit is { } buyerId &&
-            TryComp<TradingComponent>(buyerId, out var buyer))
+        if (offer.Side == TradingOfferSide.Buy)
         {
-            buyer.Balance += offer.Price;
+            if (offer.Pit is { } buyerId && TryComp<TradingComponent>(buyerId, out var buyer))
+                buyer.Balance += offer.Price;
+
+            if (market.Comp.Commodities.TryGetValue(offer.CommodityId, out var demandCommodity))
+                demandCommodity.Demand = Math.Max(0f, demandCommodity.Demand - offer.DemandContribution);
         }
 
         if (offer.Side == TradingOfferSide.Sell &&
             market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
         {
-            commodity.Supply -= offer.SupplyContribution;
+            commodity.Supply = Math.Max(0f, commodity.Supply - offer.SupplyContribution);
         }
 
         if (offer.Item is { } item && returnEscrow)
