@@ -1674,10 +1674,10 @@
         Blunt: 6
   - type: Currency
     price:
-      Revent: 30
+      Revent: 25
   - type: MedievalCurrency
     price:
-      Revent: 30
+      Revent: 25
 
 - type: entity
   name: MedievalIngotSilver10
@@ -1724,7 +1724,7 @@
   - type: Material
   - type: PhysicalComposition
     materialComposition:
-      MedievalGoldOre: 100
+      MedievalSilverOre: 100
   - type: Stack
     stackType: MedievalSilverOre
     count: 1
