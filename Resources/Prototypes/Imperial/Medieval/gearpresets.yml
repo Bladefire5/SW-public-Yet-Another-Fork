@@ -221,7 +221,7 @@
     back: MedievalClothingBackpackSatchelLeather
     pocket1: MedievalRevent100
     neck: MedievalClothingNeckCloakClanFlame
-    suitStorage: MedievalFalshionT3Silver
+    suitstorage: MedievalFalshionT3Silver
     ears: MedievalInquisitorMedallion
   storage:
     back:
@@ -239,7 +239,7 @@
   parent: RPGMedievalFlame
   equipment:
     neck: MedievalClothingNeckCloakInqVeteran
-    suitStorage: MedievalIronClaymoreSilver
+    suitstorage: MedievalIronClaymoreSilver
 
 - type: startingGear
   id: RPGMedievalFlameChaplain

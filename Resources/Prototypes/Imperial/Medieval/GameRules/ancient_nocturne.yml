@@ -58,7 +58,6 @@
 - type: entity
   parent: MarkerBase
   id: MedievalHellfireInquisitionSpawnMarker
-  name: hellfire inquisition spawner
   components:
   - type: Sprite
     layers:

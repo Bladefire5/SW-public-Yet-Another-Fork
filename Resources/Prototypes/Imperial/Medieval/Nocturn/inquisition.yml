@@ -4,13 +4,13 @@
   components:
   - type: MedievalInquisitorMedallion
   - type: Sprite
-    sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
+    sprite: Imperial/Medieval/Clothing/Medaljons/inquisitor_medallion.rsi
     state: icon
   - type: Item
     size: Tiny
-    sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
+    sprite: Imperial/Medieval/Clothing/Medaljons/inquisitor_medallion.rsi
   - type: Clothing
-    sprite: Imperial/Medieval/Clothing/Medaljons/cross.rsi
+    sprite: Imperial/Medieval/Clothing/Medaljons/inquisitor_medallion.rsi
     slots:
     - ears
 

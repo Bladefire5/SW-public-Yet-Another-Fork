@@ -35,8 +35,8 @@ medieval-ancient-nocturne-mind-connection-wrap-message = [nocturne] { $name }: {
 medieval-ancient-nocturne-mind-connection-severed = you feel your psychic connection to your master suddenly break
 
 ent-MedievalAncientNocturneSpawnRule = Ancient nocturne emergence
-ent-MedievalAncientNocturneSpawnMarker = ancient nocturne spawn marker
-ent-MedievalAncientNocturneGhostRoleSpawner = ancient nocturne ghost-role spawner
+ent-MedievalAncientNocturneSpawnMarker = ancient nocturne spawner
+ent-MedievalAncientNocturneGhostRoleSpawner = ancient nocturne spawn point
 ghost-role-information-ancient-nocturne-name = Ancient nocturne
 ghost-role-information-ancient-nocturne-description = An ancient nocturne has arrived in the archipelago!
 ghost-role-information-ancient-nocturne-rules = You are an ancient nocturne, a creature of the night. Fill your ruby with blood, turn humans, and destroy those who stand in your way

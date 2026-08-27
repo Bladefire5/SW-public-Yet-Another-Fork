@@ -35,8 +35,8 @@ medieval-ancient-nocturne-mind-connection-wrap-message = [ноктюрн] { $nam
 medieval-ancient-nocturne-mind-connection-severed = вы чувствуете, как ваша психическая связь с мастером внезапно оборвалась
 
 ent-MedievalAncientNocturneSpawnRule = Появление древних ноктюрнов
-ent-MedievalAncientNocturneSpawnMarker = маркер появления древнего ноктюрна
-ent-MedievalAncientNocturneGhostRoleSpawner = спавнер гост-роли древнего ноктюрна
+ent-MedievalAncientNocturneSpawnMarker = спавнер древнего ноктюрна
+ent-MedievalAncientNocturneGhostRoleSpawner = метка появления древнего ноктюрна
 ghost-role-information-ancient-nocturne-name = Древний ноктюрн
 ghost-role-information-ancient-nocturne-description = Древний ноктюрн прибыл в архипелаг!
 ghost-role-information-ancient-nocturne-rules = Вы — древний ноктюрн, существо ночи. Наполняйте ваш рубин кровью, обращайте людей и уничтожьте тех, кто стоит на вашем пути
