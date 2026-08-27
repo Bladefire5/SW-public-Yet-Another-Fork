@@ -4,15 +4,15 @@
     MinSize="900 620"
     SetSize="1120 760">
     <BoxContainer Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True" Margin="6">
-        <BoxContainer Orientation="Horizontal" Margin="0 0 0 6">
+        <BoxContainer Name="BalancePanel" Orientation="Horizontal" Margin="0 0 0 6" Visible="False">
             <RichTextLabel Name="BalanceInfo" HorizontalExpand="True" />
             <Button Name="WithdrawButton" Text="Снять средства" MinWidth="140" />
         </BoxContainer>
         <BoxContainer Orientation="Horizontal" Margin="0 0 0 6">
-            <Button Name="CommonButton" Text="Общие" MinWidth="140" />
+            <Button Name="CommonButton" Text="Общие" MinWidth="140" Visible="False" />
             <Button Name="UniqueButton" Text="Уникальные" MinWidth="140" Margin="6 0 0 0" />
-            <Button Name="ManagementButton" Text="Управление заказами" MinWidth="210" Margin="6 0 0 0" />
-            <Button Name="ArchiveButton" Text="Архив" MinWidth="140" Margin="6 0 0 0" />
+            <Button Name="ManagementButton" Text="Управление заказами" MinWidth="210" Margin="6 0 0 0" Visible="False" />
+            <Button Name="ArchiveButton" Text="Архив" MinWidth="140" Margin="6 0 0 0" Visible="False" />
         </BoxContainer>
         <LineEdit Name="SearchBar" PlaceHolder="Поиск по всем товарам" HorizontalExpand="True" Margin="0 0 0 6" />
         <BoxContainer Name="MarketView" Orientation="Horizontal" HorizontalExpand="True" VerticalExpand="True">
@@ -29,7 +29,7 @@
                     <Label Name="SelectedName" Text="Выберите товар" HorizontalExpand="True" />
                     <PanelContainer Name="SelectedPreview" MinSize="96 96" Margin="0 6" />
                     <RichTextLabel Name="SelectedStats" MinHeight="28" />
-                    <BoxContainer Orientation="Horizontal" Margin="0 4">
+                    <BoxContainer Name="BuyOrderPanel" Orientation="Horizontal" Margin="0 4" Visible="False">
                         <LineEdit Name="BuyPrice" PlaceHolder="Цена заказа" HorizontalExpand="True" />
                         <Button Name="CreateBuyOrderButton" Text="Заказ" MinWidth="76" Margin="4 0 0 0" />
                     </BoxContainer>
@@ -54,7 +54,7 @@
                 <BoxContainer Name="ArchiveContainer" Orientation="Vertical" HorizontalExpand="True" />
             </BoxContainer>
         </ScrollContainer>
-        <PanelContainer Name="OfferCreationPanel" Margin="0 6 0 0">
+        <PanelContainer Name="OfferCreationPanel" Margin="0 6 0 0" Visible="False">
             <BoxContainer Orientation="Horizontal" Margin="6">
                 <RichTextLabel Name="HeldItemName" Text="Выбран: —" VerticalAlignment="Center" MinSize="260 42" SetSize="260 42" RectClipContent="True" Margin="0 0 6 0" />
                 <LineEdit Name="HeldPrice" PlaceHolder="Цена" HorizontalExpand="True" MinWidth="130" />

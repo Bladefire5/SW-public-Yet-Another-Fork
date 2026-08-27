@@ -45,17 +45,7 @@ public sealed partial class TradingSystem
         SubscribeLocalEvent<TradingComponent, TradingCancelOfferMessage>(OnCancelOffer);
         SubscribeLocalEvent<TradingComponent, TradingCollectStoredItemMessage>(OnCollectStoredItem);
         SubscribeLocalEvent<TradingComponent, TradingRequestWithdrawMessage>(OnRequestWithdraw);
-    }
-
-    public void ToggleUi(EntityUid user, EntityUid storeEnt, TradingComponent? component = null)
-    {
-        if (!Resolve(storeEnt, ref component) || !TryComp<ActorComponent>(user, out var actor))
-            return;
-
-        if (!_ui.TryToggleUi(storeEnt, TradingUiKey.Key, actor.PlayerSession))
-            return;
-
-        UpdateUserInterface(user, storeEnt, component);
+        SubscribeLocalEvent<TradingComponent, BoundUserInterfaceMessageAttempt>(OnUiMessageAttempt);
     }
 
     public void CloseUi(EntityUid uid, TradingComponent? component = null)
@@ -69,20 +59,33 @@ public sealed partial class TradingSystem
         if (!Resolve(store, ref component) || !TryGetMarket(out var market))
             return;
 
+        var isOwner = IsTradingPitOwner(user, component);
         component.MarketOffers.RemoveWhere(id => !market.Comp.Offers.ContainsKey(id));
         component.StoredMarketItems.RemoveAll(item => !Exists(item));
-        RefreshVisibleMarketItems(user, store, component, market);
-        var selectedCommodity = Comp<TradingMarketViewerComponent>(user).SelectedCommodity;
+        var viewer = EnsureComp<TradingMarketViewerComponent>(user);
+        if (!isOwner &&
+            (viewer.SelectedCommodity is not { } selected ||
+             !market.Comp.Commodities.TryGetValue(selected, out var selectedItem) ||
+             (selectedItem.Sections & TradingMarketSection.Unique) == 0))
+        {
+            viewer.SelectedCommodity = market.Comp.Commodities.Values
+                .FirstOrDefault(commodity => (commodity.Sections & TradingMarketSection.Unique) != 0)?.Id;
+            viewer.SelectedOffer = null;
+        }
+
+        RefreshVisibleMarketItems(user, store, component, market, isOwner);
+        var selectedCommodity = viewer.SelectedCommodity;
         var visibleOffers = market.Comp.Offers.Values.ToList();
         var offersByCommodity = visibleOffers.ToLookup(offer => offer.CommodityId);
 
         var items = market.Comp.Commodities.Values
+            .Where(commodity => isOwner || (commodity.Sections & TradingMarketSection.Unique) != 0)
             .Select(commodity =>
             {
                 var commodityOffers = offersByCommodity[commodity.Id].ToList();
                 var asks = commodityOffers.Where(offer => offer.Side == TradingOfferSide.Sell).ToList();
                 var bids = commodityOffers
-                    .Where(offer => offer.Side == TradingOfferSide.Buy && offer.Pit != store)
+                    .Where(offer => offer.Side == TradingOfferSide.Buy && (!isOwner || offer.Pit != store))
                     .ToList();
                 var traderBids = bids
                     .Where(offer => offer.ParticipantKind == TradingParticipantKind.Trader)
@@ -131,14 +134,14 @@ public sealed partial class TradingSystem
             .ToList();
 
         var offers = visibleOffers
-            .Where(offer => offer.CommodityId == selectedCommodity || offer.Pit == store)
+            .Where(offer => offer.CommodityId == selectedCommodity || isOwner && offer.Pit == store)
             .OrderBy(offer => offer.Product.Id)
             .ThenBy(offer => offer.Side)
             .ThenBy(offer => offer.Price)
-            .Select(offer => CreateOfferState(market, store, offer))
+            .Select(offer => CreateOfferState(market, store, offer, isOwner))
             .ToList();
 
-        var storedItems = component.StoredMarketItems
+        var storedItems = (isOwner ? component.StoredMarketItems : [])
             .Where(item => Exists(item) && MetaData(item).EntityPrototype != null)
             .Select(item =>
             {
@@ -152,22 +155,42 @@ public sealed partial class TradingSystem
             })
             .ToList();
 
-        _ui.SetUiState(
+        _ui.ServerSendUiMessage(
             store,
             TradingUiKey.Key,
-            new TradingUpdateState(
-                items,
-                offers,
-                storedItems,
-                new List<string>(component.MarketArchive),
-                component.Balance,
-                component.Currency));
+            new TradingUpdateInterfaceMessage(
+                new TradingUpdateState(
+                    items,
+                    offers,
+                    storedItems,
+                    isOwner ? new List<string>(component.MarketArchive) : [],
+                    isOwner ? component.Balance : 0,
+                    component.Currency,
+                    isOwner)),
+            user);
+    }
+
+    private void OnUiMessageAttempt(
+        Entity<TradingComponent> pit,
+        ref BoundUserInterfaceMessageAttempt args)
+    {
+        if (IsTradingPitOwner(args.Actor, pit.Comp) ||
+            args.Message is OpenBoundInterfaceMessage or
+                TradingRequestUpdateInterfaceMessage or
+                TradingSelectCommodityMessage or
+                TradingSelectOfferMessage)
+        {
+            return;
+        }
+
+        args.Cancel();
     }
 
     private TradingMarketOfferState CreateOfferState(
         Entity<TradingMarketComponent> market,
         EntityUid store,
-        TradingMarketOffer offer)
+        TradingMarketOffer offer,
+        bool isOwner)
     {
         var displayName = market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity)
             ? commodity.DisplayName
@@ -189,7 +212,7 @@ public sealed partial class TradingSystem
             offer.ParticipantKind,
             offer.ParticipantName,
             offer.Price,
-            offer.Pit == store,
+            isOwner && offer.Pit == store,
             displayName,
             preview);
     }
@@ -213,8 +236,14 @@ public sealed partial class TradingSystem
 
     private void OnSelectCommodity(EntityUid uid, TradingComponent component, TradingSelectCommodityMessage args)
     {
-        if (!TryGetMarket(out var market) || !market.Comp.Commodities.ContainsKey(args.CommodityId))
+        if (!TryGetMarket(out var market) ||
+            !market.Comp.Commodities.TryGetValue(args.CommodityId, out var commodity) ||
+            !IsTradingPitOwner(args.Actor, component) &&
+            (commodity.Sections & TradingMarketSection.Unique) == 0)
+        {
+            UpdateUserInterface(args.Actor, uid, component);
             return;
+        }
 
         var viewer = EnsureComp<TradingMarketViewerComponent>(args.Actor);
         viewer.SelectedCommodity = args.CommodityId;
@@ -227,9 +256,12 @@ public sealed partial class TradingSystem
         if (!TryGetMarket(out var market))
             return;
 
+        var isOwner = IsTradingPitOwner(args.Actor, component);
         var viewer = EnsureComp<TradingMarketViewerComponent>(args.Actor);
         if (!market.Comp.Offers.TryGetValue(args.OfferId, out var offer) ||
-            !CanSelectOffer(offer, uid, viewer.SelectedCommodity))
+            !market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity) ||
+            !isOwner && (commodity.Sections & TradingMarketSection.Unique) == 0 ||
+            !CanSelectOffer(offer, uid, viewer.SelectedCommodity, isOwner))
         {
             viewer.SelectedOffer = null;
             UpdateUserInterface(args.Actor, uid, component);
@@ -240,9 +272,13 @@ public sealed partial class TradingSystem
         UpdateUserInterface(args.Actor, uid, component);
     }
 
-    private bool CanSelectOffer(TradingMarketOffer offer, EntityUid store, Guid? selectedCommodity)
+    private bool CanSelectOffer(
+        TradingMarketOffer offer,
+        EntityUid store,
+        Guid? selectedCommodity,
+        bool isOwner)
     {
-        if (offer.Pit == store || offer.CommodityId != selectedCommodity)
+        if (isOwner && offer.Pit == store || offer.CommodityId != selectedCommodity)
             return false;
 
         if (offer.Side == TradingOfferSide.Buy ||
@@ -263,14 +299,9 @@ public sealed partial class TradingSystem
         ClearVisibleMarketItems(args.Actor);
     }
 
-    private void BeforeActivatableUiOpen(EntityUid uid, TradingComponent component, BeforeActivatableUIOpenEvent args)
-    {
-        UpdateUserInterface(args.User, uid, component);
-    }
-
     private void OnBuyRequest(EntityUid uid, TradingComponent component, TradingBuyMessage msg)
     {
-        if (!TryGetMarket(out var market))
+        if (!IsTradingPitOwner(msg.Actor, component) || !TryGetMarket(out var market))
             return;
 
         var ask = market.Comp.Offers.Values
@@ -302,7 +333,7 @@ public sealed partial class TradingSystem
 
     private void OnSellRequest(EntityUid uid, TradingComponent component, TradingSellMessage msg)
     {
-        if (!TryGetMarket(out var market))
+        if (!IsTradingPitOwner(msg.Actor, component) || !TryGetMarket(out var market))
             return;
 
         var bid = market.Comp.Offers.Values
@@ -342,7 +373,8 @@ public sealed partial class TradingSystem
 
     private void OnBuyOfferRequest(EntityUid uid, TradingComponent component, TradingBuyOfferMessage msg)
     {
-        if (!TryGetMarket(out var market) ||
+        if (!IsTradingPitOwner(msg.Actor, component) ||
+            !TryGetMarket(out var market) ||
             !market.Comp.Offers.TryGetValue(msg.OfferId, out var ask) ||
             ask.Side != TradingOfferSide.Sell ||
             ask.Pit == uid ||
@@ -367,7 +399,8 @@ public sealed partial class TradingSystem
 
     private void OnSellOfferRequest(EntityUid uid, TradingComponent component, TradingSellOfferMessage msg)
     {
-        if (!TryGetMarket(out var market) ||
+        if (!IsTradingPitOwner(msg.Actor, component) ||
+            !TryGetMarket(out var market) ||
             !market.Comp.Offers.TryGetValue(msg.OfferId, out var bid) ||
             bid.Side != TradingOfferSide.Buy ||
             bid.ParticipantKind != TradingParticipantKind.Trader ||
@@ -463,7 +496,8 @@ public sealed partial class TradingSystem
 
     private void OnCreateSellOffer(EntityUid uid, TradingComponent component, TradingCreateSellOfferMessage msg)
     {
-        if (!TryGetMarket(out var market) ||
+        if (!IsTradingPitOwner(msg.Actor, component) ||
+            !TryGetMarket(out var market) ||
             !_hands.TryGetActiveItem(msg.Actor, out var held) ||
             held is not { } item ||
             !TryCreateTraderSellOffer(
@@ -487,7 +521,8 @@ public sealed partial class TradingSystem
 
     private void OnCreateBuyOffer(EntityUid uid, TradingComponent component, TradingCreateBuyOfferMessage msg)
     {
-        if (!TryGetMarket(out var market) ||
+        if (!IsTradingPitOwner(msg.Actor, component) ||
+            !TryGetMarket(out var market) ||
             !market.Comp.Commodities.TryGetValue(msg.CommodityId, out var commodity) ||
             !CreateTraderBuyOffer(
                 market,
@@ -508,7 +543,7 @@ public sealed partial class TradingSystem
         TradingComponent component,
         TradingCreateBuyOfferFromHeldMessage msg)
     {
-        if (!TryGetMarket(out var market))
+        if (!IsTradingPitOwner(msg.Actor, component) || !TryGetMarket(out var market))
             return;
 
         var config = _prototypeManager.Index(market.Comp.Config);
@@ -543,7 +578,8 @@ public sealed partial class TradingSystem
 
     private void OnCancelOffer(EntityUid uid, TradingComponent component, TradingCancelOfferMessage msg)
     {
-        if (!TryGetMarket(out var market) ||
+        if (!IsTradingPitOwner(msg.Actor, component) ||
+            !TryGetMarket(out var market) ||
             !market.Comp.Offers.TryGetValue(msg.OfferId, out var offer) ||
             offer.Pit != uid)
         {
@@ -561,6 +597,9 @@ public sealed partial class TradingSystem
 
     private void OnCollectStoredItem(EntityUid uid, TradingComponent component, TradingCollectStoredItemMessage msg)
     {
+        if (!IsTradingPitOwner(msg.Actor, component))
+            return;
+
         var item = GetEntity(msg.Item);
         if (!Exists(item) || !component.StoredMarketItems.Contains(item))
             return;
@@ -804,7 +843,8 @@ public sealed partial class TradingSystem
         EntityUid user,
         EntityUid store,
         TradingComponent component,
-        Entity<TradingMarketComponent> market)
+        Entity<TradingMarketComponent> market,
+        bool isOwner)
     {
         if (!TryComp<ActorComponent>(user, out var actor))
             return;
@@ -825,13 +865,16 @@ public sealed partial class TradingSystem
             .Select(item => item!.Value)
             .ToHashSet();
 
-        desired.UnionWith(market.Comp.Offers.Values
-            .Where(offer => offer.Pit == store && offer.Item is { } item && Exists(item))
-            .Select(offer => offer.Item!.Value));
+        if (isOwner)
+        {
+            desired.UnionWith(market.Comp.Offers.Values
+                .Where(offer => offer.Pit == store && offer.Item is { } item && Exists(item))
+                .Select(offer => offer.Item!.Value));
+        }
 
         if (viewer.SelectedOffer is { } selectedOffer &&
             market.Comp.Offers.TryGetValue(selectedOffer, out var offer) &&
-            CanSelectOffer(offer, store, viewer.SelectedCommodity))
+            CanSelectOffer(offer, store, viewer.SelectedCommodity, isOwner))
         {
             if (offer.Item is { } selectedItem && Exists(selectedItem))
                 desired.Add(selectedItem);
@@ -841,7 +884,8 @@ public sealed partial class TradingSystem
             viewer.SelectedOffer = null;
         }
 
-        desired.UnionWith(component.StoredMarketItems.Where(Exists));
+        if (isOwner)
+            desired.UnionWith(component.StoredMarketItems.Where(Exists));
 
         foreach (var item in viewer.VisibleItems.Except(desired).ToList())
         {
@@ -876,7 +920,7 @@ public sealed partial class TradingSystem
 
     private void OnRequestWithdraw(EntityUid uid, TradingComponent component, TradingRequestWithdrawMessage msg)
     {
-        if (msg.Amount <= 0 || component.Balance < msg.Amount)
+        if (!IsTradingPitOwner(msg.Actor, component) || msg.Amount <= 0 || component.Balance < msg.Amount)
             return;
 
         if (!_prototypeManager.TryIndex(component.Currency, out var prototype) ||

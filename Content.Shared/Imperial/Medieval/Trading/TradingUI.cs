@@ -33,6 +33,12 @@ public enum TradingParticipantKind : byte
 }
 
 [Serializable, NetSerializable]
+public sealed class TradingRequestOpenUiMessage(NetEntity pit) : EntityEventArgs
+{
+    public NetEntity Pit = pit;
+}
+
+[Serializable, NetSerializable]
 public sealed class TradingMarketItemState
 {
     public Guid CommodityId;
@@ -158,6 +164,7 @@ public sealed class TradingUpdateState : BoundUserInterfaceState
     public List<string> Archive;
     public int Balance;
     public ProtoId<CurrencyPrototype> Currency;
+    public bool IsOwner;
 
     public TradingUpdateState(
         List<TradingMarketItemState> items,
@@ -165,7 +172,8 @@ public sealed class TradingUpdateState : BoundUserInterfaceState
         List<TradingStoredItemState> storedItems,
         List<string> archive,
         int balance,
-        ProtoId<CurrencyPrototype> currency)
+        ProtoId<CurrencyPrototype> currency,
+        bool isOwner)
     {
         Items = items;
         Offers = offers;
@@ -173,7 +181,14 @@ public sealed class TradingUpdateState : BoundUserInterfaceState
         Archive = archive;
         Balance = balance;
         Currency = currency;
+        IsOwner = isOwner;
     }
+}
+
+[Serializable, NetSerializable]
+public sealed class TradingUpdateInterfaceMessage(TradingUpdateState state) : BoundUserInterfaceMessage
+{
+    public TradingUpdateState State = state;
 }
 
 [Serializable, NetSerializable]

@@ -30,9 +30,6 @@ public sealed partial class TradingComponent : Component
 
     public List<string> MarketArchive = new();
 
-    [ViewVariables(VVAccess.ReadWrite), DataField]
-    public bool OwnerOnly;
-
     [DataField]
     public SoundSpecifier BuySuccessSound = new SoundPathSpecifier("/Audio/Effects/kaching.ogg");
 }

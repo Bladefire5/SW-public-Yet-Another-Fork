@@ -3,7 +3,7 @@ using Robust.Server.GameObjects;
 using Content.Shared.Imperial.SpawnOnAction.Components;
 using Content.Server.Actions;
 using Content.Shared.Imperial.Medieval.Trading;
-using Content.Shared.Mind;
+using Content.Server.Imperial.Medieval.Trading;
 
 namespace Content.Server.Imperial.SpawnOnAction.Systems;
 
@@ -11,7 +11,7 @@ public sealed partial class SpawnOnActionSystem : EntitySystem
 {
     [Dependency] private readonly ActionsSystem _actions = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
-    [Dependency] private readonly SharedMindSystem _mind = default!;
+    [Dependency] private readonly TradingSystem _trading = default!;
     public override void Initialize()
     {
         base.Initialize();
@@ -38,13 +38,8 @@ public sealed partial class SpawnOnActionSystem : EntitySystem
             );
         }
 
-        // не лучшее место для этого, но компонент в любом случае используется
-        // только для торговой дыры
-        if (TryComp<TradingComponent>(comp.Object, out var trading) &&
-            _mind.TryGetMind(ev.Performer, out var mindId, out _))
-        {
-            trading.AccountOwner = mindId;
-        }
+        if (TryComp<TradingComponent>(comp.Object, out var trading))
+            _trading.BindTradingPit((comp.Object.Value, trading), uid);
 
         ev.Handled = true;
     }

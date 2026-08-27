@@ -79,6 +79,15 @@ public sealed partial class TradingMenu : DefaultWindow
     public void UpdateState(TradingUpdateState state)
     {
         _state = state;
+        if (!state.IsOwner)
+        {
+            _section = TradingMarketSection.Unique;
+            _category = null;
+            _management = false;
+            _archive = false;
+            _withdrawWindow?.Close();
+        }
+
         UpdateBalance();
         RebuildCategories();
 
@@ -143,13 +152,27 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void UpdateSectionVisibility()
     {
+        if (_state is not { IsOwner: true })
+        {
+            _section = TradingMarketSection.Unique;
+            _management = false;
+            _archive = false;
+        }
+
         var marketVisible = !_management && !_archive;
         MarketView.Visible = marketVisible;
         ManagementView.Visible = _management;
         ArchiveView.Visible = _archive;
         SearchBar.Visible = marketVisible;
-        OfferCreationPanel.Visible = marketVisible;
-        CategoryPanel.Visible = marketVisible && _section == TradingMarketSection.Common;
+        BalancePanel.Visible = _state?.IsOwner == true;
+        CommonButton.Visible = _state?.IsOwner == true;
+        ManagementButton.Visible = _state?.IsOwner == true;
+        ArchiveButton.Visible = _state?.IsOwner == true;
+        OfferCreationPanel.Visible = marketVisible && _state?.IsOwner == true;
+        BuyOrderPanel.Visible = _state?.IsOwner == true;
+        CategoryPanel.Visible = marketVisible &&
+                                _state?.IsOwner == true &&
+                                _section == TradingMarketSection.Common;
     }
 
     private void UpdateBalance()
@@ -314,7 +337,9 @@ public sealed partial class TradingMenu : DefaultWindow
         var buy = new Button
         {
             Text = item.LowestSellPrice?.ToString() ?? "—",
-            Disabled = item.LowestSellPrice == null || item.LowestSellPrice > _state!.Balance,
+            Disabled = !_state!.IsOwner ||
+                       item.LowestSellPrice == null ||
+                       item.LowestSellPrice > _state.Balance,
             HorizontalExpand = true,
             StyleBoxOverride = CreateActionButtonStyle("#c79612", "#f0d36f"),
         };
@@ -326,7 +351,7 @@ public sealed partial class TradingMenu : DefaultWindow
             var sell = new Button
             {
                 Text = item.HighestBuyPrice?.ToString() ?? "—",
-                Disabled = item.HighestBuyPrice == null,
+                Disabled = !_state.IsOwner || item.HighestBuyPrice == null,
                 HorizontalExpand = true,
                 Margin = new Thickness(4, 0, 0, 0),
                 StyleBoxOverride = CreateActionButtonStyle("#b13a3a", "#e66b63"),
@@ -396,7 +421,7 @@ public sealed partial class TradingMenu : DefaultWindow
         }
         SelectedStats.SetMarkup(
             $"Лоты: {item.SellOfferCount} · Заказы: {item.BuyOfferCount}");
-        CreateBuyOrderButton.Disabled = false;
+        CreateBuyOrderButton.Disabled = !_state.IsOwner;
 
         var offers = _state.Offers
             .Where(offer => offer.CommodityId == item.CommodityId)
@@ -460,7 +485,8 @@ public sealed partial class TradingMenu : DefaultWindow
                 {
                     Text = offer.Price.ToString(),
                     MinWidth = 76,
-                    Disabled = offer.IsOwn ||
+                    Disabled = !_state.IsOwner ||
+                               offer.IsOwn ||
                                offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
                     StyleBoxOverride = offer.Side == TradingOfferSide.Sell
                         ? CreateActionButtonStyle("#c79612", "#f0d36f")
@@ -489,7 +515,7 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void CreateSelectedBuyOrder()
     {
-        if (_selected == null)
+        if (_state is not { IsOwner: true } || _selected == null)
             return;
 
         if (!TryParsePrice(BuyPrice.Text, out var price))
@@ -720,7 +746,7 @@ public sealed partial class TradingMenu : DefaultWindow
     {
         var itemName = "—";
         var canOffer = false;
-        if (_state != null &&
+        if (_state is { IsOwner: true } &&
             _entities.System<HandsSystem>().GetActiveHandEntity() is { } held &&
             _entities.EntityExists(held) &&
             !_entities.HasComponent<VirtualItemComponent>(held) &&
@@ -752,7 +778,7 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void OpenWithdrawWindow()
     {
-        if (_state == null || _currency == null)
+        if (_state is not { IsOwner: true } || _currency == null)
             return;
 
         if (_withdrawWindow is { IsOpen: true })

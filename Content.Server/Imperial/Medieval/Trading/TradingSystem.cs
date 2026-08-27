@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Content.Server.Popups;
 using Content.Server.Stack;
+using Content.Shared.ActionBlocker;
 using Content.Shared.FixedPoint;
 using Content.Shared.GameTicking;
 using Content.Shared.Imperial.Medieval.Trading;
@@ -30,6 +31,8 @@ public sealed partial class TradingSystem : EntitySystem
     [Dependency] private readonly SharedContainerSystem _containers = default!;
     [Dependency] private readonly StackSystem _stack = default!;
     [Dependency] private readonly TagSystem _tags = default!;
+    [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
+    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
 
     private EntityUid? _market;
     private CancellationTokenSource? _marketUpdateCancellation;
@@ -39,12 +42,12 @@ public sealed partial class TradingSystem : EntitySystem
         base.Initialize();
 
         SubscribeLocalEvent<TradingComponent, ActivatableUIOpenAttemptEvent>(OnStoreOpenAttempt);
-        SubscribeLocalEvent<TradingComponent, BeforeActivatableUIOpenEvent>(BeforeActivatableUiOpen);
         SubscribeLocalEvent<TradingComponent, EntityTerminatingEvent>(OnTradingPitTerminating);
         SubscribeLocalEvent<MedievalCurrencyComponent, AfterInteractEvent>(OnAfterInteract);
         SubscribeLocalEvent<RoundStartedEvent>(OnRoundStart);
         SubscribeLocalEvent<RoundEndedEvent>(OnRoundEnd);
         SubscribeLocalEvent<RoundRestartCleanupEvent>(OnRoundRestart);
+        SubscribeNetworkEvent<TradingRequestOpenUiMessage>(OnTradingOpenRequest);
 
         InitializeUi();
     }
@@ -141,30 +144,53 @@ public sealed partial class TradingSystem : EntitySystem
 
     private void OnStoreOpenAttempt(EntityUid uid, TradingComponent component, ActivatableUIOpenAttemptEvent args)
     {
-        if (!_mind.TryGetMind(args.User, out var mindId, out _))
+        args.Cancel();
+    }
+
+    private void OnTradingOpenRequest(TradingRequestOpenUiMessage message, EntitySessionEventArgs args)
+    {
+        if (args.SenderSession.AttachedEntity is not { } user ||
+            !TryGetEntity(message.Pit, out var pit) ||
+            !TryComp<TradingComponent>(pit, out var component) ||
+            !TryComp<ActivatableUIComponent>(pit, out var activatable) ||
+            !_actionBlocker.CanInteract(user, pit.Value) ||
+            activatable.RequiresComplex && !_actionBlocker.CanComplexInteract(user) ||
+            !_interaction.InRangeUnobstructed(user, pit.Value))
         {
-            args.Cancel();
             return;
         }
 
-        if (component.AccountOwner != null && component.AccountOwner != mindId &&
-            (!_mind.TryGetMind(component.AccountOwner.Value, out var previousMind, out _) || previousMind != mindId))
+        _containers.EnsureContainer<Robust.Shared.Containers.Container>(pit.Value, TradingComponent.MarketContainerId);
+
+        _ui.OpenUi(pit.Value, TradingUiKey.Key, args.SenderSession);
+        UpdateUserInterface(user, pit.Value, component);
+    }
+
+    internal bool IsTradingPitOwner(EntityUid user, TradingComponent component)
+    {
+        return component.AccountOwner is { } owner &&
+               _mind.TryGetMind(user, out var mindId, out _) &&
+               owner == mindId;
+    }
+
+    public bool BindTradingPit(Entity<TradingComponent?> pit, EntityUid trader)
+    {
+        if (!Resolve(pit.Owner, ref pit.Comp) ||
+            !_mind.TryGetMind(trader, out var mindId, out _))
         {
-            if (component.OwnerOnly)
-            {
-                _popup.PopupEntity(Loc.GetString("store-not-account-owner", ("store", uid)), uid, args.User);
-                args.Cancel();
-                return;
-            }
+            return false;
         }
 
-        component.AccountOwner = mindId;
-        _containers.EnsureContainer<Robust.Shared.Containers.Container>(uid, TradingComponent.MarketContainerId);
+        pit.Comp.AccountOwner = mindId;
+        return true;
     }
 
     private void OnAfterInteract(EntityUid uid, MedievalCurrencyComponent component, AfterInteractEvent args)
     {
-        if (args.Handled || !args.CanReach || !TryComp<TradingComponent>(args.Target, out var store))
+        if (args.Handled ||
+            !args.CanReach ||
+            !TryComp<TradingComponent>(args.Target, out var store) ||
+            !IsTradingPitOwner(args.User, store))
             return;
 
         if (!TryAddCurrency((uid, component), (args.Target.Value, store)))

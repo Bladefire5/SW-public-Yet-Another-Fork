@@ -98,7 +98,7 @@
       enum.TradingUiKey.Key:
         type: TradingBoundUserInterface
   - type: ActivatableUI
-    singleUser: true
+    singleUser: false
     key: enum.TradingUiKey.Key
     # трейдинг указывать здесь
   - type: Trading
@@ -116,11 +116,6 @@
     # должно совпадать с currency во всех guildTypes
     currency: Revent
     balance: 0
-    # может ли эту дыру открывать только её владелец
-    # сейчас включено, при необходимости выключить
-    # нужно создать прототип личной торговой дыры (?)
-    # все остальные ограничения по типу дыры для легиона настраиваются также, как раньше
-    ownerOnly: true
   - type: AntiRottingContainer
   - type: TradingPitCollect
   - type: TrashDefendArea
