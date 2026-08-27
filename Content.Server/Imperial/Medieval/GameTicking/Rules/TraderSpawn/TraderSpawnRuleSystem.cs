@@ -10,9 +10,9 @@ using Content.Shared.GameTicking.Components;
 using Robust.Server.GameObjects;
 using Robust.Shared.Player;
 
-namespace Content.Server.Imperial.Medieval.GameTicking.Rules.SouthernTraderSpawn;
+namespace Content.Server.Imperial.Medieval.GameTicking.Rules.TraderSpawn;
 
-public sealed class SouthernTraderSpawnRuleSystem : GameRuleSystem<SouthernTraderSpawnRuleComponent>
+public sealed class TraderSpawnRuleSystem : GameRuleSystem<TraderSpawnRuleComponent>
 {
     [Dependency] private readonly IAdminLogManager _adminLog = default!;
     [Dependency] private readonly MindSystem _mind = default!;
@@ -24,7 +24,7 @@ public sealed class SouthernTraderSpawnRuleSystem : GameRuleSystem<SouthernTrade
 
     protected override void Started(
         EntityUid uid,
-        SouthernTraderSpawnRuleComponent component,
+        TraderSpawnRuleComponent component,
         GameRuleComponent gameRule,
         GameRuleStartedEvent args)
     {

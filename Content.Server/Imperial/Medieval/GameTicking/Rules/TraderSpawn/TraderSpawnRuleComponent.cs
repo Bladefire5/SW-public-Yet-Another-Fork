@@ -1,10 +1,10 @@
 using Content.Shared.Roles;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server.Imperial.Medieval.GameTicking.Rules.SouthernTraderSpawn;
+namespace Content.Server.Imperial.Medieval.GameTicking.Rules.TraderSpawn;
 
 [RegisterComponent]
-public sealed partial class SouthernTraderSpawnRuleComponent : Component
+public sealed partial class TraderSpawnRuleComponent : Component
 {
     [DataField(required: true)]
     public ProtoId<JobPrototype> Job;
