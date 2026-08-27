@@ -1654,7 +1654,7 @@
     resourceCount: 2
 
 - type: entity
-  
+  name: dagger
   parent: [ BaseKnife, BaseDaggerCharged ]
   id: MedievalDaggerT3
   description: A deadly knife intended for melee confrontations.
