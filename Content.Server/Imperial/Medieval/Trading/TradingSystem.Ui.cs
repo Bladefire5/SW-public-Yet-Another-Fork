@@ -4,6 +4,7 @@ using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 using Content.Shared.Inventory;
+using Content.Shared.Popups;
 using Content.Shared.Stacks;
 using Content.Shared.Store;
 using Content.Shared.Storage;
@@ -318,7 +319,7 @@ public sealed partial class TradingSystem
         }
 
         MatchCommodity(market, commodity, _prototypeManager.Index(market.Comp.Config));
-        _audio.PlayEntity(component.BuySuccessSound, msg.Actor, uid);
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-purchase-success");
         UpdateAllInterfaces(market);
     }
 
@@ -358,7 +359,7 @@ public sealed partial class TradingSystem
         }
 
         MatchCommodity(market, commodity, _prototypeManager.Index(market.Comp.Config));
-        _audio.PlayEntity(component.BuySuccessSound, msg.Actor, uid);
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-sale-success");
         UpdateAllInterfaces(market);
     }
 
@@ -384,7 +385,7 @@ public sealed partial class TradingSystem
         }
 
         CompleteTrade(market, commodity, ask, bid, _prototypeManager.Index(market.Comp.Config));
-        _audio.PlayEntity(component.BuySuccessSound, msg.Actor, uid);
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-purchase-success");
         UpdateAllInterfaces(market);
     }
 
@@ -468,7 +469,7 @@ public sealed partial class TradingSystem
         }
 
         CompleteTrade(market, commodity, ask, bid, _prototypeManager.Index(market.Comp.Config));
-        _audio.PlayEntity(component.BuySuccessSound, msg.Actor, uid);
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-sale-success");
         UpdateAllInterfaces(market);
     }
 
@@ -487,9 +488,10 @@ public sealed partial class TradingSystem
 
     private void OnCreateSellOffer(EntityUid uid, TradingComponent component, TradingCreateSellOfferMessage msg)
     {
-        if (!IsTradingPitOwner(msg.Actor, component) ||
-            !TryGetMarket(out var market) ||
-            !_hands.TryGetActiveItem(msg.Actor, out var held) ||
+        if (!IsTradingPitOwner(msg.Actor, component) || !TryGetMarket(out var market))
+            return;
+
+        if (!_hands.TryGetActiveItem(msg.Actor, out var held) ||
             held is not { } item ||
             !TryCreateTraderSellOffer(
                 market,
@@ -500,6 +502,10 @@ public sealed partial class TradingSystem
                 msg.Price,
                 out var commodityId))
         {
+            _popup.PopupCursor(
+                Loc.GetString("trading-ui-invalid-sell-offer"),
+                msg.Actor,
+                PopupType.SmallCaution);
             return;
         }
 
@@ -507,6 +513,7 @@ public sealed partial class TradingSystem
             return;
 
         MatchCommodity(market, commodity, _prototypeManager.Index(market.Comp.Config));
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-sell-offer-created");
         UpdateAllInterfaces(market);
     }
 
@@ -526,6 +533,7 @@ public sealed partial class TradingSystem
         }
 
         MatchCommodity(market, commodity, _prototypeManager.Index(market.Comp.Config));
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-buy-order-created");
         UpdateAllInterfaces(market);
     }
 
@@ -564,6 +572,7 @@ public sealed partial class TradingSystem
         }
 
         MatchCommodity(market, commodity, config);
+        ShowTradingSuccess(msg.Actor, uid, component, "trading-ui-buy-order-created");
         UpdateAllInterfaces(market);
     }
 
@@ -943,5 +952,15 @@ public sealed partial class TradingSystem
 
         component.Balance -= msg.Amount;
         UpdateUserInterface(msg.Actor, uid, component);
+    }
+
+    private void ShowTradingSuccess(
+        EntityUid actor,
+        EntityUid pit,
+        TradingComponent component,
+        string message)
+    {
+        _popup.PopupCursor(Loc.GetString(message), actor);
+        _audio.PlayEntity(component.BuySuccessSound, actor, pit);
     }
 }

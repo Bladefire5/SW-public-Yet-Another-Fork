@@ -1,20 +1,21 @@
 <DefaultWindow
     xmlns="https://spacestation14.io"
-    Title="Рынок гильдий"
-    MinSize="900 620"
-    SetSize="1120 760">
+    Title="{Loc trading-ui-window-title}"
+    MinSize="940 620"
+    SetSize="1160 760">
     <BoxContainer Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True" Margin="6">
         <BoxContainer Name="BalancePanel" Orientation="Horizontal" Margin="0 0 0 6" Visible="False">
             <RichTextLabel Name="BalanceInfo" HorizontalExpand="True" />
-            <Button Name="WithdrawButton" Text="Снять средства" MinWidth="140" />
+            <Button Name="HelpButton" Text="{Loc trading-ui-help-button}" MinWidth="100" Margin="0 0 6 0" />
+            <Button Name="WithdrawButton" Text="{Loc trading-ui-withdraw-button}" MinWidth="140" />
         </BoxContainer>
         <BoxContainer Orientation="Horizontal" Margin="0 0 0 6">
-            <Button Name="CommonButton" Text="Общие" MinWidth="140" Visible="False" />
-            <Button Name="UniqueButton" Text="Уникальные" MinWidth="140" Margin="6 0 0 0" />
-            <Button Name="ManagementButton" Text="Управление заказами" MinWidth="210" Margin="6 0 0 0" Visible="False" />
-            <Button Name="ArchiveButton" Text="Архив" MinWidth="140" Margin="6 0 0 0" Visible="False" />
+            <Button Name="CommonButton" Text="{Loc trading-ui-common-button}" MinWidth="140" Visible="False" />
+            <Button Name="UniqueButton" Text="{Loc trading-ui-unique-button}" MinWidth="140" Margin="6 0 0 0" />
+            <Button Name="ManagementButton" Text="{Loc trading-ui-management-button}" MinWidth="210" Margin="6 0 0 0" Visible="False" />
+            <Button Name="ArchiveButton" Text="{Loc trading-ui-archive-button}" MinWidth="140" Margin="6 0 0 0" Visible="False" />
         </BoxContainer>
-        <LineEdit Name="SearchBar" PlaceHolder="Поиск по всем товарам" HorizontalExpand="True" Margin="0 0 0 6" />
+        <LineEdit Name="SearchBar" PlaceHolder="{Loc trading-ui-market-search-placeholder}" HorizontalExpand="True" Margin="0 0 0 6" />
         <BoxContainer Name="MarketView" Orientation="Horizontal" HorizontalExpand="True" VerticalExpand="True">
             <PanelContainer Name="CategoryPanel" MinWidth="160" Margin="0 0 6 0">
                 <ScrollContainer HScrollEnabled="False" VerticalExpand="True">
@@ -26,14 +27,14 @@
             </ScrollContainer>
             <PanelContainer MinWidth="350" MaxWidth="430">
                 <BoxContainer Orientation="Vertical" Margin="8" VerticalExpand="True">
-                    <Label Name="SelectedName" Text="Выберите товар" HorizontalExpand="True" />
+                    <Label Name="SelectedName" Text="{Loc trading-ui-select-item}" HorizontalExpand="True" />
                     <PanelContainer Name="SelectedPreview" MinSize="96 96" Margin="0 6" />
                     <RichTextLabel Name="SelectedStats" MinHeight="28" />
                     <BoxContainer Name="BuyOrderPanel" Orientation="Horizontal" Margin="0 4" Visible="False">
-                        <LineEdit Name="BuyPrice" PlaceHolder="Цена заказа" HorizontalExpand="True" />
-                        <Button Name="CreateBuyOrderButton" Text="Заказ" MinWidth="76" Margin="4 0 0 0" />
+                        <LineEdit Name="BuyPrice" PlaceHolder="{Loc trading-ui-buy-price-placeholder}" HorizontalExpand="True" />
+                        <Button Name="CreateBuyOrderButton" Text="{Loc trading-ui-create-buy-order-button}" MinWidth="76" Margin="4 0 0 0" />
                     </BoxContainer>
-                    <Label Text="Заявки рынка" Margin="0 4" />
+                    <Label Text="{Loc trading-ui-market-offers-title}" Margin="0 4" />
                     <ScrollContainer HScrollEnabled="False" VerticalExpand="True">
                         <BoxContainer Name="OffersContainer" Orientation="Vertical" HorizontalExpand="True" />
                     </ScrollContainer>
@@ -42,24 +43,24 @@
         </BoxContainer>
         <ScrollContainer Name="ManagementView" HScrollEnabled="False" HorizontalExpand="True" VerticalExpand="True" Visible="False">
             <BoxContainer Orientation="Vertical" HorizontalExpand="True">
-                <Label Text="Активные лоты и заказы" Margin="4" />
+                <Label Text="{Loc trading-ui-active-offers-title}" Margin="4" />
                 <BoxContainer Name="ManagedOffersContainer" Orientation="Vertical" HorizontalExpand="True" />
-                <Label Text="Предметы, полученные по заказам" Margin="4 12 4 4" />
+                <Label Text="{Loc trading-ui-stored-items-title}" Margin="4 12 4 4" />
                 <BoxContainer Name="StoredItemsContainer" Orientation="Vertical" HorizontalExpand="True" />
             </BoxContainer>
         </ScrollContainer>
         <ScrollContainer Name="ArchiveView" HScrollEnabled="False" HorizontalExpand="True" VerticalExpand="True" Visible="False">
             <BoxContainer Orientation="Vertical" HorizontalExpand="True">
-                <Label Text="Архив сделок" Margin="4" />
+                <Label Text="{Loc trading-ui-archive-title}" Margin="4" />
                 <BoxContainer Name="ArchiveContainer" Orientation="Vertical" HorizontalExpand="True" />
             </BoxContainer>
         </ScrollContainer>
         <PanelContainer Name="OfferCreationPanel" Margin="0 6 0 0" Visible="False">
             <BoxContainer Orientation="Horizontal" Margin="6">
-                <RichTextLabel Name="HeldItemName" Text="Выбран: —" VerticalAlignment="Center" MinSize="260 42" SetSize="260 42" RectClipContent="True" Margin="0 0 6 0" />
-                <LineEdit Name="HeldPrice" PlaceHolder="Цена" HorizontalExpand="True" MinWidth="130" />
-                <Button Name="CreateSellOfferButton" Text="Выставить лот" MinWidth="130" />
-                <Button Name="CreateHeldBuyOrderButton" Text="Создать заказ по образцу" MinWidth="190" Margin="6 0 0 0" />
+                <RichTextLabel Name="HeldItemName" Text="{Loc trading-ui-held-item-none}" VerticalAlignment="Center" MinSize="260 42" SetSize="260 42" RectClipContent="True" Margin="0 0 6 0" />
+                <LineEdit Name="HeldPrice" PlaceHolder="{Loc trading-ui-price-placeholder}" HorizontalExpand="True" MinWidth="130" />
+                <Button Name="CreateSellOfferButton" Text="{Loc trading-ui-create-sell-offer-button}" MinWidth="130" />
+                <Button Name="CreateHeldBuyOrderButton" Text="{Loc trading-ui-create-sample-order-button}" MinWidth="190" Margin="6 0 0 0" />
             </BoxContainer>
         </PanelContainer>
     </BoxContainer>

@@ -24,6 +24,8 @@ public sealed class TradingCommodity
     public float Demand;
     public float Supply;
     public int MinReputation;
+    public int InitialScarcitySteps;
+    public int RemainingScarcitySteps;
     public int BaselineStackCount = 1;
     public bool HasStack;
     public bool Permanent;
@@ -43,6 +45,7 @@ public sealed class TradingMarketOffer
     public TradingParticipantKind ParticipantKind;
     public string ParticipantName = string.Empty;
     public int Price;
+    public int MarketPrice;
     public Guid? GuildId;
     public EntityUid? Pit;
     public EntityUid? ImmediateRecipient;

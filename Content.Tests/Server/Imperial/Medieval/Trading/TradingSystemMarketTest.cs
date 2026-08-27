@@ -12,52 +12,73 @@ namespace Content.Tests.Server.Imperial.Medieval.Trading;
 public sealed class TradingSystemMarketTest
 {
     [Test]
-    public void GuildSellOfferCreationChanceIncreasesWhenSupplyFalls()
+    public void SignedMarketValuesMoveGuildPricesInRequiredDirections()
     {
-        Assert.That(TradingSystem.GetGuildSellOfferCreationChance(0.1f, 50f, 25f), Is.EqualTo(0.05f));
-        Assert.That(TradingSystem.GetGuildSellOfferCreationChance(0.1f, 25f, 25f), Is.EqualTo(0.1f));
-        Assert.That(TradingSystem.GetGuildSellOfferCreationChance(0.1f, 12.5f, 25f), Is.EqualTo(0.2f));
-        Assert.That(TradingSystem.GetGuildSellOfferCreationChance(0.1f, 0f, 25f), Is.EqualTo(0.2f));
+        var config = new TradingMarketConfigPrototype();
+
+        Assert.That(
+            TradingSystem.GetGuildPriceCenterFactor(TradingOfferSide.Sell, 0f, -1f, config),
+            Is.LessThan(1f));
+        Assert.That(
+            TradingSystem.GetGuildPriceCenterFactor(TradingOfferSide.Sell, 0f, 1f, config),
+            Is.GreaterThan(1f));
+        Assert.That(
+            TradingSystem.GetGuildPriceCenterFactor(TradingOfferSide.Buy, -1f, 0f, config),
+            Is.GreaterThan(1f));
+        Assert.That(
+            TradingSystem.GetGuildPriceCenterFactor(TradingOfferSide.Buy, 1f, 0f, config),
+            Is.LessThan(1f));
     }
 
     [Test]
-    public void GuildBuyOrderCreationChanceIncreasesWhenDemandFalls()
+    public void OfferContributionUsesSignedGoldPriceComparison()
     {
-        Assert.That(TradingSystem.GetGuildBuyOrderCreationChance(0.05f, 100f, 50f), Is.EqualTo(0.025f));
-        Assert.That(TradingSystem.GetGuildBuyOrderCreationChance(0.05f, 50f, 50f), Is.EqualTo(0.05f));
-        Assert.That(TradingSystem.GetGuildBuyOrderCreationChance(0.05f, 25f, 50f), Is.EqualTo(0.1f));
-        Assert.That(TradingSystem.GetGuildBuyOrderCreationChance(0.05f, 0f, 50f), Is.EqualTo(0.1f));
+        Assert.That(
+            TradingSystem.GetOfferContributionFactor(TradingOfferSide.Sell, 100, 50),
+            Is.GreaterThan(0f));
+        Assert.That(
+            TradingSystem.GetOfferContributionFactor(TradingOfferSide.Sell, 100, 200),
+            Is.LessThan(0f));
+        Assert.That(
+            TradingSystem.GetOfferContributionFactor(TradingOfferSide.Buy, 100, 50),
+            Is.LessThan(0f));
+        Assert.That(
+            TradingSystem.GetOfferContributionFactor(TradingOfferSide.Buy, 100, 200),
+            Is.GreaterThan(0f));
     }
 
-    [TestCase(12, 10)]
-    [TestCase(220, 10)]
-    [TestCase(1600, 10)]
-    [TestCase(100, 15)]
-    public void ReputationScarcityRecoversAtConfiguredExpectedTime(int price, int reputation)
+    [TestCase(30f, 6)]
+    [TestCase(31f, 6)]
+    [TestCase(60f, 3)]
+    [TestCase(200f, 1)]
+    public void ReputationScarcityStepCountNeverEndsBeforeConfiguredTime(float stepInterval, int expected)
     {
-        var config = new TradingMarketConfigPrototype();
+        var config = new TradingMarketConfigPrototype
+        {
+            StepInterval = stepInterval,
+        };
+
+        Assert.That(TradingSystem.GetReputationScarcityStepsPerPoint(config), Is.EqualTo(expected));
+    }
+
+    [TestCase(10, 60, 60, 10f)]
+    [TestCase(10, 60, 30, 5.5f)]
+    [TestCase(10, 60, 0, 1f)]
+    [TestCase(15, 90, 90, 14.5f)]
+    public void ReputationScarcityPriceMultiplierUsesRemainingSteps(
+        int reputation,
+        int initialSteps,
+        int remainingSteps,
+        float expected)
+    {
         var commodity = new TradingCommodity
         {
-            StandardPrice = price,
             MinReputation = reputation,
+            InitialScarcitySteps = initialSteps,
+            RemainingScarcitySteps = remainingSteps,
         };
-        var target = TradingSystem.GetReputationScarcityRecoveryStepTarget(commodity, config);
-        var state = TradingSystem.GetReputationScarcityInitialState(commodity, config);
-        var initialFactor = TradingSystem.GetExpectedReputationScarcityPriceFactor(
-            commodity,
-            config,
-            state.Demand,
-            state.Supply,
-            0);
-        var factor = TradingSystem.GetExpectedReputationScarcityPriceFactor(
-            commodity,
-            config,
-            state.Demand,
-            state.Supply,
-            target);
 
-        Assert.That(initialFactor, Is.EqualTo(reputation).Within(0.01f));
-        Assert.That(factor, Is.EqualTo(1f).Within(0.01f));
+        Assert.That(TradingSystem.GetReputationScarcityPriceMultiplier(commodity), Is.EqualTo(expected));
     }
 
     [Test]

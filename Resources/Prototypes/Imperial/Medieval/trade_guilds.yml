@@ -10,8 +10,8 @@
   blockedTraderItemTags:
   - MedievalRevent
   stepInterval: 30
-  initialDemand: 50
-  initialSupply: 25
+  initialDemand: 0
+  initialSupply: 0
   reputationScarcityMinutesPerPoint: 3
   liquidityReferencePrice: 5
   liquidityReferenceOfferCount: 60
@@ -19,7 +19,7 @@
   minimumGuildOfferCount: 2
   maximumGuildOfferCount: 120
   guildSellOfferChance: 0.1
-  guildBuyOrderChance: 0.05
+  guildBuyOrderChance: 0.1
   maximumGuildSellOfferCount: 200
   maximumGuildBuyOrderCount: 100
   guildSellOfferRemovalChance: 0.01
@@ -27,10 +27,7 @@
   marketImpactReferenceOfferCount: 6
   supplyPlacementImpact: 3
   demandPlacementImpact: 3
-  supplyTradeImpact: 1
-  demandTradeImpact: 2
-  priceRatioSlope: 1.3
-  priceSaturationFloor: 1
+  pricePressure: 1.3
   priceSpread: 0.12
   priceNoise: 0.18
 - type: guildIcon

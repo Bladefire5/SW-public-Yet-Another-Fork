@@ -54,6 +54,7 @@ public sealed partial class TradingMenu : DefaultWindow
     private bool _updateSelectedPrice = true;
     private CurrencyPrototype? _currency;
     private StoreWithdrawWindow? _withdrawWindow;
+    private TradingHelpWindow? _helpWindow;
     private bool _management;
     private bool _archive;
     private string? _heldItemName;
@@ -69,6 +70,7 @@ public sealed partial class TradingMenu : DefaultWindow
         ManagementButton.OnPressed += _ => SelectManagement();
         ArchiveButton.OnPressed += _ => SelectArchive();
         SearchBar.OnTextChanged += _ => RebuildItems();
+        HelpButton.OnPressed += _ => OpenHelpWindow();
         WithdrawButton.OnPressed += _ => OpenWithdrawWindow();
         CreateBuyOrderButton.OnPressed += _ => CreateSelectedBuyOrder();
         CreateSellOfferButton.OnPressed += _ => SubmitPrice(HeldPrice.Text, OnCreateSellOffer, true);
@@ -195,7 +197,11 @@ public sealed partial class TradingMenu : DefaultWindow
         if (_management || _archive || _section != TradingMarketSection.Common || _state == null)
             return;
 
-        var all = new Button { Text = "Все категории", HorizontalExpand = true };
+        var all = new Button
+        {
+            Text = Loc.GetString("trading-ui-all-categories"),
+            HorizontalExpand = true,
+        };
         all.OnPressed += _ =>
         {
             _category = null;
@@ -384,7 +390,7 @@ public sealed partial class TradingMenu : DefaultWindow
         OffersContainer.DisposeAllChildren();
         if (_management || _archive || _state == null || _selected == null)
         {
-            SelectedName.Text = "Выберите товар";
+            SelectedName.Text = Loc.GetString("trading-ui-select-item");
             SelectedName.FontColorOverride = null;
             SelectedPreview.DisposeAllChildren();
             SelectedStats.SetMarkup(string.Empty);
@@ -419,7 +425,10 @@ public sealed partial class TradingMenu : DefaultWindow
             _updateSelectedPrice = false;
         }
         SelectedStats.SetMarkup(
-            $"Лоты: {item.SellOfferCount} · Заказы: {item.BuyOfferCount}");
+            Loc.GetString(
+                "trading-ui-offer-counts",
+                ("sellCount", item.SellOfferCount),
+                ("buyCount", item.BuyOfferCount)));
         CreateBuyOrderButton.Disabled = !_state.IsOwner;
 
         var offers = _state.Offers
@@ -436,7 +445,7 @@ public sealed partial class TradingMenu : DefaultWindow
             };
             row.AddChild(new Label
             {
-                Text = offer.Side == TradingOfferSide.Sell ? "Лот" : "Заказ",
+                Text = GetOfferSideText(offer.Side),
                 MinWidth = 54,
             });
             var selectOffer = new Button
@@ -521,7 +530,12 @@ public sealed partial class TradingMenu : DefaultWindow
 
         var ownOffers = _state.Offers.Where(offer => offer.IsOwn).ToList();
         if (ownOffers.Count == 0)
-            ManagedOffersContainer.AddChild(new Label { Text = "Нет активных лотов и заказов" });
+        {
+            ManagedOffersContainer.AddChild(new Label
+            {
+                Text = Loc.GetString("trading-ui-no-active-offers"),
+            });
+        }
 
         foreach (var offer in ownOffers)
         {
@@ -529,12 +543,15 @@ public sealed partial class TradingMenu : DefaultWindow
                 offer.ProductEntity,
                 offer.PreviewEntity,
                 offer.DisplayName,
-                offer.Side == TradingOfferSide.Sell
-                    ? $"Лот · {offer.Price}"
-                    : $"Заказ · {offer.Price}");
+                Loc.GetString(
+                    "trading-ui-managed-offer-status",
+                    ("side", GetOfferSideText(offer.Side)),
+                    ("price", offer.Price)));
             var cancel = new Button
             {
-                Text = offer.Side == TradingOfferSide.Sell ? "Отменить и забрать" : "Отменить",
+                Text = Loc.GetString(offer.Side == TradingOfferSide.Sell
+                    ? "trading-ui-cancel-and-collect-button"
+                    : "trading-ui-cancel-button"),
                 MinWidth = 150,
             };
             cancel.OnPressed += _ => OnCancelOffer?.Invoke(offer.Id);
@@ -543,7 +560,12 @@ public sealed partial class TradingMenu : DefaultWindow
         }
 
         if (_state.StoredItems.Count == 0)
-            StoredItemsContainer.AddChild(new Label { Text = "Нет предметов для получения" });
+        {
+            StoredItemsContainer.AddChild(new Label
+            {
+                Text = Loc.GetString("trading-ui-no-stored-items"),
+            });
+        }
 
         foreach (var stored in _state.StoredItems)
         {
@@ -551,8 +573,12 @@ public sealed partial class TradingMenu : DefaultWindow
                 stored.ProductEntity,
                 stored.Item,
                 stored.DisplayName,
-                "Получен по заказу");
-            var collect = new Button { Text = "Получить", MinWidth = 150 };
+                Loc.GetString("trading-ui-received-from-order"));
+            var collect = new Button
+            {
+                Text = Loc.GetString("trading-ui-collect-button"),
+                MinWidth = 150,
+            };
             collect.OnPressed += _ => OnCollectStoredItem?.Invoke(stored.Item);
             row.AddChild(collect);
             StoredItemsContainer.AddChild(row);
@@ -569,7 +595,7 @@ public sealed partial class TradingMenu : DefaultWindow
         {
             ArchiveContainer.AddChild(new Label
             {
-                Text = "Архив сделок пуст",
+                Text = Loc.GetString("trading-ui-empty-archive"),
                 Margin = new Thickness(4),
             });
             return;
@@ -748,7 +774,9 @@ public sealed partial class TradingMenu : DefaultWindow
         if (_heldItemName != itemName)
         {
             _heldItemName = itemName;
-            HeldItemName.SetMessage($"Выбран: {itemName}", defaultColor: Color.White);
+            HeldItemName.SetMessage(
+                Loc.GetString("trading-ui-held-item", ("item", itemName)),
+                defaultColor: Color.White);
             HeldItemName.ToolTip = itemName;
         }
 
@@ -781,6 +809,25 @@ public sealed partial class TradingMenu : DefaultWindow
         _withdrawWindow.OnWithdrawAttempt += (_, _, amount) => OnWithdraw?.Invoke(amount);
     }
 
+    private void OpenHelpWindow()
+    {
+        if (_helpWindow is { IsOpen: true })
+        {
+            _helpWindow.MoveToFront();
+            return;
+        }
+
+        _helpWindow = new TradingHelpWindow();
+        _helpWindow.OpenCentered();
+    }
+
+    private static string GetOfferSideText(TradingOfferSide side)
+    {
+        return Loc.GetString(side == TradingOfferSide.Sell
+            ? "trading-ui-sell-offer"
+            : "trading-ui-buy-order");
+    }
+
     private void UpdateColumns()
     {
         ItemsGrid.Columns = Math.Max(1, (int) (ItemsGrid.Width / 185));
@@ -790,6 +837,7 @@ public sealed partial class TradingMenu : DefaultWindow
     {
         base.Close();
         _withdrawWindow?.Close();
+        _helpWindow?.Close();
 
         foreach (var entity in _prototypeExamineEntities.Values)
         {

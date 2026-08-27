@@ -19,10 +19,10 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float StepInterval = 30f;
 
     [DataField]
-    public float InitialDemand = 50f;
+    public float InitialDemand;
 
     [DataField]
-    public float InitialSupply = 25f;
+    public float InitialSupply;
 
     [DataField]
     public float ReputationScarcityMinutesPerPoint = 3f;
@@ -46,7 +46,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float GuildSellOfferChance = 0.1f;
 
     [DataField]
-    public float GuildBuyOrderChance = 0.05f;
+    public float GuildBuyOrderChance = 0.1f;
 
     [DataField]
     public int MaximumGuildSellOfferCount = 200;
@@ -70,16 +70,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float DemandPlacementImpact = 3f;
 
     [DataField]
-    public float SupplyTradeImpact = 1f;
-
-    [DataField]
-    public float DemandTradeImpact = 2f;
-
-    [DataField]
-    public float PriceRatioSlope = 1.3f;
-
-    [DataField]
-    public float PriceSaturationFloor = 1f;
+    public float PricePressure = 1.3f;
 
     [DataField]
     public float PriceSpread = 0.12f;
