@@ -200,9 +200,7 @@ public sealed partial class TradingSystem
         if (count <= float.Epsilon)
             return;
 
-        var total = Math.Max(state.Demand + state.Supply, float.Epsilon);
-        var pressure = (state.Demand - state.Supply) / total;
-        var center = 1f + pressure * config.PricePressure;
+        var center = GetMarketPriceCenterFactor(state.Demand, state.Supply, config);
         var spread = side == TradingOfferSide.Sell ? config.PriceSpread / 2f : -config.PriceSpread / 2f;
         var impactScale = GetMarketImpactScale(commodity, config);
         var sampleCount = Math.Min(ScarcityPriceSamples, Math.Max(1, (int) MathF.Ceiling(count)));
@@ -325,9 +323,7 @@ public sealed partial class TradingSystem
         TradingCommodity commodity,
         TradingMarketConfigPrototype config)
     {
-        var total = Math.Max(state.Demand + state.Supply, float.Epsilon);
-        var pressure = (state.Demand - state.Supply) / total;
-        return 1f + pressure * config.PricePressure + config.PriceSpread / 2f +
+        return GetMarketPriceCenterFactor(state.Demand, state.Supply, config) + config.PriceSpread / 2f +
                GetExpectedLowestPriceNoise(commodity, config);
     }
 }

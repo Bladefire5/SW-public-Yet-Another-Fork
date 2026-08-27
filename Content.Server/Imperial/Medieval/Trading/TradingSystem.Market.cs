@@ -454,13 +454,25 @@ public sealed partial class TradingSystem
         TradingOfferSide side,
         TradingMarketConfigPrototype config)
     {
-        var total = Math.Max(commodity.Demand + commodity.Supply, float.Epsilon);
-        var pressure = (commodity.Demand - commodity.Supply) / total;
-        var center = 1f + pressure * config.PricePressure;
+        var center = GetMarketPriceCenterFactor(commodity.Demand, commodity.Supply, config);
         var spread = side == TradingOfferSide.Sell ? config.PriceSpread / 2f : -config.PriceSpread / 2f;
         var noise = _random.NextFloat(-config.PriceNoise, config.PriceNoise);
         var factor = center + spread + noise;
         return RoundMarketPrice(commodity.StandardPrice * (double) factor);
+    }
+
+    internal static float GetMarketPriceCenterFactor(
+        float demand,
+        float supply,
+        TradingMarketConfigPrototype config)
+    {
+        var floor = Math.Max(float.Epsilon, config.PriceSaturationFloor);
+        var baselineRatio = (Math.Max(0f, config.InitialDemand) + floor) /
+                            (Math.Max(0f, config.InitialSupply) + floor);
+        var marketRatio = (Math.Max(0f, demand) + floor) /
+                          (Math.Max(0f, supply) + floor);
+        var relativeRatio = Math.Max(float.Epsilon, marketRatio / baselineRatio);
+        return MathF.Pow(relativeRatio, Math.Max(0f, config.PriceElasticity));
     }
 
     private static int RoundMarketPrice(double price)

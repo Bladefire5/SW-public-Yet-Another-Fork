@@ -82,7 +82,10 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float DemandTradeImpact = 2f;
 
     [DataField]
-    public float PricePressure = 0.45f;
+    public float PriceElasticity = 1.3f;
+
+    [DataField]
+    public float PriceSaturationFloor = 1f;
 
     [DataField]
     public float PriceSpread = 0.12f;

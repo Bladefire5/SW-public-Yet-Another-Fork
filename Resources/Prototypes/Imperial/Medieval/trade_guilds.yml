@@ -31,7 +31,8 @@
   demandPlacementImpact: 3
   supplyTradeImpact: 1
   demandTradeImpact: 2
-  pricePressure: 0.45
+  priceElasticity: 1.3
+  priceSaturationFloor: 1
   priceSpread: 0.12
   priceNoise: 0.18
 - type: guildIcon
