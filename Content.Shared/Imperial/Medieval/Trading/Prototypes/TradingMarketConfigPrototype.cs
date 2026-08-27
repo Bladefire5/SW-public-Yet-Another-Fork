@@ -89,7 +89,4 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
 
     [DataField]
     public float PriceNoise = 0.18f;
-
-    [DataField]
-    public float MinimumPriceFactor = 0.25f;
 }

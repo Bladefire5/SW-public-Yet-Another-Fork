@@ -34,7 +34,6 @@
   pricePressure: 0.45
   priceSpread: 0.12
   priceNoise: 0.18
-  minimumPriceFactor: 0.25
 - type: guildIcon
   id: MagicGuild1
   texturePath: "/Textures/Imperial/Medieval/GuildsIcons/MagicGuild1.png"

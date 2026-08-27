@@ -416,7 +416,7 @@ public sealed partial class TradingSystem
         var center = 1f + pressure * config.PricePressure;
         var spread = side == TradingOfferSide.Sell ? config.PriceSpread / 2f : -config.PriceSpread / 2f;
         var noise = _random.NextFloat(-config.PriceNoise, config.PriceNoise);
-        var factor = Math.Max(config.MinimumPriceFactor, center + spread + noise);
+        var factor = center + spread + noise;
         return RoundMarketPrice(commodity.StandardPrice * (double) factor);
     }
 
