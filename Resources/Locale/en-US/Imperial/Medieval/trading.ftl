@@ -88,6 +88,7 @@ trading-ui-help-management-text = The offer management section lets you cancel y
 trading-ui-invalid-sell-offer = This item cannot be listed as a lot
 trading-ui-sell-offer-created = Lot listed successfully
 trading-ui-buy-order-created = Order created successfully
+trading-ui-insufficient-order-funds = Insufficient funds for the order
 trading-ui-purchase-success = Purchase completed successfully
 trading-ui-sale-success = Sale completed successfully
 trading-ui-archive-sell-entry = Your lot “{$item}” was bought by {$trader} for {$price} revents

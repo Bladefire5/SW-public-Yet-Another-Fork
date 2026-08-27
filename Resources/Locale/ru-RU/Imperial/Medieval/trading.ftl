@@ -72,6 +72,7 @@ trading-ui-help-management-text = В разделе управления зая�
 trading-ui-invalid-sell-offer = Этот предмет нельзя выставить как лот
 trading-ui-sell-offer-created = Лот успешно выставлен
 trading-ui-buy-order-created = Заказ успешно создан
+trading-ui-insufficient-order-funds = Недостаточно средств для заказа
 trading-ui-purchase-success = Покупка успешно завершена
 trading-ui-sale-success = Продажа успешно завершена
 trading-ui-archive-sell-entry = Ваш лот «{$item}» был куплен торговцем {$trader} за {$price} ревентов

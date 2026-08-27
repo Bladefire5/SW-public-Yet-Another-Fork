@@ -1,5 +1,6 @@
 using System.Linq;
 using Content.Shared.FixedPoint;
+using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
@@ -25,6 +26,7 @@ public sealed partial class TradingSystem
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly UserInterfaceSystem _ui = default!;
     [Dependency] private readonly PvsOverrideSystem _pvs = default!;
+    [Dependency] private readonly ExamineSystemShared _examine = default!;
 
     private void InitializeUi()
     {
@@ -45,6 +47,7 @@ public sealed partial class TradingSystem
         SubscribeLocalEvent<TradingComponent, TradingCreateBuyOfferFromHeldMessage>(OnCreateBuyOfferFromHeld);
         SubscribeLocalEvent<TradingComponent, TradingCancelOfferMessage>(OnCancelOffer);
         SubscribeLocalEvent<TradingComponent, TradingCollectStoredItemMessage>(OnCollectStoredItem);
+        SubscribeLocalEvent<TradingComponent, TradingExamineItemMessage>(OnExamineItem);
         SubscribeLocalEvent<TradingComponent, TradingRequestWithdrawMessage>(OnRequestWithdraw);
         SubscribeLocalEvent<TradingComponent, BoundUserInterfaceMessageAttempt>(OnUiMessageAttempt);
     }
@@ -178,12 +181,27 @@ public sealed partial class TradingSystem
             args.Message is OpenBoundInterfaceMessage or
                 TradingRequestUpdateInterfaceMessage or
                 TradingSelectCommodityMessage or
-                TradingSelectOfferMessage)
+                TradingSelectOfferMessage or
+                TradingExamineItemMessage)
         {
             return;
         }
 
         args.Cancel();
+    }
+
+    private void OnExamineItem(EntityUid uid, TradingComponent component, TradingExamineItemMessage args)
+    {
+        if (!TryGetEntity(args.Item, out var item) ||
+            !Exists(item) ||
+            !TryComp<TradingMarketViewerComponent>(args.Actor, out var viewer) ||
+            !viewer.VisibleItems.Contains(item.Value))
+        {
+            return;
+        }
+
+        var message = _examine.GetExamineText(item.Value, args.Actor, true);
+        _examine.SendExamineTooltip(args.Actor, item.Value, message, false, true);
     }
 
     private TradingMarketOfferState CreateOfferState(
@@ -521,8 +539,18 @@ public sealed partial class TradingSystem
     {
         if (!IsTradingPitOwner(msg.Actor, component) ||
             !TryGetMarket(out var market) ||
-            !market.Comp.Commodities.TryGetValue(msg.CommodityId, out var commodity) ||
-            !CreateTraderBuyOffer(
+            !market.Comp.Commodities.TryGetValue(msg.CommodityId, out var commodity))
+        {
+            return;
+        }
+
+        if (component.Balance < msg.Price)
+        {
+            ShowInsufficientOrderFunds(msg.Actor);
+            return;
+        }
+
+        if (!CreateTraderBuyOffer(
                 market,
                 (uid, component),
                 MetaData(msg.Actor).EntityName,
@@ -548,9 +576,14 @@ public sealed partial class TradingSystem
         var config = _prototypeManager.Index(market.Comp.Config);
         if (!_hands.TryGetActiveItem(msg.Actor, out var held) ||
             held is not { } item ||
-            msg.Price <= 0 ||
-            component.Balance < msg.Price)
+            msg.Price <= 0)
         {
+            return;
+        }
+
+        if (component.Balance < msg.Price)
+        {
+            ShowInsufficientOrderFunds(msg.Actor);
             return;
         }
 
@@ -962,5 +995,13 @@ public sealed partial class TradingSystem
     {
         _popup.PopupCursor(Loc.GetString(message), actor);
         _audio.PlayEntity(component.BuySuccessSound, actor, pit);
+    }
+
+    private void ShowInsufficientOrderFunds(EntityUid actor)
+    {
+        _popup.PopupCursor(
+            Loc.GetString("trading-ui-insufficient-order-funds"),
+            actor,
+            PopupType.SmallCaution);
     }
 }

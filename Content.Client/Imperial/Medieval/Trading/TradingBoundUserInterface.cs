@@ -29,6 +29,7 @@ public sealed class TradingBoundUserInterface : BoundUserInterface
         _menu.OnCreateBuyOfferFromHeld += price => SendOwnerMessage(new TradingCreateBuyOfferFromHeldMessage(price));
         _menu.OnCancelOffer += id => SendOwnerMessage(new TradingCancelOfferMessage(id));
         _menu.OnCollectStoredItem += item => SendOwnerMessage(new TradingCollectStoredItemMessage(item));
+        _menu.OnExamineItem += item => SendMessage(new TradingExamineItemMessage(item));
         _menu.OnWithdraw += amount => SendOwnerMessage(new TradingRequestWithdrawMessage(amount));
         SendMessage(new TradingRequestUpdateInterfaceMessage());
     }

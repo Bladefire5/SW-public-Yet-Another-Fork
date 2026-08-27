@@ -44,6 +44,7 @@ public sealed partial class TradingMenu : DefaultWindow
     public event Action<int>? OnCreateBuyOfferFromHeld;
     public event Action<Guid>? OnCancelOffer;
     public event Action<NetEntity>? OnCollectStoredItem;
+    public event Action<NetEntity>? OnExamineItem;
     public event Action<int>? OnWithdraw;
 
     private TradingUpdateState? _state;
@@ -687,7 +688,7 @@ public sealed partial class TradingMenu : DefaultWindow
                 if (args.Function != ContentKeyFunctions.ExamineEntity)
                     return;
 
-                ExamineProduct(product);
+                OnExamineItem?.Invoke(netEntity);
                 args.Handle();
             };
             return view;

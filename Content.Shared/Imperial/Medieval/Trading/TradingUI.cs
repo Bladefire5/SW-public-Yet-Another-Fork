@@ -256,6 +256,12 @@ public sealed class TradingCollectStoredItemMessage(NetEntity item) : BoundUserI
 }
 
 [Serializable, NetSerializable]
+public sealed class TradingExamineItemMessage(NetEntity item) : BoundUserInterfaceMessage
+{
+    public NetEntity Item = item;
+}
+
+[Serializable, NetSerializable]
 public sealed class TradingRequestWithdrawMessage(int amount) : BoundUserInterfaceMessage
 {
     public int Amount = amount;
