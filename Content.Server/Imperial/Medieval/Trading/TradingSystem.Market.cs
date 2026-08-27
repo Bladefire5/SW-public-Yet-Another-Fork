@@ -219,6 +219,7 @@ public sealed partial class TradingSystem
         }
 
         CreateGuildActivity(market, config);
+        RemoveUncompetitiveGuildOffers(market, config);
         MatchAll(market, config);
     }
 
@@ -273,10 +274,6 @@ public sealed partial class TradingSystem
                 continue;
 
             var candidates = GetGuildCandidates(market, commodity);
-            var expectedSellCount = GetGuildOfferTarget(commodity, config);
-            var sellTarget = Math.Max(
-                expectedSellCount,
-                (int) MathF.Ceiling(expectedSellCount * config.GuildSellOfferCapacityMultiplier));
             var currentSells = GetGuildOfferCount(market, commodity, TradingOfferSide.Sell);
             CreateGuildOffers(
                 market,
@@ -284,10 +281,9 @@ public sealed partial class TradingSystem
                 candidates,
                 TradingOfferSide.Sell,
                 config.GuildSellOfferChance,
-                Math.Max(0, sellTarget - currentSells),
+                Math.Max(0, config.MaximumGuildSellOfferCount - currentSells),
                 config);
 
-            var buyTarget = Math.Max(1, (int) MathF.Ceiling(expectedSellCount * config.GuildBuyOrderShare));
             var currentBuys = GetGuildOfferCount(market, commodity, TradingOfferSide.Buy);
             CreateGuildOffers(
                 market,
@@ -295,9 +291,50 @@ public sealed partial class TradingSystem
                 candidates,
                 TradingOfferSide.Buy,
                 config.GuildBuyOrderChance,
-                Math.Max(0, buyTarget - currentBuys),
+                Math.Max(0, config.MaximumGuildBuyOrderCount - currentBuys),
                 config);
         }
+    }
+
+    private void RemoveUncompetitiveGuildOffers(
+        Entity<TradingMarketComponent> market,
+        TradingMarketConfigPrototype config)
+    {
+        foreach (var commodityId in market.Comp.CommonCommodities.Values)
+        {
+            if (!market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
+                continue;
+
+            var sellOffer = market.Comp.Offers.Values
+                .Where(offer => offer.CommodityId == commodity.Id &&
+                                offer.ParticipantKind == TradingParticipantKind.Guild &&
+                                offer.Side == TradingOfferSide.Sell)
+                .OrderByDescending(offer => offer.Price)
+                .ThenBy(offer => offer.Sequence)
+                .FirstOrDefault();
+            TryRemoveUncompetitiveGuildOffer(market, commodity, sellOffer, config);
+
+            var buyOrder = market.Comp.Offers.Values
+                .Where(offer => offer.CommodityId == commodity.Id &&
+                                offer.ParticipantKind == TradingParticipantKind.Guild &&
+                                offer.Side == TradingOfferSide.Buy)
+                .OrderBy(offer => offer.Price)
+                .ThenBy(offer => offer.Sequence)
+                .FirstOrDefault();
+            TryRemoveUncompetitiveGuildOffer(market, commodity, buyOrder, config);
+        }
+    }
+
+    private void TryRemoveUncompetitiveGuildOffer(
+        Entity<TradingMarketComponent> market,
+        TradingCommodity commodity,
+        TradingMarketOffer? offer,
+        TradingMarketConfigPrototype config)
+    {
+        if (offer == null || _random.NextFloat() >= GetGuildOfferRemovalChance(commodity, offer, config))
+            return;
+
+        RemoveOffer(market, offer.Id, true, config);
     }
 
     private List<Guild> GetGuildCandidates(
@@ -380,6 +417,34 @@ public sealed partial class TradingSystem
     {
         var total = demand + supply;
         return total > 0f ? Math.Clamp(demand / total, 0f, 1f) : 1f;
+    }
+
+    internal static float GetGuildOfferRemovalChance(
+        TradingCommodity commodity,
+        TradingMarketOffer offer,
+        TradingMarketConfigPrototype config)
+    {
+        var standardPrice = Math.Max(1, commodity.StandardPrice);
+        float baseChance;
+        float priceScale;
+        float marketScale;
+
+        if (offer.Side == TradingOfferSide.Sell)
+        {
+            baseChance = config.GuildSellOfferRemovalChance;
+            priceScale = Math.Max(1f, (float) offer.Price / standardPrice);
+            marketScale = Math.Max(1f,
+                Math.Max(0f, commodity.Supply) / Math.Max(float.Epsilon, config.InitialSupply));
+        }
+        else
+        {
+            baseChance = config.GuildBuyOrderRemovalChance;
+            priceScale = Math.Max(1f, (float) standardPrice / Math.Max(1, offer.Price));
+            marketScale = Math.Max(1f,
+                Math.Max(0f, commodity.Demand) / Math.Max(float.Epsilon, config.InitialDemand));
+        }
+
+        return Math.Clamp(baseChance * priceScale * marketScale, 0f, 1f);
     }
 
     private void TryCreateGuildOffer(

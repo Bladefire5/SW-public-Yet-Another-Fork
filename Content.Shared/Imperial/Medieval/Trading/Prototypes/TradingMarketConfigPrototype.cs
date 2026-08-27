@@ -58,10 +58,16 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float GuildBuyOrderChance = 0.25f;
 
     [DataField]
-    public float GuildBuyOrderShare = 0.25f;
+    public int MaximumGuildSellOfferCount = 200;
 
     [DataField]
-    public float GuildSellOfferCapacityMultiplier = 1.1f;
+    public int MaximumGuildBuyOrderCount = 100;
+
+    [DataField]
+    public float GuildSellOfferRemovalChance = 0.01f;
+
+    [DataField]
+    public float GuildBuyOrderRemovalChance = 0.01f;
 
     [DataField]
     public float GuildOfferMinimumLifetime = 600f;

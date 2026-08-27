@@ -23,8 +23,10 @@
   maximumGuildOfferCount: 120
   guildSellOfferChance: 0.5
   guildBuyOrderChance: 0.25
-  guildBuyOrderShare: 0.25
-  guildSellOfferCapacityMultiplier: 1.1
+  maximumGuildSellOfferCount: 200
+  maximumGuildBuyOrderCount: 100
+  guildSellOfferRemovalChance: 0.01
+  guildBuyOrderRemovalChance: 0.01
   guildOfferMinimumLifetime: 600
   guildOfferMaximumLifetime: 1200
   marketImpactReferenceOfferCount: 6
