@@ -648,14 +648,10 @@ public sealed partial class TradingMenu : DefaultWindow
             view.SetEntity(netEntity);
             view.OnKeyBindDown += args =>
             {
-                if (args.Function != ContentKeyFunctions.ExamineEntity ||
-                    view.Entity is not { } viewed ||
-                    !_entities.EntityExists(viewed.Owner))
-                {
+                if (args.Function != ContentKeyFunctions.ExamineEntity)
                     return;
-                }
 
-                _entities.System<ExamineSystem>().DoExamine(viewed.Owner, ignoreRange: true);
+                ExamineProduct(product);
                 args.Handle();
             };
             return view;
@@ -678,8 +674,7 @@ public sealed partial class TradingMenu : DefaultWindow
                 if (args.Function != ContentKeyFunctions.ExamineEntity)
                     return;
 
-                var viewed = GetPrototypeExamineEntity(product);
-                _entities.System<ExamineSystem>().DoExamine(viewed, ignoreRange: true);
+                ExamineProduct(product);
                 args.Handle();
             };
             return icon;
@@ -690,6 +685,12 @@ public sealed partial class TradingMenu : DefaultWindow
             MinSize = size,
             SetSize = size,
         };
+    }
+
+    private void ExamineProduct(EntProtoId product)
+    {
+        var entity = GetPrototypeExamineEntity(product);
+        _entities.System<ExamineSystem>().DoExamine(entity);
     }
 
     private EntityUid GetPrototypeExamineEntity(EntProtoId product)

@@ -40,8 +40,6 @@ namespace Content.Client.Examine
         private Popup? _examineTooltipOpen;
         private ScreenCoordinates _popupPos;
         private CancellationTokenSource? _requestCancelTokenSource;
-        private int? _ignoreRangeRequestId;
-        private bool _ignoreRange;
         private int _idCounter;
 
         public override void Initialize()
@@ -79,7 +77,7 @@ namespace Content.Client.Examine
             if (_examineTooltipOpen is not {Visible: true}) return;
             if (!_examinedEntity.Valid || _playerManager.LocalEntity is not { } player) return;
 
-            if (!_ignoreRange && !CanExamine(player, _examinedEntity))
+            if (!CanExamine(player, _examinedEntity))
                 CloseTooltip();
         }
 
@@ -160,8 +158,7 @@ namespace Content.Client.Examine
             // since there's probably one open already if it's coming in from the server.
             var entity = GetEntity(ev.EntityUid);
 
-            var ignoreRange = ev.Id != 0 && ev.Id == _ignoreRangeRequestId;
-            OpenTooltip(player.Value, entity, ev.CenterAtCursor, ev.OpenAtOldTooltip, ev.KnowTarget, ignoreRange);
+            OpenTooltip(player.Value, entity, ev.CenterAtCursor, ev.OpenAtOldTooltip, ev.KnowTarget);
             UpdateTooltipInfo(player.Value, entity, ev.Message, ev.Verbs, getVerbs: false);
         }
 
@@ -176,20 +173,13 @@ namespace Content.Client.Examine
         ///     not fill it with information. This is done when the server sends examine info/verbs,
         ///     or immediately if it's entirely clientside.
         /// </summary>
-        public void OpenTooltip(
-            EntityUid player,
-            EntityUid target,
-            bool centeredOnCursor = true,
-            bool openAtOldTooltip = true,
-            bool knowTarget = true,
-            bool ignoreRange = false)
+        public void OpenTooltip(EntityUid player, EntityUid target, bool centeredOnCursor=true, bool openAtOldTooltip=true, bool knowTarget = true)
         {
             // Close any examine tooltip that might already be opened
             // Before we do that, save its position. We'll prioritize opening any new popups there if
             // openAtOldTooltip is true.
             ScreenCoordinates? oldTooltipPos = _examineTooltipOpen != null ? _popupPos : null;
             CloseTooltip();
-            _ignoreRange = ignoreRange;
 
             // cache entity for Update function
             _examinedEntity = target;
@@ -406,11 +396,7 @@ namespace Content.Client.Examine
             }
         }
 
-        public void DoExamine(
-            EntityUid entity,
-            bool centeredOnCursor = true,
-            EntityUid? userOverride = null,
-            bool ignoreRange = false)
+        public void DoExamine(EntityUid entity, bool centeredOnCursor = true, EntityUid? userOverride = null)
         {
             var playerEnt = userOverride ?? _playerManager.LocalEntity;
             if (playerEnt == null)
@@ -418,7 +404,7 @@ namespace Content.Client.Examine
 
             FormattedMessage message;
 
-            OpenTooltip(playerEnt.Value, entity, centeredOnCursor, false, ignoreRange: ignoreRange);
+            OpenTooltip(playerEnt.Value, entity, centeredOnCursor, false);
 
             // Always update tooltip info from client first.
             // If we get it wrong, server will correct us later anyway.
@@ -433,7 +419,6 @@ namespace Content.Client.Examine
                 {
                     _idCounter += 1;
                 }
-                _ignoreRangeRequestId = ignoreRange ? _idCounter : null;
                 RaiseNetworkEvent(new ExamineSystemMessages.RequestExamineInfoMessage(GetNetEntity(entity), _idCounter, true));
             }
 
@@ -442,8 +427,6 @@ namespace Content.Client.Examine
 
         private void CloseTooltip()
         {
-            _ignoreRange = false;
-            _ignoreRangeRequestId = null;
             if (_examineTooltipOpen != null)
             {
                 foreach (var control in _examineTooltipOpen.Children)
