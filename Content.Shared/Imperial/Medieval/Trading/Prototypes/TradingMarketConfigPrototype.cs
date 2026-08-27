@@ -61,12 +61,6 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float GuildBuyOrderRemovalChance = 0.01f;
 
     [DataField]
-    public float GuildOfferMinimumLifetime = 600f;
-
-    [DataField]
-    public float GuildOfferMaximumLifetime = 1200f;
-
-    [DataField]
     public float MarketImpactReferenceOfferCount = 6f;
 
     [DataField]
@@ -82,7 +76,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float DemandTradeImpact = 2f;
 
     [DataField]
-    public float PriceElasticity = 1.3f;
+    public float PriceRatioSlope = 1.3f;
 
     [DataField]
     public float PriceSaturationFloor = 1f;

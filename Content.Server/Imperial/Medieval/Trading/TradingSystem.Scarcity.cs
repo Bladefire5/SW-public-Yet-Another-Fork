@@ -15,7 +15,6 @@ public sealed partial class TradingSystem
         public float Count;
         public int Price;
         public float Contribution;
-        public float Age;
     }
 
     private sealed class ExpectedMarketState
@@ -30,38 +29,59 @@ public sealed partial class TradingSystem
         TradingMarketConfigPrototype config)
     {
         var recoverySteps = GetReputationScarcityRecoveryStepTarget(commodity, config);
-        var initialDemand = Math.Max(float.Epsilon, config.InitialDemand);
-        var lowerDemand = Math.Max(float.Epsilon, initialDemand / 16f);
-        var upperDemand = initialDemand;
+        var targetPriceFactor = Math.Max(1f, commodity.MinReputation);
+        var targetMarketRatio = GetMarketRatioForLowestSellPriceFactor(commodity, config, targetPriceFactor);
+        var lowerSupply = 0f;
+        var upperSupply = Math.Max(config.InitialSupply, config.PriceSaturationFloor);
 
         for (var iteration = 0;
              iteration < ScarcityCalibrationIterations &&
-             GetExpectedLowestSellPriceFactor(commodity, config, upperDemand, recoverySteps) < 1f;
+             GetExpectedLowestSellPriceFactor(
+                 commodity,
+                 config,
+                 GetReputationScarcityState(targetMarketRatio, upperSupply, config),
+                 recoverySteps) < 1f;
              iteration++)
         {
-            upperDemand *= 2f;
-        }
-
-        for (var iteration = 0;
-             iteration < ScarcityCalibrationIterations &&
-             lowerDemand > float.Epsilon &&
-             GetExpectedLowestSellPriceFactor(commodity, config, lowerDemand, recoverySteps) > 1f;
-             iteration++)
-        {
-            lowerDemand /= 2f;
+            upperSupply *= 2f;
         }
 
         for (var iteration = 0; iteration < ScarcityCalibrationIterations; iteration++)
         {
-            var demand = (lowerDemand + upperDemand) / 2f;
-            if (GetExpectedLowestSellPriceFactor(commodity, config, demand, recoverySteps) > 1f)
-                upperDemand = demand;
+            var supply = (lowerSupply + upperSupply) / 2f;
+            var state = GetReputationScarcityState(targetMarketRatio, supply, config);
+            if (GetExpectedLowestSellPriceFactor(commodity, config, state, recoverySteps) > 1f)
+                upperSupply = supply;
             else
-                lowerDemand = demand;
+                lowerSupply = supply;
         }
 
-        var calibratedDemand = (lowerDemand + upperDemand) / 2f;
-        return (calibratedDemand, 0f);
+        return GetReputationScarcityState(targetMarketRatio, (lowerSupply + upperSupply) / 2f, config);
+    }
+
+    private static float GetMarketRatioForLowestSellPriceFactor(
+        TradingCommodity commodity,
+        TradingMarketConfigPrototype config,
+        float targetPriceFactor)
+    {
+        var floor = Math.Max(float.Epsilon, config.PriceSaturationFloor);
+        var baselineRatio = (Math.Max(0f, config.InitialDemand) + floor) /
+                            (Math.Max(0f, config.InitialSupply) + floor);
+        var slope = Math.Max(float.Epsilon, config.PriceRatioSlope);
+        var targetCenter = targetPriceFactor - config.PriceSpread / 2f -
+                           GetExpectedLowestPriceNoise(commodity, config);
+        var relativeRatio = 1f + (targetCenter - 1f) / slope;
+        return baselineRatio * Math.Max(float.Epsilon, relativeRatio);
+    }
+
+    private static (float Demand, float Supply) GetReputationScarcityState(
+        float marketRatio,
+        float supply,
+        TradingMarketConfigPrototype config)
+    {
+        var floor = Math.Max(float.Epsilon, config.PriceSaturationFloor);
+        var demand = marketRatio * (supply + floor) - floor;
+        return (Math.Max(0f, demand), Math.Max(0f, supply));
     }
 
     internal static int GetReputationScarcityRecoveryStepTarget(
@@ -91,14 +111,14 @@ public sealed partial class TradingSystem
     private static float GetExpectedLowestSellPriceFactor(
         TradingCommodity commodity,
         TradingMarketConfigPrototype config,
-        float demand,
+        (float Demand, float Supply) state,
         int steps)
     {
         return GetExpectedReputationScarcityPriceFactor(
             commodity,
             config,
-            demand,
-            0f,
+            state.Demand,
+            state.Supply,
             steps);
     }
 
@@ -113,12 +133,21 @@ public sealed partial class TradingSystem
             Demand = demand,
             Supply = supply,
         };
+        var offerCount = GetGuildOfferTarget(commodity, config);
         AddExpectedOffers(
             state,
             commodity,
             TradingOfferSide.Sell,
-            GetGuildOfferTarget(commodity, config),
-            config);
+            offerCount,
+            config,
+            false);
+        AddExpectedOffers(
+            state,
+            commodity,
+            TradingOfferSide.Buy,
+            offerCount,
+            config,
+            false);
         return state;
     }
 
@@ -127,43 +156,12 @@ public sealed partial class TradingSystem
         TradingCommodity commodity,
         TradingMarketConfigPrototype config)
     {
-        ExpireExpectedOffers(state, config);
         CreateExpectedGuildOffers(state, commodity, TradingOfferSide.Sell, config);
         CreateExpectedGuildOffers(state, commodity, TradingOfferSide.Buy, config);
         RemoveExpectedUncompetitiveOffer(state, commodity, TradingOfferSide.Sell, config);
         RemoveExpectedUncompetitiveOffer(state, commodity, TradingOfferSide.Buy, config);
         MatchExpectedOffers(state, commodity, config);
         state.Offers.RemoveAll(offer => offer.Count <= float.Epsilon);
-    }
-
-    private static void ExpireExpectedOffers(
-        ExpectedMarketState state,
-        TradingMarketConfigPrototype config)
-    {
-        foreach (var offer in state.Offers)
-        {
-            var previousSurvival = GetExpectedOfferSurvival(offer.Age, config);
-            offer.Age += config.StepInterval;
-            var survival = GetExpectedOfferSurvival(offer.Age, config);
-            var remaining = previousSurvival > 0f ? offer.Count * survival / previousSurvival : 0f;
-            RemoveExpectedOfferContribution(state, offer, offer.Count - remaining);
-            offer.Count = remaining;
-        }
-    }
-
-    private static float GetExpectedOfferSurvival(
-        float age,
-        TradingMarketConfigPrototype config)
-    {
-        var minimum = config.GuildOfferMinimumLifetime;
-        var maximum = Math.Max(minimum, config.GuildOfferMaximumLifetime);
-        if (age < minimum)
-            return 1f;
-        if (age >= maximum)
-            return 0f;
-        if (MathHelper.CloseTo(minimum, maximum))
-            return 0f;
-        return (maximum - age) / (maximum - minimum);
     }
 
     private static void CreateExpectedGuildOffers(
@@ -195,7 +193,8 @@ public sealed partial class TradingSystem
         TradingCommodity commodity,
         TradingOfferSide side,
         float count,
-        TradingMarketConfigPrototype config)
+        TradingMarketConfigPrototype config,
+        bool applyPlacementImpact = true)
     {
         if (count <= float.Epsilon)
             return;
@@ -223,10 +222,13 @@ public sealed partial class TradingSystem
                 Contribution = contribution,
             });
 
-            if (side == TradingOfferSide.Sell)
-                state.Supply += contribution * countPerSample;
-            else
-                state.Demand += contribution * countPerSample;
+            if (applyPlacementImpact)
+            {
+                if (side == TradingOfferSide.Sell)
+                    state.Supply += contribution * countPerSample;
+                else
+                    state.Demand += contribution * countPerSample;
+            }
         }
     }
 

@@ -24,14 +24,12 @@
   maximumGuildBuyOrderCount: 100
   guildSellOfferRemovalChance: 0.01
   guildBuyOrderRemovalChance: 0.01
-  guildOfferMinimumLifetime: 600
-  guildOfferMaximumLifetime: 1200
   marketImpactReferenceOfferCount: 6
   supplyPlacementImpact: 3
   demandPlacementImpact: 3
   supplyTradeImpact: 1
   demandTradeImpact: 2
-  priceElasticity: 1.3
+  priceRatioSlope: 1.3
   priceSaturationFloor: 1
   priceSpread: 0.12
   priceNoise: 0.18

@@ -52,7 +52,6 @@ public sealed class TradingMarketOffer
     public long Sequence;
     public float SupplyContribution;
     public float DemandContribution;
-    public TimeSpan ExpiresAt;
 }
 
 [RegisterComponent]

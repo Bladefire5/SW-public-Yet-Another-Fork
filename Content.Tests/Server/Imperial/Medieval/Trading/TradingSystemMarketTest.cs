@@ -56,8 +56,7 @@ public sealed class TradingSystemMarketTest
             state.Supply,
             target);
 
-        Assert.That(state.Supply, Is.Zero);
-        Assert.That(initialFactor, Is.GreaterThan(1f));
+        Assert.That(initialFactor, Is.EqualTo(reputation).Within(0.01f));
         Assert.That(factor, Is.EqualTo(1f).Within(0.01f));
     }
 

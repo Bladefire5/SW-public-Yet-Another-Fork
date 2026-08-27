@@ -97,7 +97,7 @@ public sealed partial class TradingSystem
         }
 
         InitializeReputationScarcity(market, config);
-        SeedGuildSellOffers((uid, market), config);
+        SeedGuildOffers((uid, market), config);
         return true;
     }
 
@@ -163,29 +163,12 @@ public sealed partial class TradingSystem
         Entity<TradingMarketComponent> market,
         TradingMarketConfigPrototype config)
     {
-        ExpireGuildOffers(market, config);
         CreateGuildActivity(market, config);
         RemoveUncompetitiveGuildOffers(market, config);
         MatchAll(market, config);
     }
 
-    private void ExpireGuildOffers(
-        Entity<TradingMarketComponent> market,
-        TradingMarketConfigPrototype config)
-    {
-        var expired = market.Comp.Offers.Values
-            .Where(offer => offer.ParticipantKind == TradingParticipantKind.Guild &&
-                            offer.ExpiresAt <= _timing.CurTime)
-            .Select(offer => offer.Id)
-            .ToList();
-
-        foreach (var offerId in expired)
-        {
-            RemoveOffer(market, offerId, true, config);
-        }
-    }
-
-    private void SeedGuildSellOffers(
+    private void SeedGuildOffers(
         Entity<TradingMarketComponent> market,
         TradingMarketConfigPrototype config)
     {
@@ -198,14 +181,23 @@ public sealed partial class TradingSystem
             if (candidates.Count == 0)
                 continue;
 
-            for (var index = 0; index < GetGuildOfferTarget(commodity, config); index++)
+            var offerCount = GetGuildOfferTarget(commodity, config);
+            for (var index = 0; index < offerCount; index++)
             {
                 TryCreateGuildOffer(
                     market,
                     _random.Pick(candidates),
                     commodity,
                     TradingOfferSide.Sell,
-                    config);
+                    config,
+                    false);
+                TryCreateGuildOffer(
+                    market,
+                    _random.Pick(candidates),
+                    commodity,
+                    TradingOfferSide.Buy,
+                    config,
+                    false);
             }
         }
     }
@@ -430,7 +422,8 @@ public sealed partial class TradingSystem
         Guild guild,
         TradingCommodity commodity,
         TradingOfferSide side,
-        TradingMarketConfigPrototype config)
+        TradingMarketConfigPrototype config,
+        bool applyPlacementImpact = true)
     {
         AddOffer(market, new TradingMarketOffer
         {
@@ -443,10 +436,7 @@ public sealed partial class TradingSystem
             Price = GetGuildPrice(commodity, side, config),
             GuildId = guild.Id,
             Sequence = market.Comp.NextSequence++,
-            ExpiresAt = _timing.CurTime + TimeSpan.FromSeconds(_random.NextFloat(
-                config.GuildOfferMinimumLifetime,
-                Math.Max(config.GuildOfferMinimumLifetime, config.GuildOfferMaximumLifetime))),
-        }, config);
+        }, config, applyPlacementImpact);
     }
 
     private int GetGuildPrice(
@@ -472,7 +462,8 @@ public sealed partial class TradingSystem
         var marketRatio = (Math.Max(0f, demand) + floor) /
                           (Math.Max(0f, supply) + floor);
         var relativeRatio = Math.Max(float.Epsilon, marketRatio / baselineRatio);
-        return MathF.Pow(relativeRatio, Math.Max(0f, config.PriceElasticity));
+        var factor = 1f + (relativeRatio - 1f) * Math.Max(0f, config.PriceRatioSlope);
+        return Math.Max(float.Epsilon, factor);
     }
 
     private static int RoundMarketPrice(double price)
@@ -486,7 +477,8 @@ public sealed partial class TradingSystem
     private void AddOffer(
         Entity<TradingMarketComponent> market,
         TradingMarketOffer offer,
-        TradingMarketConfigPrototype config)
+        TradingMarketConfigPrototype config,
+        bool applyPlacementImpact = true)
     {
         if (market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity))
         {
@@ -495,14 +487,16 @@ public sealed partial class TradingSystem
             {
                 offer.SupplyContribution = config.SupplyPlacementImpact * impactScale *
                                            GetPriceImpactRatio((float) commodity.StandardPrice / offer.Price);
-                commodity.Supply += offer.SupplyContribution;
+                if (applyPlacementImpact)
+                    commodity.Supply += offer.SupplyContribution;
             }
             else
             {
                 offer.DemandContribution = config.DemandPlacementImpact * impactScale *
                                            GetPriceImpactRatio((float) offer.Price /
                                                                Math.Max(1, commodity.StandardPrice));
-                commodity.Demand += offer.DemandContribution;
+                if (applyPlacementImpact)
+                    commodity.Demand += offer.DemandContribution;
             }
         }
 
@@ -619,7 +613,7 @@ public sealed partial class TradingSystem
         }
 
         var executionPrice = ask.Sequence < bid.Sequence ? ask.Price : bid.Price;
-        ArchiveTrade(commodity, ask, bid);
+        ArchiveTrade(commodity, ask, bid, executionPrice);
 
         if (bid.Pit is { } buyerPit && TryComp<TradingComponent>(buyerPit, out var buyer))
             buyer.Balance += bid.Price - executionPrice;
@@ -671,14 +665,9 @@ public sealed partial class TradingSystem
     private void ArchiveTrade(
         TradingCommodity commodity,
         TradingMarketOffer ask,
-        TradingMarketOffer bid)
+        TradingMarketOffer bid,
+        int executionPrice)
     {
-        if (ask.ParticipantKind != TradingParticipantKind.Trader ||
-            bid.ParticipantKind != TradingParticipantKind.Trader)
-        {
-            return;
-        }
-
         var displayName = commodity.DisplayName;
         if (ask.Item is { } item && Exists(item))
         {
@@ -687,20 +676,22 @@ public sealed partial class TradingSystem
             displayName = FormatStackName(metadata.EntityName, stackCount);
         }
 
-        if (!ask.IsImmediate &&
+        if (ask.ParticipantKind == TradingParticipantKind.Trader &&
+            !ask.IsImmediate &&
             ask.Pit is { } sellerPit &&
             TryComp<TradingComponent>(sellerPit, out var seller))
         {
             seller.MarketArchive.Add(
-                $"ваш лот {displayName} был куплен торговцем {bid.ParticipantName} за {ask.Price} ревентов");
+                $"ваш лот {displayName} был куплен торговцем {bid.ParticipantName} за {executionPrice} ревентов");
         }
 
-        if (!bid.IsImmediate &&
+        if (bid.ParticipantKind == TradingParticipantKind.Trader &&
+            !bid.IsImmediate &&
             bid.Pit is { } buyerPit &&
             TryComp<TradingComponent>(buyerPit, out var buyer))
         {
             buyer.MarketArchive.Add(
-                $"Ваш заказ {displayName} был выполнен торговцем {ask.ParticipantName} за {bid.Price} ревентов");
+                $"Ваш заказ {displayName} был выполнен торговцем {ask.ParticipantName} за {executionPrice} ревентов");
         }
     }
 
