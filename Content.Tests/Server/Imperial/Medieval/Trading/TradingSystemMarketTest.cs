@@ -1,6 +1,9 @@
+using System;
 using Content.Server.Imperial.Medieval.Trading;
+using Content.Shared.Imperial.Medieval.Trading;
 using Content.Shared.Imperial.Medieval.Trading.Prototypes;
 using NUnit.Framework;
+using Robust.Shared.GameObjects;
 
 namespace Content.Tests.Server.Imperial.Medieval.Trading;
 
@@ -56,5 +59,57 @@ public sealed class TradingSystemMarketTest
         Assert.That(state.Supply, Is.Zero);
         Assert.That(initialFactor, Is.GreaterThan(1f));
         Assert.That(factor, Is.EqualTo(1f).Within(0.01f));
+    }
+
+    [Test]
+    public void LowestSellOfferMatchesPurchaseOrdering()
+    {
+        var commodityId = Guid.NewGuid();
+        var ownPit = new EntityUid(1);
+        var expected = new TradingMarketOffer
+        {
+            CommodityId = commodityId,
+            Side = TradingOfferSide.Sell,
+            ParticipantKind = TradingParticipantKind.Guild,
+            Price = 2,
+            Sequence = 1,
+        };
+        var offers = new[]
+        {
+            new TradingMarketOffer
+            {
+                CommodityId = commodityId,
+                Side = TradingOfferSide.Sell,
+                Pit = ownPit,
+                Price = 1,
+                Sequence = 0,
+            },
+            new TradingMarketOffer
+            {
+                CommodityId = commodityId,
+                Side = TradingOfferSide.Sell,
+                Pit = new EntityUid(2),
+                Item = new EntityUid(3),
+                Price = 2,
+                Sequence = 2,
+            },
+            expected,
+            new TradingMarketOffer
+            {
+                CommodityId = Guid.NewGuid(),
+                Side = TradingOfferSide.Sell,
+                Price = 1,
+            },
+            new TradingMarketOffer
+            {
+                CommodityId = commodityId,
+                Side = TradingOfferSide.Buy,
+                Price = 3,
+            },
+        };
+
+        var actual = TradingSystem.GetLowestSellOffer(offers, commodityId, ownPit);
+
+        Assert.That(actual, Is.SameAs(expected));
     }
 }

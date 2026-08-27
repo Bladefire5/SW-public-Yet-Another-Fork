@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Content.Server.Popups;
 using Content.Server.Stack;
-using Content.Shared.ActionBlocker;
 using Content.Shared.FixedPoint;
 using Content.Shared.GameTicking;
 using Content.Shared.Imperial.Medieval.Trading;
@@ -13,7 +12,6 @@ using Content.Shared.Stacks;
 using Content.Shared.Tag;
 using Content.Shared.UserInterface;
 using Robust.Shared.Containers;
-using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
@@ -31,8 +29,6 @@ public sealed partial class TradingSystem : EntitySystem
     [Dependency] private readonly SharedContainerSystem _containers = default!;
     [Dependency] private readonly StackSystem _stack = default!;
     [Dependency] private readonly TagSystem _tags = default!;
-    [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
-    [Dependency] private readonly SharedInteractionSystem _interaction = default!;
 
     private EntityUid? _market;
     private CancellationTokenSource? _marketUpdateCancellation;
@@ -41,13 +37,12 @@ public sealed partial class TradingSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<TradingComponent, ActivatableUIOpenAttemptEvent>(OnStoreOpenAttempt);
+        SubscribeLocalEvent<TradingComponent, BeforeActivatableUIOpenEvent>(OnBeforeUiOpen);
         SubscribeLocalEvent<TradingComponent, EntityTerminatingEvent>(OnTradingPitTerminating);
         SubscribeLocalEvent<MedievalCurrencyComponent, AfterInteractEvent>(OnAfterInteract);
         SubscribeLocalEvent<RoundStartedEvent>(OnRoundStart);
         SubscribeLocalEvent<RoundEndedEvent>(OnRoundEnd);
         SubscribeLocalEvent<RoundRestartCleanupEvent>(OnRoundRestart);
-        SubscribeNetworkEvent<TradingRequestOpenUiMessage>(OnTradingOpenRequest);
 
         InitializeUi();
     }
@@ -142,28 +137,9 @@ public sealed partial class TradingSystem : EntitySystem
         _marketUpdateCancellation = null;
     }
 
-    private void OnStoreOpenAttempt(EntityUid uid, TradingComponent component, ActivatableUIOpenAttemptEvent args)
+    private void OnBeforeUiOpen(EntityUid uid, TradingComponent component, BeforeActivatableUIOpenEvent args)
     {
-        args.Cancel();
-    }
-
-    private void OnTradingOpenRequest(TradingRequestOpenUiMessage message, EntitySessionEventArgs args)
-    {
-        if (args.SenderSession.AttachedEntity is not { } user ||
-            !TryGetEntity(message.Pit, out var pit) ||
-            !TryComp<TradingComponent>(pit, out var component) ||
-            !TryComp<ActivatableUIComponent>(pit, out var activatable) ||
-            !_actionBlocker.CanInteract(user, pit.Value) ||
-            activatable.RequiresComplex && !_actionBlocker.CanComplexInteract(user) ||
-            !_interaction.InRangeUnobstructed(user, pit.Value))
-        {
-            return;
-        }
-
-        _containers.EnsureContainer<Robust.Shared.Containers.Container>(pit.Value, TradingComponent.MarketContainerId);
-
-        _ui.OpenUi(pit.Value, TradingUiKey.Key, args.SenderSession);
-        UpdateUserInterface(user, pit.Value, component);
+        _containers.EnsureContainer<Robust.Shared.Containers.Container>(uid, TradingComponent.MarketContainerId);
     }
 
     internal bool IsTradingPitOwner(EntityUid user, TradingComponent component)

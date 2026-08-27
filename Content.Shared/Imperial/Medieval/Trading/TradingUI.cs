@@ -33,12 +33,6 @@ public enum TradingParticipantKind : byte
 }
 
 [Serializable, NetSerializable]
-public sealed class TradingRequestOpenUiMessage(NetEntity pit) : EntityEventArgs
-{
-    public NetEntity Pit = pit;
-}
-
-[Serializable, NetSerializable]
 public sealed class TradingMarketItemState
 {
     public Guid CommodityId;

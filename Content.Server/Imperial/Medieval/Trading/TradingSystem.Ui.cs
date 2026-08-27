@@ -90,18 +90,17 @@ public sealed partial class TradingSystem
                 var traderBids = bids
                     .Where(offer => offer.ParticipantKind == TradingParticipantKind.Trader)
                     .ToList();
-                var preview = asks
-                    .Where(offer => offer.Item != null && Exists(offer.Item.Value))
-                    .OrderBy(offer => offer.Price)
-                    .ThenBy(offer => offer.Sequence)
-                    .Select(offer => offer.Item)
-                    .FirstOrDefault();
+                var lowestSellOffer = GetLowestSellOffer(
+                    commodityOffers,
+                    commodity.Id,
+                    isOwner ? store : null);
+                var preview = lowestSellOffer?.Item;
                 var displayName = commodity.DisplayName;
                 var description = commodity.Description;
                 int? stackCount = commodity.HasStack ? commodity.BaselineStackCount : null;
                 var damagedEquipment = commodity.IsDamagedEquipment;
                 NetEntity? previewEntity = null;
-                if (preview is { } previewItem)
+                if (preview is { } previewItem && Exists(previewItem))
                 {
                     var metadata = MetaData(previewItem);
                     stackCount = TryComp<StackComponent>(previewItem, out var stack) ? stack.Count : null;
@@ -125,7 +124,7 @@ public sealed partial class TradingSystem
                     damagedEquipment,
                     commodity.Demand,
                     commodity.Supply,
-                    asks.Count == 0 ? null : asks.Min(offer => offer.Price),
+                    lowestSellOffer?.Price,
                     traderBids.Count == 0 ? null : traderBids.Max(offer => offer.Price),
                     asks.Count,
                     bids.Count,
@@ -261,7 +260,7 @@ public sealed partial class TradingSystem
         if (!market.Comp.Offers.TryGetValue(args.OfferId, out var offer) ||
             !market.Comp.Commodities.TryGetValue(offer.CommodityId, out var commodity) ||
             !isOwner && (commodity.Sections & TradingMarketSection.Unique) == 0 ||
-            !CanSelectOffer(offer, uid, viewer.SelectedCommodity, isOwner))
+            !CanSelectOffer(offer, viewer.SelectedCommodity))
         {
             viewer.SelectedOffer = null;
             UpdateUserInterface(args.Actor, uid, component);
@@ -274,11 +273,9 @@ public sealed partial class TradingSystem
 
     private bool CanSelectOffer(
         TradingMarketOffer offer,
-        EntityUid store,
-        Guid? selectedCommodity,
-        bool isOwner)
+        Guid? selectedCommodity)
     {
-        if (isOwner && offer.Pit == store || offer.CommodityId != selectedCommodity)
+        if (offer.CommodityId != selectedCommodity)
             return false;
 
         if (offer.Side == TradingOfferSide.Buy ||
@@ -304,13 +301,7 @@ public sealed partial class TradingSystem
         if (!IsTradingPitOwner(msg.Actor, component) || !TryGetMarket(out var market))
             return;
 
-        var ask = market.Comp.Offers.Values
-            .Where(offer => offer.CommodityId == msg.CommodityId &&
-                            offer.Side == TradingOfferSide.Sell &&
-                            offer.Pit != uid)
-            .OrderBy(offer => offer.Price)
-            .ThenBy(offer => offer.Sequence)
-            .FirstOrDefault();
+        var ask = GetLowestSellOffer(market.Comp.Offers.Values, msg.CommodityId, uid);
         if (ask == null || component.Balance < ask.Price)
             return;
 
@@ -851,17 +842,12 @@ public sealed partial class TradingSystem
 
         var viewer = EnsureComp<TradingMarketViewerComponent>(user);
         var desired = market.Comp.Commodities.Values
-            .Where(commodity => commodity.Id == viewer.SelectedCommodity)
-            .Select(commodity => market.Comp.Offers.Values
-                .Where(offer => offer.CommodityId == commodity.Id &&
-                                offer.Side == TradingOfferSide.Sell &&
-                                offer.Item != null &&
-                                Exists(offer.Item.Value))
-                .OrderBy(offer => offer.Price)
-                .ThenBy(offer => offer.Sequence)
-                .Select(offer => offer.Item)
-                .FirstOrDefault())
-            .Where(item => item != null)
+            .Where(commodity => isOwner || (commodity.Sections & TradingMarketSection.Unique) != 0)
+            .Select(commodity => GetLowestSellOffer(
+                market.Comp.Offers.Values,
+                commodity.Id,
+                isOwner ? store : null)?.Item)
+            .Where(item => item != null && Exists(item.Value))
             .Select(item => item!.Value)
             .ToHashSet();
 
@@ -874,7 +860,7 @@ public sealed partial class TradingSystem
 
         if (viewer.SelectedOffer is { } selectedOffer &&
             market.Comp.Offers.TryGetValue(selectedOffer, out var offer) &&
-            CanSelectOffer(offer, store, viewer.SelectedCommodity, isOwner))
+            CanSelectOffer(offer, viewer.SelectedCommodity))
         {
             if (offer.Item is { } selectedItem && Exists(selectedItem))
                 desired.Add(selectedItem);
@@ -916,6 +902,20 @@ public sealed partial class TradingSystem
         }
 
         RemCompDeferred<TradingMarketViewerComponent>(user);
+    }
+
+    internal static TradingMarketOffer? GetLowestSellOffer(
+        IEnumerable<TradingMarketOffer> offers,
+        Guid commodityId,
+        EntityUid? excludedPit = null)
+    {
+        return offers
+            .Where(offer => offer.CommodityId == commodityId &&
+                            offer.Side == TradingOfferSide.Sell &&
+                            (excludedPit == null || offer.Pit != excludedPit))
+            .OrderBy(offer => offer.Price)
+            .ThenBy(offer => offer.Sequence)
+            .FirstOrDefault();
     }
 
     private void OnRequestWithdraw(EntityUid uid, TradingComponent component, TradingRequestWithdrawMessage msg)

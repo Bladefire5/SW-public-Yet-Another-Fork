@@ -399,8 +399,7 @@ public sealed partial class TradingMenu : DefaultWindow
         var selectedOffer = _selectedOffer is { } selectedOfferId
             ? _state.Offers.FirstOrDefault(offer =>
                 offer.Id == selectedOfferId &&
-                offer.CommodityId == item.CommodityId &&
-                !offer.IsOwn)
+                offer.CommodityId == item.CommodityId)
             : null;
         if (_selectedOffer != null && selectedOffer == null)
         {
@@ -440,33 +439,19 @@ public sealed partial class TradingMenu : DefaultWindow
                 Text = offer.Side == TradingOfferSide.Sell ? "Лот" : "Заказ",
                 MinWidth = 54,
             });
-            Control participant;
-            if (!offer.IsOwn)
+            var selectOffer = new Button
             {
-                var selectOffer = new Button
-                {
-                    Text = offer.ParticipantName,
-                    HorizontalExpand = true,
-                    ClipText = true,
-                };
-                selectOffer.OnPressed += _ =>
-                {
-                    _selectedOffer = offer.Id;
-                    _updateSelectedPrice = true;
-                    OnSelectOffer?.Invoke(offer.Id);
-                };
-                participant = selectOffer;
-            }
-            else
+                Text = offer.ParticipantName,
+                HorizontalExpand = true,
+                ClipText = true,
+            };
+            selectOffer.OnPressed += _ =>
             {
-                participant = new Label
-                {
-                    Text = offer.ParticipantName,
-                    HorizontalExpand = true,
-                    ClipText = true,
-                };
-            }
-            row.AddChild(participant);
+                _selectedOffer = offer.Id;
+                _updateSelectedPrice = true;
+                OnSelectOffer?.Invoke(offer.Id);
+            };
+            row.AddChild(selectOffer);
 
             if (offer.Side == TradingOfferSide.Buy &&
                 offer.ParticipantKind == TradingParticipantKind.Guild)
@@ -649,7 +634,7 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private static bool TryParsePrice(string text, out int price, bool allowZero = false)
     {
-        return int.TryParse(text, out price) && (price > 0 || (allowZero && price == 0));
+        return int.TryParse(text, out price) && (price > 0 || allowZero && price == 0);
     }
 
     private Control CreateItemPreview(TradingMarketItemState item, Vector2 size)
