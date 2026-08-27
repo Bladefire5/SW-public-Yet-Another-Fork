@@ -117,7 +117,6 @@ public sealed partial class TradingSystem
                     stackCount,
                     previewEntity,
                     commodity.Permanent,
-                    commodity.CanCreateBuyOrder,
                     commodity.HasStack,
                     commodity.BaselineStackCount,
                     damagedEquipment,
@@ -515,7 +514,6 @@ public sealed partial class TradingSystem
         var config = _prototypeManager.Index(market.Comp.Config);
         if (!_hands.TryGetActiveItem(msg.Actor, out var held) ||
             held is not { } item ||
-            !CanCreateBuyOrderForItem(item, config) ||
             msg.Price <= 0 ||
             component.Balance < msg.Price)
         {
@@ -602,8 +600,7 @@ public sealed partial class TradingSystem
         var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
             (price == 0 && immediateRecipient == null) ||
-            (!commodity.CanCreateBuyOrder && immediateRecipient == null) ||
-            HasBlockedTraderProductTag(commodity.Product, config) ||
+            !CanTradeProduct(commodity.Product, config) ||
             pit.Comp.Balance < price ||
             !market.Comp.Commodities.ContainsKey(commodity.Id))
         {
@@ -666,15 +663,11 @@ public sealed partial class TradingSystem
         offer = default!;
         var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
-            !CanOfferItemForSale(sourceItem, config) ||
-            (immediate && !CanCreateBuyOrderForItem(sourceItem, config)) ||
+            !TryResolveCommodityForItem(market, sourceItem, price, true, out var commodity) ||
             MetaData(sourceItem).EntityPrototype?.ID is not { } product)
         {
             return false;
         }
-
-        if (!TryResolveCommodityForItem(market, sourceItem, price, true, out var commodity))
-            return false;
 
         var destination = _containers.EnsureContainer<Container>(pit.Owner, TradingComponent.MarketContainerId);
         BaseContainer? previousContainer = null;
@@ -732,7 +725,6 @@ public sealed partial class TradingSystem
         TradingCommodity selected,
         out EntityUid item)
     {
-        var config = _prototypeManager.Index(market.Comp.Config);
         var pending = new Queue<EntityUid>(_inventory.GetHandOrInventoryEntities(user));
         var visited = new HashSet<EntityUid>();
         while (pending.TryDequeue(out var candidate))
@@ -740,8 +732,7 @@ public sealed partial class TradingSystem
             if (!visited.Add(candidate))
                 continue;
 
-            if (CanCreateBuyOrderForItem(candidate, config) &&
-                TryResolveCommodityForItem(market, candidate, selected.StandardPrice, false, out var commodity) &&
+            if (TryResolveCommodityForItem(market, candidate, selected.StandardPrice, false, out var commodity) &&
                 commodity.Id == selected.Id)
             {
                 item = candidate;
@@ -767,6 +758,12 @@ public sealed partial class TradingSystem
         EntityUid item,
         EntityUid? recipient)
     {
+        if (!Exists(item) || TerminatingOrDeleted(item) || EntityManager.IsQueuedForDeletion(item))
+        {
+            pit.StoredMarketItems.Remove(item);
+            return;
+        }
+
         if (recipient is { } user && Exists(user))
         {
             pit.StoredMarketItems.Remove(item);

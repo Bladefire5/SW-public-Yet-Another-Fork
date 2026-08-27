@@ -29,7 +29,6 @@ public sealed class TradingCommodity
     public int BaselineStackCount = 1;
     public bool HasStack;
     public bool Permanent;
-    public bool CanCreateBuyOrder = true;
     public bool IsDamagedEquipment;
     public string Signature = string.Empty;
     public string DisplayName = string.Empty;

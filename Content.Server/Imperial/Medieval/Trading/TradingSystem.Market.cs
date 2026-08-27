@@ -54,10 +54,13 @@ public sealed partial class TradingSystem
                 if (item.ProductEntity is not { } product || IsTrophy(product) || IsAlchemyRecipe(product))
                     continue;
 
+                var prototype = _prototypeManager.Index(product);
+                if (!CanTradeProduct(prototype, config))
+                    continue;
+
                 TradingCommodity commodity;
                 if (!market.CommonCommodities.TryGetValue(product, out var commodityId))
                 {
-                    var prototype = _prototypeManager.Index(product);
                     prototype.TryGetComponent<StackComponent>(out var stack, EntityManager.ComponentFactory);
                     commodityId = Guid.NewGuid();
                     commodity = new TradingCommodity
@@ -496,6 +499,17 @@ public sealed partial class TradingSystem
     {
         if (ask.Item is { } escrowItem)
         {
+            if (!CanTradeItem(escrowItem, config))
+            {
+                Log.Error(
+                    $"Trading market could not complete trade for sell offer {ask.Id}: escrow item {escrowItem} " +
+                    $"for product {ask.Product} is no longer eligible for trading.");
+                RemoveOffer(market, ask.Id, true, config);
+                if (bid.IsImmediate)
+                    RemoveOffer(market, bid.Id, false, config);
+                return;
+            }
+
             if (!CanTransferEscrowItem(ask, escrowItem))
             {
                 Log.Error(
@@ -654,21 +668,18 @@ public sealed partial class TradingSystem
         market.Comp.Commodities.Remove(commodity.Id);
     }
 
-    private bool CanOfferItemForSale(EntityUid item, TradingMarketConfigPrototype config)
+    private bool CanTradeItem(EntityUid item, TradingMarketConfigPrototype config)
     {
-        return Exists(item) &&
-               !TerminatingOrDeleted(item) &&
-               !EntityManager.IsQueuedForDeletion(item) &&
-               HasComp<ItemComponent>(item) &&
-               !HasComp<VirtualItemComponent>(item) &&
-               !HasComp<MobStateComponent>(item) &&
-               !HasBlockedTraderItemTag(item, config) &&
-               !ContainsPlayerMind(item);
-    }
-
-    private bool CanCreateBuyOrderForItem(EntityUid item, TradingMarketConfigPrototype config)
-    {
-        if (!CanOfferItemForSale(item, config) ||
+        if (!Exists(item) ||
+            TerminatingOrDeleted(item) ||
+            EntityManager.IsQueuedForDeletion(item) ||
+            MetaData(item).EntityPrototype is not { } prototype ||
+            !HasComp<ItemComponent>(item) ||
+            !CanTradeProduct(prototype, config) ||
+            HasComp<VirtualItemComponent>(item) ||
+            HasComp<MobStateComponent>(item) ||
+            HasBlockedTraderItemTag(item, config) ||
+            ContainsPlayerMind(item) ||
             HasComp<TimedDespawnComponent>(item) ||
             HasComp<MedievalTimedDespawnComponent>(item) ||
             HasComp<ActiveTimerTriggerComponent>(item) ||
@@ -683,11 +694,34 @@ public sealed partial class TradingSystem
             return false;
         }
 
-        if (HasComp<LetterComponent>(item))
-            return false;
+        return !HasComp<LetterComponent>(item);
+    }
 
-        return MetaData(item).EntityPrototype is { } prototype &&
-               !prototype.HasComponent<LetterComponent>();
+    private bool CanTradeProduct(EntProtoId product, TradingMarketConfigPrototype config)
+    {
+        return _prototypeManager.TryIndex(product, out var prototype) &&
+               CanTradeProduct(prototype, config);
+    }
+
+    private bool CanTradeProduct(EntityPrototype prototype, TradingMarketConfigPrototype config)
+    {
+        if (!prototype.HasComponent<ItemComponent>() ||
+            prototype.HasComponent<VirtualItemComponent>() ||
+            prototype.HasComponent<MobStateComponent>() ||
+            prototype.HasComponent<TimedDespawnComponent>() ||
+            prototype.HasComponent<MedievalTimedDespawnComponent>() ||
+            prototype.HasComponent<ActiveTimerTriggerComponent>() ||
+            prototype.HasComponent<ActiveTwoStageTriggerComponent>() ||
+            prototype.HasComponent<LetterComponent>() ||
+            HasBlockedTraderProductTag(prototype, config))
+        {
+            return false;
+        }
+
+        return !prototype.TryGetComponent<ExpendableLightComponent>(
+                   out var light,
+                   EntityManager.ComponentFactory) ||
+               light.CurrentState == ExpendableLightState.BrandNew;
     }
 
     private bool HasBlockedTraderItemTag(EntityUid item, TradingMarketConfigPrototype config)
@@ -696,10 +730,9 @@ public sealed partial class TradingSystem
                _tags.HasAnyTag(item, config.BlockedTraderItemTags);
     }
 
-    private bool HasBlockedTraderProductTag(EntProtoId product, TradingMarketConfigPrototype config)
+    private bool HasBlockedTraderProductTag(EntityPrototype prototype, TradingMarketConfigPrototype config)
     {
         return config.BlockedTraderItemTags.Count > 0 &&
-               _prototypeManager.TryIndex(product, out var prototype) &&
                prototype.TryGetComponent<TagComponent>(out var tags, EntityManager.ComponentFactory) &&
                _tags.HasAnyTag(tags, config.BlockedTraderItemTags);
     }
@@ -743,6 +776,10 @@ public sealed partial class TradingSystem
         bool forceIntactEquipment = false)
     {
         commodity = default!;
+        var config = _prototypeManager.Index(market.Comp.Config);
+        if (!CanTradeItem(item, config))
+            return false;
+
         if (HasComp<VirtualItemComponent>(item) ||
             MetaData(item).EntityPrototype?.ID is not { } product)
         {
@@ -794,7 +831,6 @@ public sealed partial class TradingSystem
         if (!create)
             return false;
 
-        var config = _prototypeManager.Index(market.Comp.Config);
         var standardPrice = hasCommon && common != null
             ? common.StandardPrice
             : Math.Max(fallbackPrice, 1);
@@ -809,7 +845,6 @@ public sealed partial class TradingSystem
             Supply = 0f,
             BaselineStackCount = stackCount,
             HasStack = hasStack,
-            CanCreateBuyOrder = CanCreateBuyOrderForItem(item, config),
             IsDamagedEquipment = isDamagedEquipment,
             Signature = signature,
             DisplayName = FormatStackName(metadata.EntityName, hasStack ? stackCount : null),

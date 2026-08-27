@@ -396,7 +396,7 @@ public sealed partial class TradingMenu : DefaultWindow
         }
         SelectedStats.SetMarkup(
             $"Лоты: {item.SellOfferCount} · Заказы: {item.BuyOfferCount}");
-        CreateBuyOrderButton.Disabled = !item.CanCreateBuyOrder;
+        CreateBuyOrderButton.Disabled = false;
 
         var offers = _state.Offers
             .Where(offer => offer.CommodityId == item.CommodityId)
@@ -489,8 +489,7 @@ public sealed partial class TradingMenu : DefaultWindow
 
     private void CreateSelectedBuyOrder()
     {
-        if (_selected == null ||
-            _state?.Items.FirstOrDefault(item => item.CommodityId == _selected.Value) is not { CanCreateBuyOrder: true })
+        if (_selected == null)
             return;
 
         if (!TryParsePrice(BuyPrice.Text, out var price))
