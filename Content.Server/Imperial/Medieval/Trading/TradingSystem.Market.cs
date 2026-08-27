@@ -21,6 +21,7 @@ using Content.Shared.Tag;
 using Content.Shared.Trigger.Components;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Spawners;
@@ -29,12 +30,16 @@ namespace Content.Server.Imperial.Medieval.Trading;
 
 public sealed partial class TradingSystem
 {
-    internal void CreateMarket()
+    internal bool CreateMarket()
     {
-        if (_market is { } previous && Exists(previous))
-            QueueDel(previous);
+        DeleteMarket();
+        if (!TryFindMarketMap(out var map))
+        {
+            Log.Error("Trading market could not be created because no active map exists.");
+            return false;
+        }
 
-        var uid = Spawn(null, MapCoordinates.Nullspace);
+        var uid = Spawn(null, new EntityCoordinates(map, 0f, 0f));
         var market = EnsureComp<TradingMarketComponent>(uid);
         _market = uid;
 
@@ -51,7 +56,7 @@ public sealed partial class TradingSystem
 
             foreach (var item in guildType.Items)
             {
-                if (item.ProductEntity is not { } product || IsTrophy(product) || IsAlchemyRecipe(product))
+                if (item.ProductEntity is not { } product)
                     continue;
 
                 var prototype = _prototypeManager.Index(product);
@@ -93,6 +98,35 @@ public sealed partial class TradingSystem
 
         InitializeReputationScarcity(market, config);
         SeedGuildSellOffers((uid, market), config);
+        return true;
+    }
+
+    private bool TryFindMarketMap(out EntityUid map)
+    {
+        var maps = EntityQueryEnumerator<MapComponent>();
+        while (maps.MoveNext(out var mapUid, out _))
+        {
+            if (TerminatingOrDeleted(mapUid) || EntityManager.IsQueuedForDeletion(mapUid))
+                continue;
+
+            map = mapUid;
+            return true;
+        }
+
+        map = default;
+        return false;
+    }
+
+    private void DeleteMarket()
+    {
+        var query = EntityQueryEnumerator<TradingMarketComponent>();
+        while (query.MoveNext(out var uid, out _))
+        {
+            if (!TerminatingOrDeleted(uid) && !EntityManager.IsQueuedForDeletion(uid))
+                QueueDel(uid);
+        }
+
+        _market = null;
     }
 
     private static void InitializeReputationScarcity(
@@ -168,18 +202,6 @@ public sealed partial class TradingSystem
             denominator = denominator < 0f ? -float.Epsilon : float.Epsilon;
 
         return demand * (1f - pressure) / denominator;
-    }
-
-    private bool IsTrophy(EntProtoId product)
-    {
-        return _prototypeManager.TryIndex(product, out var prototype) &&
-               prototype.HasComponent<MedievalCurrencyComponent>();
-    }
-
-    private bool IsAlchemyRecipe(EntProtoId product)
-    {
-        return _prototypeManager.TryIndex(product, out var prototype) &&
-               prototype.HasComponent<MedievalRandomChemistryRecipeComponent>();
     }
 
     private void RunMarketStep(
@@ -800,12 +822,14 @@ public sealed partial class TradingSystem
 
         var hasStack = stack != null;
         var isRecipe = HasComp<MedievalRandomChemistryRecipeComponent>(item);
+        var hasCurrencyValue = HasComp<MedievalCurrencyComponent>(item);
         var hasAppliedQuality = TryComp<SmithQualityComponent>(item, out var quality) && quality.Applied;
         var isEquipment = hasAppliedQuality ||
                           HasComp<MedievalMeleeResourceComponent>(item) ||
                           HasComp<MedievalArmorIntegrityComponent>(item);
         var isDamagedEquipment = !forceIntactEquipment && IsDamagedEquipment(item);
         var matchesCommon = !isRecipe &&
+                            !hasCurrencyValue &&
                             hasCommon &&
                             common != null &&
                             common.HasStack == hasStack &&

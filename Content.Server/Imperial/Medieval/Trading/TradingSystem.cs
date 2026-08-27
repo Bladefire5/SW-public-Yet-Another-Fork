@@ -83,7 +83,9 @@ public sealed partial class TradingSystem : EntitySystem
     private void OnRoundStart(RoundStartedEvent args)
     {
         StopMarketUpdates();
-        CreateMarket();
+        if (!CreateMarket())
+            return;
+
         _marketUpdateCancellation = new CancellationTokenSource();
         _ = RunMarketUpdatesAsync(_marketUpdateCancellation.Token);
     }
@@ -91,12 +93,13 @@ public sealed partial class TradingSystem : EntitySystem
     private void OnRoundEnd(RoundEndedEvent args)
     {
         StopMarketUpdates();
+        DeleteMarket();
     }
 
     private void OnRoundRestart(RoundRestartCleanupEvent args)
     {
         StopMarketUpdates();
-        _market = null;
+        DeleteMarket();
     }
 
     private async Task RunMarketUpdatesAsync(CancellationToken cancellationToken)
@@ -226,15 +229,21 @@ public sealed partial class TradingSystem : EntitySystem
 
     private bool TryGetMarket(out Entity<TradingMarketComponent> market)
     {
-        if (_market is { } marketUid && TryComp<TradingMarketComponent>(marketUid, out var component))
+        if (_market is { } marketUid &&
+            !TerminatingOrDeleted(marketUid) &&
+            !EntityManager.IsQueuedForDeletion(marketUid) &&
+            TryComp<TradingMarketComponent>(marketUid, out var component))
         {
             market = (marketUid, component);
             return true;
         }
 
         var query = EntityQueryEnumerator<TradingMarketComponent>();
-        if (query.MoveNext(out marketUid, out component))
+        while (query.MoveNext(out marketUid, out component))
         {
+            if (TerminatingOrDeleted(marketUid) || EntityManager.IsQueuedForDeletion(marketUid))
+                continue;
+
             _market = marketUid;
             market = (marketUid, component);
             return true;
