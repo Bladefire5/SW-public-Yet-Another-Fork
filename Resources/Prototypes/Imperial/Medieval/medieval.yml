@@ -181,7 +181,7 @@
             - !type:SnapToGrid { }
           steps:
             - material: WoodPlank
-              amount: 12
+              amount: 8
               doAfter: 16
     - node: medievalstockadeHigh
       entity: MedievalStockadeHigh
@@ -190,7 +190,7 @@
           completed:
             - !type:SpawnPrototype
               prototype: MaterialWoodPlank
-              amount: 12
+              amount: 8
           steps:
             - tool: Prying
               doAfter: 1500
