@@ -2,9 +2,11 @@ using System.Globalization;
 using System.Linq;
 using Content.Server.Imperial.Medieval.Courier;
 using Content.Server.Light.Components;
+using Content.Shared.Chemistry.Components.SolutionManager;
 using Content.Shared.Imperial.Medieval.Additions;
 using Content.Shared.Imperial.Medieval.ArmorIntegrity;
 using Content.Shared.Imperial.Medieval.Chemistry;
+using Content.Shared.Imperial.Medieval.PlayerCreations.Paintings;
 using Content.Shared.Imperial.Medieval.SmithingSystem;
 using Content.Shared.Imperial.Medieval.SmithingSystem.Behaviours;
 using Content.Shared.Imperial.Medieval.Trading;
@@ -827,6 +829,10 @@ public sealed partial class TradingSystem
 
         var hasStack = stack != null;
         var isRecipe = HasComp<MedievalRandomChemistryRecipeComponent>(item);
+        var isCanvas = HasComp<CanvasComponent>(item);
+        var hasStoredSolution = TryComp<SolutionContainerManagerComponent>(item, out var solutionManager) &&
+                                _solutionContainer.EnumerateSolutions((item, solutionManager))
+                                    .Any(solution => solution.Solution.Comp.Solution.Volume > 0);
         var hasCurrencyValue = HasComp<MedievalCurrencyComponent>(item);
         var hasAppliedQuality = TryComp<SmithQualityComponent>(item, out var quality) && quality.Applied;
         var isEquipment = hasAppliedQuality ||
@@ -834,6 +840,8 @@ public sealed partial class TradingSystem
                           HasComp<MedievalArmorIntegrityComponent>(item);
         var isDamagedEquipment = !forceIntactEquipment && IsDamagedEquipment(item);
         var matchesCommon = !isRecipe &&
+                            !isCanvas &&
+                            !hasStoredSolution &&
                             !hasCurrencyValue &&
                             hasCommon &&
                             common != null &&

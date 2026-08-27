@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Content.Server.Popups;
 using Content.Server.Stack;
+using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.FixedPoint;
 using Content.Shared.GameTicking;
 using Content.Shared.Imperial.Medieval.Trading;
@@ -27,6 +28,7 @@ public sealed partial class TradingSystem : EntitySystem
     [Dependency] private readonly SharedContainerSystem _containers = default!;
     [Dependency] private readonly StackSystem _stack = default!;
     [Dependency] private readonly TagSystem _tags = default!;
+    [Dependency] private readonly SharedSolutionContainerSystem _solutionContainer = default!;
 
     private EntityUid? _market;
     private CancellationTokenSource? _marketUpdateCancellation;
