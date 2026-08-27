@@ -1654,7 +1654,7 @@
     resourceCount: 2
 
 - type: entity
-  name: dagger
+  
   parent: [ BaseKnife, BaseDaggerCharged ]
   id: MedievalDaggerT3
   description: A deadly knife intended for melee confrontations.
@@ -1688,7 +1688,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 14
+        Piercing: 14
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -3333,7 +3333,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 14
+        Piercing: 16
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -4043,7 +4043,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 14
+        Piercing: 14
         Poison: 3
   #- type: QualityOfItem
   #  qualityWeights:
@@ -4276,7 +4276,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 17
+        Piercing: 17
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -4359,7 +4359,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 13
+        Piercing: 13
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -4504,7 +4504,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 19
+        Piercing: 19
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
