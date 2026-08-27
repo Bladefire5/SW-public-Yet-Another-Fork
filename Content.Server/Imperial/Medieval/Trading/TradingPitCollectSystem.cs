@@ -45,9 +45,7 @@ public sealed class TradingPitCollectSystem : EntitySystem
     private void OnGetAltVerb(EntityUid uid, TradingPitCollectComponent component, GetVerbsEvent<AlternativeVerb> args)
     {
         if (!args.CanAccess ||
-            !args.CanInteract ||
-            TryComp<TradingComponent>(uid, out var trading) &&
-            !_trading.IsTradingPitOwner(args.User, trading))
+            !args.CanInteract)
             return;
 
         args.Verbs.Add(new AlternativeVerb
@@ -59,12 +57,6 @@ public sealed class TradingPitCollectSystem : EntitySystem
 
     private void StartCollect(EntityUid pit, EntityUid user, TradingPitCollectComponent component)
     {
-        if (TryComp<TradingComponent>(pit, out var trading) &&
-            !_trading.IsTradingPitOwner(user, trading))
-        {
-            return;
-        }
-
         if (!_xformQuery.TryGetComponent(pit, out var pitXform))
             return;
 
@@ -159,12 +151,6 @@ public sealed class TradingPitCollectSystem : EntitySystem
         if (!_xformQuery.TryGetComponent(uid, out var pitXform))
             return;
 
-        if (TryComp<TradingComponent>(uid, out var trading) &&
-            !_trading.IsTradingPitOwner(args.Args.User, trading))
-        {
-            return;
-        }
-
         var sold = new List<EntityUid>();
         var soldPositions = new List<EntityCoordinates>();
         var soldAngles = new List<Angle>();
@@ -213,9 +199,6 @@ public sealed class TradingPitCollectSystem : EntitySystem
         if (TryComp<TradingComponent>(pit, out var trading) &&
             TryComp<MedievalCurrencyComponent>(entity, out var medievalCurrency))
         {
-            if (!_trading.IsTradingPitOwner(user, trading))
-                return false;
-
             return _trading.TryAddCurrency((entity, medievalCurrency), (pit, trading));
         }
 

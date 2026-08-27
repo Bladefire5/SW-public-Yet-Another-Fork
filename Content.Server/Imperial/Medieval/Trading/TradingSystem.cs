@@ -165,8 +165,7 @@ public sealed partial class TradingSystem : EntitySystem
     {
         if (args.Handled ||
             !args.CanReach ||
-            !TryComp<TradingComponent>(args.Target, out var store) ||
-            !IsTradingPitOwner(args.User, store))
+            !TryComp<TradingComponent>(args.Target, out var store))
             return;
 
         if (!TryAddCurrency((uid, component), (args.Target.Value, store)))
