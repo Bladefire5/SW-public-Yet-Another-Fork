@@ -81,15 +81,6 @@ public sealed class NocturnBloodSpellSystem : EntitySystem
         var spentBlood = MathF.Min(bloodCost, availableBlood);
         nocturn.BloodLevel -= spentBlood;
         Dirty(args.Performer, nocturn);
-
-        if (args.ShowManaPopup)
-        {
-            _popup.PopupEntity(
-                Loc.GetString("medieval-nocturn-blood-cast-spell", ("bloodCost", spentBlood)),
-                args.Performer,
-                args.Performer,
-                PopupType.Large);
-        }
     }
 
     private void OnFailedCast(

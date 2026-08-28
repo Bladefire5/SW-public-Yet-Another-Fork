@@ -3,16 +3,19 @@ using Content.Server.Destructible;
 using Content.Server.Polymorph.Components;
 using Content.Server.Polymorph.Systems;
 using Content.Shared.Actions;
+using Content.Shared.Alert;
 using Content.Shared.Damage;
 using Content.Shared.DoAfter;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Humanoid;
+using Content.Shared.Imperial.Medieval.Additions;
 using Content.Shared.Imperial.Medieval.Magic;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Nocturn.Components;
 using Content.Shared.Polymorph;
 using Content.Shared.Popups;
+using Robust.Shared.Player;
 
 namespace Content.Server.Nocturn;
 
@@ -23,6 +26,7 @@ public sealed class AncientNocturneSystem : EntitySystem
     [Dependency] private readonly MobThresholdSystem _mobThreshold = default!;
     [Dependency] private readonly PolymorphSystem _polymorph = default!;
     [Dependency] private readonly SharedActionsSystem _actions = default!;
+    [Dependency] private readonly AlertsSystem _alerts = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly NocturnBloodSpellSystem _bloodSpells = default!;
@@ -125,12 +129,22 @@ public sealed class AncientNocturneSystem : EntitySystem
             return;
 
         RemComp<PolymorphedEntityComponent>(converted);
+        _alerts.ClearAlert(converted, "SpawnProtection");
+        RemComp<ShieldOnStartupComponent>(converted);
         QueueDel(target);
 
         var connection = EnsureComp<AncientNocturneMindConnectionComponent>(ent.Owner);
         var trall = EnsureComp<AncientNocturneTrallMindConnectionComponent>(converted);
+        EnsureComp<AncientNocturneMindChatComponent>(converted);
         trall.Master = ent.Owner;
         connection.Tralls.Add(converted);
+
+        SendConversionNotification(converted, AncientNocturneConversionNotification.Converted);
+        if (!connection.HasConvertedTrall)
+        {
+            connection.HasConvertedTrall = true;
+            SendConversionNotification(ent.Owner, AncientNocturneConversionNotification.FirstTrall);
+        }
 
         _popup.PopupEntity(
             Loc.GetString("medieval-ancient-nocturne-conversion-success-user"),
@@ -142,6 +156,16 @@ public sealed class AncientNocturneSystem : EntitySystem
             converted,
             converted,
             PopupType.Large);
+    }
+
+    private void SendConversionNotification(
+        EntityUid recipient,
+        AncientNocturneConversionNotification notification)
+    {
+        if (!TryComp<ActorComponent>(recipient, out var actor))
+            return;
+
+        RaiseNetworkEvent(new AncientNocturneConversionNotificationEvent(notification), actor.PlayerSession);
     }
 
     private void OnPolymorphed(Entity<PolymorphedEntityComponent> ent, ref PolymorphedEvent args)

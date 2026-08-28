@@ -2,6 +2,13 @@ ent-MedievalAncientNocturneBloodArrowAction = Кровавая стрела
     .desc = Сформируйте из крови стрелу и выпустите её из рук
 ent-BloodArrow = кровавая стрела
 
+ent-MedievalClothingNeckAncientNocturneCloak = Графский плащ
+    .desc = Спустя столько лет, всё ещё находится в идеальном состоянии
+ent-MedievalClothingUniformAncientNocturneFrockCoat = Сюртук с красной отделкой
+    .desc = Отлично подходит для прогулок под полной луной
+ent-MedievalClothingShoesAncientNocturneBoots = Сапоги аристократа
+    .desc = Под этой подошвой было погребено немало душ
+
 ent-MedievalAncientNocturneBatAction = Превращение в летучую мышь
     .desc = Превратитесь в летучую мышь на 20 секунд.
 ent-MedievalAncientNocturneRevertAction = Превращение в ноктюрна
@@ -24,7 +31,6 @@ ent-MedievalAncientNocturneEmergencyTeleportAction = Экстренный тел
 medieval-ancient-nocturne-emergency-teleport-blocked = Что-то помешало вашему телепорту!
 medieval-nocturn-cant-use-blood-spells = Вы не должны это видеть, обратитесь в ahelp.
 medieval-nocturn-not-enough-blood = Недостаточно крови.
-medieval-nocturn-blood-cast-spell = Потрачено { $bloodCost } единиц крови
 
 ent-MedievalAncientNocturneConversionAction = Обращение в ноктюрна
     .desc = Обратите человека в ноктюрна.
@@ -33,6 +39,10 @@ medieval-ancient-nocturne-conversion-success-user = Человек обращё�
 medieval-ancient-nocturne-conversion-success-target = Вы были обращены в ноктюрна.
 medieval-ancient-nocturne-mind-connection-wrap-message = [ноктюрн] { $name }: { $message }
 medieval-ancient-nocturne-mind-connection-severed = вы чувствуете, как ваша психическая связь с мастером внезапно оборвалась
+medieval-ancient-nocturne-mind-connection-channel-name = Ноктюрн
+medieval-ancient-nocturne-mind-connection-chat-key = е
+medieval-ancient-nocturne-mind-connection-first-trall = Вы конвертировали своего первого ноктюрна на этом архипелаге. Вы можете общаться с ним с помощью вашей психической связи. Используйте ключ в чате :{ $key }
+medieval-ancient-nocturne-mind-connection-converted = Вас превратили в ноктюрна! Теперь вы будете нести это бремя до скончания жизни. Чтобы общаться с мастером и такими же его обращёнными, вы можете использовать ключ в чате :{ $key }
 
 ent-MedievalAncientNocturneSpawnRule = Появление древних ноктюрнов
 ent-MedievalAncientNocturneSpawnMarker = спавнер древнего ноктюрна

@@ -31,19 +31,24 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
         ref ComponentStartup args)
     {
         ent.Comp.ActiveEntity = ent.Owner;
+        EnsureComp<AncientNocturneMindChatComponent>(ent.Owner);
     }
 
     private void OnMasterShutdown(
         Entity<AncientNocturneMindConnectionComponent> ent,
         ref ComponentShutdown args)
     {
+        var chatColor = TryComp<AncientNocturneMindChatComponent>(ent.Owner, out var chat)
+            ? chat.ChatColor
+            : Color.FromHex("#A060E8");
+
         foreach (var trallUid in ent.Comp.Tralls.ToArray())
         {
             if (!TryComp<AncientNocturneTrallMindConnectionComponent>(trallUid, out var trall) ||
                 trall.Master != ent.Owner)
                 continue;
 
-            SendConnectionSevered(trallUid, ent.Comp.ChatColor);
+            SendConnectionSevered(trallUid, chatColor);
             RemComp<AncientNocturneTrallMindConnectionComponent>(trallUid);
         }
 
@@ -57,12 +62,15 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
         }
 
         ent.Comp.Tralls.Clear();
+        RemComp<AncientNocturneMindChatComponent>(ent.Owner);
     }
 
     private void OnTrallShutdown(
         Entity<AncientNocturneTrallMindConnectionComponent> ent,
         ref ComponentShutdown args)
     {
+        RemComp<AncientNocturneMindChatComponent>(ent.Owner);
+
         if (ent.Comp.IsMasterRelay)
             return;
 
@@ -94,10 +102,13 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
         EntityUid nameSource,
         ref BeforeInGameICMessageEvent args)
     {
-        var prefix = args.Message.StartsWith(master.Comp.ChatPrefix, StringComparison.OrdinalIgnoreCase)
-            ? master.Comp.ChatPrefix
-            : args.Message.StartsWith(master.Comp.AlternateChatPrefix, StringComparison.OrdinalIgnoreCase)
-                ? master.Comp.AlternateChatPrefix
+        if (!TryComp<AncientNocturneMindChatComponent>(source, out var chat))
+            return;
+
+        var prefix = args.Message.StartsWith(chat.ChatPrefix, StringComparison.OrdinalIgnoreCase)
+            ? chat.ChatPrefix
+            : args.Message.StartsWith(chat.AlternateChatPrefix, StringComparison.OrdinalIgnoreCase)
+                ? chat.AlternateChatPrefix
                 : null;
 
         if (prefix == null)
@@ -133,7 +144,7 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
             "medieval-ancient-nocturne-mind-connection-wrap-message",
             ("name", escapedName),
             ("message", escapedMessage));
-        wrappedMessage = $"[color={master.Comp.ChatColor.ToHex()}]{wrappedMessage}[/color]";
+        wrappedMessage = $"[color={chat.ChatColor.ToHex()}]{wrappedMessage}[/color]";
 
         _chat.ChatMessageToManyFiltered(
             recipients,
@@ -143,7 +154,7 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
             source,
             false,
             false,
-            master.Comp.ChatColor);
+            chat.ChatColor);
     }
 
     private void OnMasterPolymorphed(
@@ -157,6 +168,7 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
         var relay = EnsureComp<AncientNocturneTrallMindConnectionComponent>(args.NewEntity);
         relay.Master = ent.Owner;
         relay.IsMasterRelay = true;
+        EnsureComp<AncientNocturneMindChatComponent>(args.NewEntity);
     }
 
     private void OnTrallPolymorphed(
@@ -174,6 +186,7 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
         var relay = EnsureComp<AncientNocturneTrallMindConnectionComponent>(args.NewEntity);
         relay.Master = ent.Comp.Master;
         relay.IsMasterRelay = true;
+        EnsureComp<AncientNocturneMindChatComponent>(args.NewEntity);
     }
 
     private void SendConnectionSevered(EntityUid trall, Color color)

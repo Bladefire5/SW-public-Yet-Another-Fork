@@ -1,3 +1,5 @@
+using Robust.Shared.Prototypes;
+
 namespace Content.Server.Nocturn;
 
 [RegisterComponent]
@@ -11,4 +13,7 @@ public sealed partial class NocturnBloodFoodComponent : Component
 
     [DataField]
     public float EatDuration = 1f;
+
+    [DataField]
+    public EntProtoId BloodParticlesPrototype = "BloodParticles";
 }

@@ -23,11 +23,6 @@
     event: !type:MedievalProjectileSpellEvent
       projectilePrototype:
         0: MedievalAncientNocturneHypnosisProjectile
-      speechPoints:
-        0:
-          speech: medieval-spell-speach-sleep
-          color: "#AC8AA2"
-          hideChat: true
 
 - type: entity
   id: MedievalAncientNocturneHypnosisProjectile

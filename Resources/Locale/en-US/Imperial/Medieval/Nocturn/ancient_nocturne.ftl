@@ -2,6 +2,13 @@ ent-MedievalAncientNocturneBloodArrowAction = Blood arrow
     .desc = Shape an arrow from blood and release it from your hand
 ent-BloodArrow = blood arrow
 
+ent-MedievalClothingNeckAncientNocturneCloak = Count's cloak
+    .desc = After so many years, it remains in perfect condition
+ent-MedievalClothingUniformAncientNocturneFrockCoat = Red-trimmed frock coat
+    .desc = Perfect for walks under the full moon
+ent-MedievalClothingShoesAncientNocturneBoots = Aristocrat's boots
+    .desc = Many souls have been buried beneath these soles
+
 ent-MedievalAncientNocturneBatAction = Transform into a bat
     .desc = Transform into a bat for 20 seconds.
 ent-MedievalAncientNocturneRevertAction = Transform into a nocturne
@@ -24,7 +31,6 @@ ent-MedievalAncientNocturneEmergencyTeleportAction = Emergency teleport
 medieval-ancient-nocturne-emergency-teleport-blocked = Something interfered with your teleport!
 medieval-nocturn-cant-use-blood-spells = You should not be seeing this; contact an administrator via ahelp.
 medieval-nocturn-not-enough-blood = Not enough blood.
-medieval-nocturn-blood-cast-spell = { $bloodCost } blood units used
 
 ent-MedievalAncientNocturneConversionAction = Turn into a nocturne
     .desc = Turn a human into a nocturne.
@@ -33,6 +39,10 @@ medieval-ancient-nocturne-conversion-success-user = The human has been turned in
 medieval-ancient-nocturne-conversion-success-target = You have been turned into a nocturne.
 medieval-ancient-nocturne-mind-connection-wrap-message = [nocturne] { $name }: { $message }
 medieval-ancient-nocturne-mind-connection-severed = you feel your psychic connection to your master suddenly break
+medieval-ancient-nocturne-mind-connection-channel-name = Nocturne
+medieval-ancient-nocturne-mind-connection-chat-key = o
+medieval-ancient-nocturne-mind-connection-first-trall = You have converted your first nocturne on this archipelago. You can communicate with them through your psychic connection. Use the chat key :{ $key }
+medieval-ancient-nocturne-mind-connection-converted = You have been turned into a nocturne! You will now bear this burden until the end of your life. To communicate with your master and their other converts, use the chat key :{ $key }
 
 ent-MedievalAncientNocturneSpawnRule = Ancient nocturne emergence
 ent-MedievalAncientNocturneSpawnMarker = ancient nocturne spawner

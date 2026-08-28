@@ -51,6 +51,7 @@
       180: Dead
   - type: MedievalSpecialDamageReceiver
     targetType: Werewolf
+  - type: Undrowable
 
 - type: polymorph
   id: MedievalAncientNocturneBatPolymorph

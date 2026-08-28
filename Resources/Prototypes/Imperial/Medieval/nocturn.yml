@@ -368,8 +368,9 @@
 - type: startingGear
   id: MedievalAncientNocturneGear
   equipment:
-    jumpsuit: MedievalClothingUniformJumpsuitShitCloth41
-    shoes: MedievalShoesSapogiHigh
+    jumpsuit: MedievalClothingUniformAncientNocturneFrockCoat
+    shoes: MedievalClothingShoesAncientNocturneBoots
+    neck: MedievalClothingNeckAncientNocturneCloak
     back: MedievalClothingBackpackSatchelLeather
   storage:
     back:

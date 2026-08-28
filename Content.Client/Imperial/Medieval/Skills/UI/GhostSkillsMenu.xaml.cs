@@ -12,6 +12,9 @@ namespace Content.Client.Imperial.Medieval.Skills.UI;
 [GenerateTypedNameReferences]
 public sealed partial class GhostSkillsMenu : DefaultWindow
 {
+    private const float InitialPixelWidth = 1100f;
+    private const float MinimumPixelWidth = 1050f;
+
     private readonly IPrototypeManager _prototypes;
     private readonly Dictionary<string, int> _levels;
     private readonly Dictionary<string, SkillEntry> _entries = new();
@@ -21,6 +24,7 @@ public sealed partial class GhostSkillsMenu : DefaultWindow
     public GhostSkillsMenu(IPrototypeManager prototypes, Dictionary<string, int> levels)
     {
         RobustXamlLoader.Load(this);
+        ApplyPixelWidth(UserInterfaceManager.RootControl.UIScale);
         _prototypes = prototypes;
         _levels = SharedSkillsSystem.GetDefaultSkillLevels(prototypes);
 
@@ -32,6 +36,18 @@ public sealed partial class GhostSkillsMenu : DefaultWindow
 
         Populate();
         SaveButton.OnPressed += _ => Save();
+    }
+
+    protected override void UIScaleChanged()
+    {
+        base.UIScaleChanged();
+        ApplyPixelWidth(UIScale);
+    }
+
+    private void ApplyPixelWidth(float uiScale)
+    {
+        MinWidth = MinimumPixelWidth / uiScale;
+        SetWidth = InitialPixelWidth / uiScale;
     }
 
     private void Populate()

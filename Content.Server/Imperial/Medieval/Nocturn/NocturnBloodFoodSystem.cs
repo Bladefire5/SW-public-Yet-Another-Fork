@@ -74,6 +74,7 @@ public sealed class NocturnBloodFoodSystem : EntitySystem
         }
 
         _audio.PlayPvs(new SoundPathSpecifier(nocturn.EffectSoundOnDrink), args.User);
+        Spawn(ent.Comp.BloodParticlesPrototype, Transform(args.User).Coordinates);
         QueueDel(ent.Owner);
     }
 }
