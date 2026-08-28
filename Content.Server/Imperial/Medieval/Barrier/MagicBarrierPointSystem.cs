@@ -173,7 +173,6 @@ namespace Content.Server.MagicBarrier
             _chat.DispatchGlobalAnnouncement("Проклятый нарост уничтожен, расход стабильности барьера снижен.", playSound: false, colorOverride: Color.LimeGreen, sender: "Барьер");
             foreach (var comp in EntityManager.EntityQuery<MagicBarrierComponent>())
             {
-                // Is this redundent?
                 comp.MagicBarrierCursePE++;
                 comp.MagicBarrierCurseEffect += 0.01f;
                 comp.Stability += 4f;
@@ -182,7 +181,6 @@ namespace Content.Server.MagicBarrier
 
         private void OnExamine(EntityUid uid, MagicBarrierComponent component, ExaminedEvent args)
         {
-            // is this ok
             args.PushMarkup("[color=red]Текущая стабильность барьера " + Math.Round(component.Stability, 2) + " из " + component.MaxStability + "[/color]", 1);
             args.PushMarkup("[color=cyan]Текущий расход " + Math.Round(component.Lose, 2) + " стабильности в минуту[/color]", 0);
             int sector1 = 0;

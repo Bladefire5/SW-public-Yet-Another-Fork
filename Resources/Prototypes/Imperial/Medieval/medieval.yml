@@ -4031,7 +4031,7 @@
   placement:
     mode: SnapgridCenter
   components:
-  - type: MedievalHornPlaytimeRequirement
+  - type: MedievalHornPlaytimeRequirement 
   - type: MeleeSound
     soundGroups:
       Brute:
