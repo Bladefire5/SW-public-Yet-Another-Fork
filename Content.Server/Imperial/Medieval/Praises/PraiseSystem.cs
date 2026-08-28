@@ -237,7 +237,7 @@ public sealed class PraiseSystem : EntitySystem
 
         if (!isAdmin && _lastPraiseViewDataRequests[id] > DateTime.Now - _praiseViewDataRequestCooldown)
         {
-            RaiseNetworkEvent(new PraiseViewMessage { Target = msg.Target, Records = new(), Admin = false, Spam = true });
+            RaiseNetworkEvent(new PraiseViewMessage { Target = msg.Target, Records = new(), Admin = false, Spam = true }, args.SenderSession);
             return;
         }
 
