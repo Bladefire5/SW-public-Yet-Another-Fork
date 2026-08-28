@@ -173,17 +173,18 @@ namespace Content.Server.MagicBarrier
             _chat.DispatchGlobalAnnouncement("Проклятый нарост уничтожен, расход стабильности барьера снижен.", playSound: false, colorOverride: Color.LimeGreen, sender: "Барьер");
             foreach (var comp in EntityManager.EntityQuery<MagicBarrierComponent>())
             {
-                comp.Lose *= 0.72f;
+                // Is this redundent?
+                comp.MagicBarrierCursePE++;
+                comp.MagicBarrierCurseEffect += 0.01f;
                 comp.Stability += 4f;
             }
         }
 
         private void OnExamine(EntityUid uid, MagicBarrierComponent component, ExaminedEvent args)
         {
+            // is this ok
             args.PushMarkup("[color=red]Текущая стабильность барьера " + Math.Round(component.Stability, 2) + " из " + component.MaxStability + "[/color]", 1);
-            var riftCount = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
-            var riftLoss = component.ElementalRiftStabilityLossPerMinute * riftCount;
-            args.PushMarkup("[color=cyan]Текущий расход " + Math.Round(component.Lose + riftLoss, 2) + " стабильности в минуту[/color]", 0);
+            args.PushMarkup("[color=cyan]Текущий расход " + Math.Round(component.Lose, 2) + " стабильности в минуту[/color]", 0);
             int sector1 = 0;
             int sector2 = 0;
             int sector3 = 0;
@@ -327,21 +328,37 @@ namespace Content.Server.MagicBarrier
                     var xform = Transform(comp.Owner);
                     var coords = xform.Coordinates;
 
-                    if (comp.Stability <= 10f && comp.Stability > 5f)
+                    if (comp.Stability <= 100f && comp.Stability > 50f)
                     {
                         _chat.DispatchGlobalAnnouncement("Низкий уровень стабильности барьера", playSound: false, colorOverride: Color.GreenYellow, sender: "Барьер");
                     }
-                    if (comp.Stability <= 5f)
+                    if (comp.Stability <= 50f)
                     {
                         _chat.DispatchGlobalAnnouncement("Крайне Низкий уровень стабильности барьера", playSound: false, colorOverride: Color.IndianRed, sender: "Барьер");
                     }
 
                     if (comp.Stability > 0f)
                     {
-                        comp.Stability -= comp.Lose;
+                        var growthCount = EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
                         var riftCount = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
-                        if (riftCount > 0)
-                            comp.Stability -= comp.ElementalRiftStabilityLossPerMinute * riftCount;
+
+                        // Calculate the raw drain from the base drain, active Rifts,
+                        // the persistent Growth escalation, and the number of active Growths.
+                        var LowCurse =
+                            (comp.BaseCurseDrain + comp.RiftCurseDrain * riftCount) *
+                            MathF.Pow(comp.MagicBarrierCurseEffect, 1f + growthCount);
+
+                        // The hard cap is based on the total number of active Growths and Rifts.
+                        var totalSources = growthCount + riftCount;
+                        var HighCurse = totalSources <= comp.ACurseLimit
+                            ? comp.HLCurseLimit
+                            : comp.HLCurseLimit +
+                              (comp.HHCurseLimit - comp.HLCurseLimit) *
+                              (1f - MathF.Exp(-comp.OCurseRate * (totalSources - comp.ACurseLimit)));
+
+                        // Apply the lower of the raw drain or the hard cap, rounded to two decimals.
+                        comp.Lose = MathF.Round(MathF.Min(LowCurse, HighCurse), 2);
+                        comp.Stability -= comp.Lose;
                     }
                     else
                     {
@@ -359,7 +376,6 @@ namespace Content.Server.MagicBarrier
                     comp.Cycle += 1;
                     if (comp.Cycle % 10 == 0)
                     {
-                        comp.Lose = comp.Lose * comp.Rate;
                         var cursespawners = EntityManager.EntityQuery<MagicBarrierCurseSpawnComponent>().ToArray();
                         if (cursespawners.Length > 0)
                         {
@@ -494,7 +510,6 @@ namespace Content.Server.MagicBarrier
             foreach (var barrier in EntityManager.EntityQuery<MagicBarrierComponent>())
             {
                 barrier.Stability += 4f;
-                barrier.Lose *= 0.72f;
             }
 
             _chat.DispatchGlobalAnnouncement("Элементальный разлом уничтожен, стабильность барьера восстановлена.", playSound: false, colorOverride: Color.LimeGreen, sender: "Барьер");
