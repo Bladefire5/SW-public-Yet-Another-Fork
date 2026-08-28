@@ -5041,6 +5041,7 @@
     tags:
       - HideContextMenu
   - type: MeleeParryEffect
+    phaseControlled: true
 
 - type: entity
   id: MedievalEffectSuccessParry

@@ -26,10 +26,15 @@ public sealed class MeleeParryEffectSystem : EntitySystem
             }
 
             var elapsed = Math.Max(0f, (float) (_timing.CurTime - effect.AnimationStartTime).TotalSeconds);
-            var animationTime = Math.Min(elapsed, Math.Max(0f, state.TotalDelay - 0.0001f));
-
             _sprite.LayerSetAutoAnimated(layer, false);
-            _sprite.LayerSetAnimationTime(layer, animationTime);
+
+            if (elapsed >= state.TotalDelay)
+            {
+                _sprite.LayerSetVisible(layer, false);
+                continue;
+            }
+
+            _sprite.LayerSetAnimationTime(layer, elapsed);
         }
     }
 }

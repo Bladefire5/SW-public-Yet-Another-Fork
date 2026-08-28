@@ -5,7 +5,7 @@ namespace Content.Shared.MeleeParry.Components
     [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
     public sealed partial class MeleeParryEffectComponent : Component
     {
-        [AutoNetworkedField]
+        [DataField]
         public bool PhaseControlled;
 
         [AutoNetworkedField]

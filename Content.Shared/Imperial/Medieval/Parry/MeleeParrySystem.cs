@@ -241,10 +241,11 @@ namespace Content.Shared.MeleeParry
 
             var effectCoordinates = Transform(uid).Coordinates;
             var effectUid = PredictedSpawnAttachedTo(parry.ParryEffectWindow, effectCoordinates);
-            var effect = Comp<MeleeParryEffectComponent>(effectUid);
-            effect.PhaseControlled = true;
-            effect.AnimationStartTime = parry.ParriedTime;
-            Dirty(effectUid, effect);
+            if (TryComp<MeleeParryEffectComponent>(effectUid, out var effect))
+            {
+                effect.AnimationStartTime = parry.ParriedTime;
+                Dirty(effectUid, effect);
+            }
 
             _audio.PlayPredicted(parry.ParryWindowSound, effectCoordinates, uid);
 
