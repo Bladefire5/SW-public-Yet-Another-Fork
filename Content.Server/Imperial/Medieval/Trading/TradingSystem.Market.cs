@@ -703,27 +703,14 @@ public sealed partial class TradingSystem
             TerminatingOrDeleted(item) ||
             EntityManager.IsQueuedForDeletion(item) ||
             MetaData(item).EntityPrototype is not { } prototype ||
-            !HasComp<ItemComponent>(item) ||
             !CanTradeProduct(prototype, config) ||
-            HasComp<VirtualItemComponent>(item) ||
-            HasComp<MobStateComponent>(item) ||
-            HasBlockedTraderItemTag(item, config) ||
-            ContainsPlayerMind(item) ||
-            HasComp<TimedDespawnComponent>(item) ||
-            HasComp<MedievalTimedDespawnComponent>(item) ||
-            HasComp<ActiveTimerTriggerComponent>(item) ||
-            HasComp<ActiveTwoStageTriggerComponent>(item))
+            ContainsPlayerMind(item))
         {
             return false;
         }
 
-        if (TryComp<ExpendableLightComponent>(item, out var light) &&
-            light.CurrentState != ExpendableLightState.BrandNew)
-        {
-            return false;
-        }
-
-        return !HasComp<LetterComponent>(item);
+        return !TryComp<ExpendableLightComponent>(item, out var light) ||
+               light.CurrentState == ExpendableLightState.BrandNew;
     }
 
     private bool CanTradeProduct(EntProtoId product, TradingMarketConfigPrototype config)
@@ -751,12 +738,6 @@ public sealed partial class TradingSystem
                    out var light,
                    EntityManager.ComponentFactory) ||
                light.CurrentState == ExpendableLightState.BrandNew;
-    }
-
-    private bool HasBlockedTraderItemTag(EntityUid item, TradingMarketConfigPrototype config)
-    {
-        return config.BlockedTraderItemTags.Count > 0 &&
-               _tags.HasAnyTag(item, config.BlockedTraderItemTags);
     }
 
     private bool HasBlockedTraderProductTag(EntityPrototype prototype, TradingMarketConfigPrototype config)
@@ -847,7 +828,7 @@ public sealed partial class TradingSystem
                             common != null &&
                             common.HasStack == hasStack &&
                             common.BaselineStackCount == stackCount &&
-                            (!isEquipment || (!hasAppliedQuality && !isDamagedEquipment));
+                            (!isEquipment || !hasAppliedQuality && !isDamagedEquipment);
 
         if (matchesCommon)
         {
