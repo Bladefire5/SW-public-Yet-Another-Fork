@@ -6,7 +6,6 @@ materials-reinforced-plasma-glass = плазменное бронестекло
 
 # Metals
 materials-steel = сталь
-materials-silver = серебро
 materials-plasteel = пласталь
 
 # Other
