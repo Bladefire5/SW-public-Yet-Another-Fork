@@ -3,6 +3,8 @@
   id: MedievalInquisitorMedallion
   components:
   - type: MedievalInquisitorMedallion
+  - type: UseDelay
+    delay: 600
   - type: Sprite
     sprite: Imperial/Medieval/Clothing/Medaljons/inquisitor_medallion.rsi
     state: icon
@@ -13,6 +15,12 @@
     sprite: Imperial/Medieval/Clothing/Medaljons/inquisitor_medallion.rsi
     slots:
     - ears
+  - type: Armor
+    modifiers:
+      coefficients:
+        Caustic: 0.7
+        Radiation: 0.7
+        Bloodloss: 0.7
 
 - type: entity
   parent: MedievalPaper

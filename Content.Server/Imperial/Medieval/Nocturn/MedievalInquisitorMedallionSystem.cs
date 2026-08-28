@@ -5,8 +5,8 @@ using Content.Shared.Humanoid;
 using Content.Shared.Interaction;
 using Content.Shared.Nocturn.Components;
 using Content.Shared.Popups;
+using Content.Shared.Timing;
 using Robust.Shared.Player;
-using Robust.Shared.Timing;
 
 namespace Content.Server.Nocturn;
 
@@ -17,7 +17,7 @@ public sealed class MedievalInquisitorMedallionSystem : EntitySystem
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly RaceSystem _race = default!;
-    [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly UseDelaySystem _delay = default!;
 
     public override void Initialize()
     {
@@ -37,25 +37,8 @@ public sealed class MedievalInquisitorMedallionSystem : EntitySystem
 
         args.Handled = true;
 
-        if (medallion.Comp.InUse)
-        {
-            _popup.PopupEntity(
-                Loc.GetString("medieval-inquisitor-medallion-in-use"),
-                medallion,
-                args.User,
-                PopupType.MediumCaution);
+        if (!TryComp(medallion, out UseDelayComponent? useDelay) || _delay.IsDelayed((medallion, useDelay)))
             return;
-        }
-
-        if (medallion.Comp.NextUseTime > _timing.CurTime)
-        {
-            _popup.PopupEntity(
-                Loc.GetString("medieval-inquisitor-medallion-cooldown"),
-                medallion,
-                args.User,
-                PopupType.MediumCaution);
-            return;
-        }
 
         var targetKind = GetTargetKind(target, medallion.Comp);
         if (targetKind == null)
@@ -89,7 +72,6 @@ public sealed class MedievalInquisitorMedallionSystem : EntitySystem
         if (!_doAfter.TryStartDoAfter(doAfterArgs))
             return;
 
-        medallion.Comp.InUse = true;
         ShowStartMessages(args.User, target, targetKind.Value);
     }
 
@@ -97,13 +79,11 @@ public sealed class MedievalInquisitorMedallionSystem : EntitySystem
         Entity<MedievalInquisitorMedallionComponent> medallion,
         ref MedievalInquisitorMedallionDoAfterEvent args)
     {
-        medallion.Comp.InUse = false;
-
         if (args.Handled || args.Cancelled)
             return;
 
         args.Handled = true;
-        medallion.Comp.NextUseTime = _timing.CurTime + medallion.Comp.Cooldown;
+        _delay.TryResetDelay(medallion);
 
         if (args.Target is not { } target)
             return;

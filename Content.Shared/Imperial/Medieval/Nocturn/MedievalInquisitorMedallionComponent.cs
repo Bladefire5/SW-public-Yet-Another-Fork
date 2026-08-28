@@ -13,9 +13,6 @@ public sealed partial class MedievalInquisitorMedallionComponent : Component
     public TimeSpan ExaminationDuration = TimeSpan.FromSeconds(5);
 
     [DataField]
-    public TimeSpan Cooldown = TimeSpan.FromMinutes(10);
-
-    [DataField]
     public ProtoId<SpeciesPrototype> HumanSpecies = "Human";
 
     [DataField]
@@ -26,12 +23,6 @@ public sealed partial class MedievalInquisitorMedallionComponent : Component
             { "Heat", 5000 }
         }
     };
-
-    [ViewVariables]
-    public TimeSpan NextUseTime = TimeSpan.Zero;
-
-    [ViewVariables]
-    public bool InUse;
 }
 
 [RegisterComponent]
