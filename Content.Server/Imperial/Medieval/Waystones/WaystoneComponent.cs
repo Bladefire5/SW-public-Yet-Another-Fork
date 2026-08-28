@@ -62,4 +62,9 @@ public sealed partial class WaystoneComponent : Component
     public string LinkedCircle = string.Empty;
 
     public TimeSpan LastMessageTime = TimeSpan.Zero;
+
+    /// <summary>
+    /// First array element - Departy, Second - Arrival
+    /// </summary>
+    public int[] TeleportationMoney = new int[2];
 }
