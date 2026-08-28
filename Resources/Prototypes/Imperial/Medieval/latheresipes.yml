@@ -1258,7 +1258,7 @@
   id: MedievalSilverCup
   craftTime: 15
   stacks:
-    MedievalIronIngot: 2
+    MedievalSilver: 2
   result: MedievalSilverCup
 
 - type: CP14Recipe
@@ -1834,7 +1834,8 @@
   iconOverride: MedievalIronClaymoreSilver
   stacks:
     MedievalGold: 1
-    MedievalSilver: 39
+    MedievalSilver: 11
+    MedievalIronIngot: 20
     WoodPlank: 6
   result: WorkpieceMedievalIronClaymoreSilver
 
