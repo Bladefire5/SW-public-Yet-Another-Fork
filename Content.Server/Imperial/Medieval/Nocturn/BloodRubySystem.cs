@@ -6,6 +6,7 @@ using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Imperial.Medieval.Magic;
 using Content.Shared.Nocturn.Components;
 using Content.Shared.Popups;
+using Content.Shared.Toggleable;
 using Content.Shared.Verbs;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
@@ -16,6 +17,7 @@ public sealed class BloodRubySystem : EntitySystem
 {
     [Dependency] private readonly SharedHandsSystem _hands = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
+    [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly SharedPointLightSystem _pointLight = default!;
     [Dependency] private readonly SharedActionsSystem _actions = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
@@ -32,8 +34,15 @@ public sealed class BloodRubySystem : EntitySystem
         SubscribeLocalEvent<BloodRubyOwnerComponent, BloodRubyDonationDoAfterEvent>(OnDonationDoAfter);
         SubscribeLocalEvent<BloodRubyOwnerComponent, AncientNocturneEmergencyTeleportActionEvent>(OnEmergencyTeleportAction);
         SubscribeLocalEvent<BloodRubyOwnerComponent, AncientNocturneEmergencyTeleportDoAfterEvent>(OnEmergencyTeleportDoAfter);
+        SubscribeLocalEvent<BloodRubyComponent, MapInitEvent>(OnRubyMapInit, after: [typeof(LoadoutSystem)]);
         SubscribeLocalEvent<BloodRubyComponent, GetVerbsEvent<AlternativeVerb>>(OnGetVerbs);
         SubscribeLocalEvent<BloodRubyComponent, ExaminedEvent>(OnExamined);
+    }
+
+    private void OnRubyMapInit(Entity<BloodRubyComponent> ruby, ref MapInitEvent args)
+    {
+        var progress = Math.Clamp(ruby.Comp.TotalBlood / ruby.Comp.BloodForFullGlow, 0f, 1f);
+        UpdateFill(ruby.Owner, progress);
     }
 
     private void OnOwnerStartup(Entity<BloodRubyOwnerComponent> ent, ref ComponentStartup args)
@@ -138,7 +147,7 @@ public sealed class BloodRubySystem : EntitySystem
         ruby.TotalBlood += donatedBlood;
 
         Spawn(ent.Comp.BloodParticlesPrototype, Transform(rubyUid).Coordinates);
-        UpdateLight((rubyUid, ruby));
+        UpdateVisuals((rubyUid, ruby));
     }
 
     private void OnEmergencyTeleportAction(
@@ -257,11 +266,12 @@ public sealed class BloodRubySystem : EntitySystem
         return null;
     }
 
-    private void UpdateLight(Entity<BloodRubyComponent> ruby)
+    private void UpdateVisuals(Entity<BloodRubyComponent> ruby)
     {
         var progress = Math.Clamp(ruby.Comp.TotalBlood / ruby.Comp.BloodForFullGlow, 0f, 1f);
         var light = _pointLight.EnsureLight(ruby.Owner);
 
+        UpdateFill(ruby.Owner, progress);
         _pointLight.SetEnabled(ruby.Owner, true, light);
         _pointLight.SetCastShadows(ruby.Owner, false, light);
         _pointLight.SetColor(
@@ -276,5 +286,11 @@ public sealed class BloodRubySystem : EntitySystem
             ruby.Owner,
             MathHelper.Lerp(ruby.Comp.MinimumLightEnergy, ruby.Comp.MaximumLightEnergy, progress),
             light);
+    }
+
+    private void UpdateFill(EntityUid ruby, float progress)
+    {
+        _appearance.SetData(ruby, ToggleableVisuals.Enabled, true);
+        _appearance.SetData(ruby, ToggleableVisuals.Color, Color.White.WithAlpha(progress));
     }
 }

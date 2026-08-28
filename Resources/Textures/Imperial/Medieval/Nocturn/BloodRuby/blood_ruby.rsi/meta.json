@@ -11,11 +11,22 @@
       "name": "icon"
     },
     {
+      "name": "fill-icon"
+    },
+    {
       "name": "inhand-left",
       "directions": 4
     },
     {
+      "name": "fill-inhand-left",
+      "directions": 4
+    },
+    {
       "name": "inhand-right",
+      "directions": 4
+    },
+    {
+      "name": "fill-inhand-right",
       "directions": 4
     }
   ]

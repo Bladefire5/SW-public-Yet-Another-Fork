@@ -6,9 +6,28 @@
   components:
   - type: Sprite
     sprite: Imperial/Medieval/Nocturn/BloodRuby/blood_ruby.rsi
-    state: icon
+    layers:
+    - state: icon
+    - state: fill-icon
+      color: "#FFFFFF00"
+      map: [ "bloodFill" ]
   - type: Item
     size: Tiny
     sprite: Imperial/Medieval/Nocturn/BloodRuby/blood_ruby.rsi
+    inhandVisuals:
+      left:
+      - state: inhand-left
+      right:
+      - state: inhand-right
+  - type: Appearance
+  - type: ToggleableVisuals
+    spriteLayer: bloodFill
+    inhandVisuals:
+      left:
+      - state: fill-inhand-left
+        color: "#FFFFFF00"
+      right:
+      - state: fill-inhand-right
+        color: "#FFFFFF00"
   - type: BloodRuby
   - type: Undrowable
