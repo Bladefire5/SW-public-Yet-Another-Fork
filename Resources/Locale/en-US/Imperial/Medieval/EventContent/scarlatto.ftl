@@ -441,3 +441,10 @@ ent-MedievalDecorationEventFestivalScarlatto4 = festival pennants
     .suffix = {"Medieval, Scarlatto, Masquerade"}
 
 ### FESTIVAL EVENT
+
+ent-MedievalViolinInstrument = violin
+    .desc = They say the violin is the devil's instrument, but you can draw from it not only desperate sighs and cries, but also the music of your own repentance...
+    .suffix = {"Medieval, Scarlatto"}
+ent-MedievalBowInstrument = violin bow
+    .desc = At its tip, your destiny begins.
+    .suffix = {"Medieval, Scarlatto"}
