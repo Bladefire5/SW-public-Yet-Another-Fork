@@ -52,13 +52,13 @@ medieval-store-spells-fire-diffusion-senior-desc = Ха-ха, поле битв�
 medieval-spell-speach-boost = A̷̡͡UĢ͡Ḿ̷̛ENTU̷͢͞M̡
 
 medieval-store-spells-light-boost-beginner-name = Усиление
-medieval-store-spells-light-boost-beginner-desc = Вводит в цель жидкую ману из-за чего она начинает двигаться быстрее. Стоимость 50 маны.
+medieval-store-spells-light-boost-beginner-desc = Вводит в цель жидкую ману из-за чего она начинает двигаться быстрее и слегка насыщается. Стоимость 50 маны.
 
 medieval-store-spells-light-boost-middle-name = Усиление опытный
-medieval-store-spells-light-boost-middle-desc = Вводит в цель жидкую ману из-за чего она начинает двигаться быстрее. Стоимость 70 маны.
+medieval-store-spells-light-boost-middle-desc = Вводит в цель жидкую ману из-за чего она начинает двигаться быстрее и слегка насыщается. Стоимость 70 маны.
 
 medieval-store-spells-light-boost-senior-name = Усиление архимаг
-medieval-store-spells-light-boost-senior-desc = Вводит в цель жидкую ману из-за чего она начинает двигаться быстрее. Стоимость 80 маны.
+medieval-store-spells-light-boost-senior-desc = Вводит в цель жидкую ману из-за чего она начинает двигаться быстрее и слегка насыщается. Стоимость 80 маны.
 
 # Magic Arrow
 
@@ -116,7 +116,14 @@ medieval-store-spells-fire-wall-senior-name = Небесный огонь
 medieval-store-spells-fire-wall-senior-desc = Кто вам сказал что в средневековье не было напалма? Стоимость 55 маны.
 
 # Magic Spark
+
 medieval-spell-speach-spark = щёлкает пальцами
 
 medieval-store-spells-fire-spark-beginner-name = Магическая искра
 medieval-store-spells-fire-spark-beginner-desc = Создаёт магическую искру в вашей руке, способную поджечь что-либо. Пригодится, если вдруг забыли огниво
+
+# FireFetter
+medieval-spell-speach-fire-fetter = Kɛlɛ faama nɛɛma
+
+medieval-spell-speach-fire-fetter-beginner-name = Огненные оковы
+medieval-spell-speach-fire-fetter-beginner-desc = Призывает магические огненные оковы в руку. При ударе наносят огненный урон и поджигают цель. Стоимость 35 маны.

@@ -123,6 +123,13 @@ medieval-store-spells-darkness-tentacles-senior-desc = Creates cursed roots that
 
 medieval-store-spells-darkness-spawn-skelet-senior-desc = Summons a warrior skeleton, hostile to everyone, at the selected point. Cost: 50 mana.
 
+# CursedFetter
+
+medieval-spell-speach-cursed-fetter = Nɛɛma tɔgbee kɛlɛ
+
+medieval-spell-speach-cursed-fetter-beginner-name = Shadow shackles
+medieval-spell-speach-cursed-fetter-beginner-desc = Summons magical cursed shackles into the hand. Upon hitting, they deal stamina damage. Costs 35 mana.
+
 # Cult Dagger
 
 medieval-spell-speech-black-hole = Atrum Foramen Crea
@@ -149,4 +156,3 @@ medieval-store-spells-darkness-cursed-arrow-player-follower-middle-name = Cursed
 medieval-store-spells-darkness-cursed-arrow-player-follower-middle-desc = Fire up to four homing arrows. Costs 35 mana. Use the middle mouse button to select multiple targets.
 medieval-store-spells-darkness-cursed-arrow-player-follower-senior-name = Cursed arrow: Pursuit
 medieval-store-spells-darkness--cursed-arrow-player-follower-senior-desc = Fire up to six homing arrows. Costs 45 mana. Use the middle mouse button to select multiple targets.
-

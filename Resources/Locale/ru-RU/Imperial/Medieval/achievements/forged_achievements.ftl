@@ -4,19 +4,19 @@ achievement-forged-magic-dust-desc = Получите магический по�
 achievement-forged-magic-glina-name = Магическая глина
 achievement-forged-magic-glina-desc = Получите магическую глину.
 
-achievement-forged-wooden-modules-name = Деревянный кованный
+achievement-forged-wooden-modules-name = Деревянный кованый
 achievement-forged-wooden-modules-desc = Создайте все модули деревянного кованного (голова, торс, руки, ноги).
 
-achievement-forged-iron-modules-name = Железный кованный
+achievement-forged-iron-modules-name = Железный кованый
 achievement-forged-iron-modules-desc = Создайте все модули железного кованного.
 
-achievement-forged-golden-modules-name = Золотой кованный
+achievement-forged-golden-modules-name = Золотой кованый
 achievement-forged-golden-modules-desc = Создайте все модули золотого кованного.
 
-achievement-forged-forstone-modules-name = Форстоуновый кованный
+achievement-forged-forstone-modules-name = Форстоуновый кованый
 achievement-forged-forstone-modules-desc = Создайте все модули форстоунового кованного.
 
-achievement-forged-ebonite-modules-name = Эбонитовый кованный
+achievement-forged-ebonite-modules-name = Эбонитовый кованый
 achievement-forged-ebonite-modules-desc = Создайте все модули эбонитового кованного.
 
 achievement-forged-cannon1-name = Пушкарь I

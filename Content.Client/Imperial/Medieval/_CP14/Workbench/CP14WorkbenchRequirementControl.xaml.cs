@@ -26,6 +26,8 @@ public sealed partial class CP14WorkbenchRequirementControl : Control
     private readonly CP14WorkbenchRecipePrototype _recipePrototype;
     private readonly bool _craftable;
 
+    public string RecipeName => Name.Text ?? string.Empty;
+
     public CP14WorkbenchRequirementControl(CP14WorkbenchUiRecipesEntry entry)
     {
         RobustXamlLoader.Load(this);

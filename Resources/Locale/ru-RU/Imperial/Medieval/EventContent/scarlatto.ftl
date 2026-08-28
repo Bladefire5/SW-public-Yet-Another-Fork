@@ -339,3 +339,10 @@ ent-MedievalDecorationEventFestivalScarlatto4 = фестивальные фла�
     .suffix = {"Средневековье, Scarlatto, Маскарад"}
 
 ### FESTIVAL EVENT
+
+ent-MedievalViolinInstrument = скрипка
+    .desc = Говорят, скрипка - инструмент дьявола, но ведь из неё можно высечь не только истошные вздохи и крики, но и музыку собственного раскаяния...
+    .suffix = {"Средневековье, Scarlatto"}
+ent-MedievalBowInstrument = смычок
+    .desc = На его конце начинается твоя судьба.
+    .suffix = {"Средневековье, Scarlatto"}

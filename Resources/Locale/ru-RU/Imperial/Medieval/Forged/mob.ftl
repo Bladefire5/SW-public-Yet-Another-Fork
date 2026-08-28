@@ -1,3 +1,3 @@
-ent-MedievalForgedMob = Кованный
-    .desc = Наделенный разумом механизм
+ent-MedievalForgedMob = кованый
+    .desc = Наделенный разумом механизм.
     .suffix = { "Средневековье, моб, DEBUG" }

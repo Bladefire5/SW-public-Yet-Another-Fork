@@ -115,3 +115,10 @@ medieval-store-spells-darkness-mana-burn-field-middle-desc = Размещает 
 
 medieval-store-spells-darkness-mana-burn-field-senior-name = Дыра истощения маны
 medieval-store-spells-darkness-mana-burn-field-senior-desc = Размещает поле радиусом 3.5 тайла, которое постепенно выжигает ману у стоящих на нём сущностей и притягивает их к центру поля
+
+# CursedFetter
+
+medieval-spell-speach-cursed-fetter = Nɛɛma tɔgbee kɛlɛ
+
+medieval-spell-speach-cursed-fetter-beginner-name = Теневые оковы
+medieval-spell-speach-cursed-fetter-beginner-desc = Призывает магические проклятые оковы в руку. При ударе наносят урон по выносливости. Стоимость 35 маны.

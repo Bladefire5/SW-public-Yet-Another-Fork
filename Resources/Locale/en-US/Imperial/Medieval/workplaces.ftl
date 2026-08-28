@@ -6,11 +6,11 @@ smithing-gorn-slot-fail-whitelist = This definitely doesn't belong inside the fo
 smithing-gorn-slot-fail-locked = Something's already inside the forge.
 smithing-gorn-slot-success-insert = You place the workpiece inside the forge.
 
-ent-SmithingGorn = Forge
-    .desc = Used to heat workpieces
+ent-SmithingGorn = forge
+    .desc = Used to heat workpieces.
     .suffix = { "Medieval" }
-ent-SmithWorkplace = Anvil
-    .desc = Used to make the final product
+ent-SmithWorkplace = anvil
+    .desc = Used to make the final product.
     .suffix = { "Medieval" }
 ent-SmithingGornCraft = forge workpiece
     .desc = Hold this workpiece in your active hand and click where you want to build a forge.

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
-  "copyright": "Drawed by BROtania/BRO & resprite by Unit480/solder",
+  "copyright": "by crookielv",
   "size": {
     "x": 32,
     "y": 32
@@ -9,10 +9,6 @@
   "states": [
     {
       "name": "icon"
-    },
-    {
-      "name": "equipped-HELMET",
-      "directions": 4
     },
     {
       "name": "inhand-left",
