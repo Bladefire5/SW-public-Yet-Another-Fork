@@ -18,16 +18,52 @@ namespace Content.Server.MagicBarrier.Components
         public TimeSpan ReloadTime = TimeSpan.FromSeconds(60f);
 
         [DataField]
-        public float Stability = 60f;
+        public float Stability = 500f;
 
         [DataField]
-        public float MaxStability = 60f;
+        public float MaxStability = 500f;
+
+        // Current stability drain per minute. This value is calculated by MagicBarrierSystem.
+        [DataField]
+        public float Lose;
+
+        // Base stability drain before active Growth and Rift effects are applied. Default (3.64).
+        [DataField]
+        public float BaseCurseDrain = 3.64f;
+
+        // Stability drain added by each active Rift before the Growth escalation multiplier is applied. Default (4.5).
+        [DataField]
+        public float RiftCurseDrain = 4.5f;
+
+        // Number of Cursed Growths that have been destroyed. This provides persistent escalation.
+        [DataField]
+        public float MagicBarrierCursePE = 0f;
+
+        // Current persistent-escalation multiplier applied by Cursed Growths. Default (1.1).
+        [DataField]
+        public float MagicBarrierCurseEffect = 1.1f;
+
+        [DataField] 
+        public float MagicBarrierCurseEM = 0.01f;
+
+        // Controls how quickly the hard-cap curve approaches its upper limit, the higher it is the faster it reaches the limit. Default (0.17)
+        [DataField]
+        public float OCurseRate = 0.17f;
+
+        // Number of active Cursed Growths and Rifts at which the hard-cap curve begins. Default (5).
+        [DataField]
+        public float ACurseLimit = 5f;
+
+        // Lower value of the hard-cap curve. Default (20)
+        [DataField]
+        public float HLCurseLimit = 20f;
+
+        // Upper value approached by the hard-cap curve. Default (50)
+        [DataField]
+        public float HHCurseLimit = 50f;
 
         [DataField]
-        public float Lose = 0.5f;
-
-        [DataField]
-        public float Rate = 1.5f;
+        public TimeSpan LastLoseCalculateTime = TimeSpan.Zero;
 
         [DataField]
         public int Cycle = 0;
@@ -55,9 +91,6 @@ namespace Content.Server.MagicBarrier.Components
 
         [DataField]
         public TimeSpan ElementalRiftNextSpawnTime = TimeSpan.Zero;
-
-        [DataField]
-        public float ElementalRiftStabilityLossPerMinute = 0.0015f;
 
         [DataField]
         public float ElementalRiftMinSpawnMinutes = 30f;
