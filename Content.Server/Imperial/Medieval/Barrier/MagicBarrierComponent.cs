@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Numerics;
 using Robust.Shared.Network;
 using Robust.Shared.Prototypes;
@@ -38,14 +37,14 @@ namespace Content.Server.MagicBarrier.Components
 
         // Number of Cursed Growths that have been destroyed. This provides persistent escalation.
         [DataField]
-        public int MagicBarrierCursePE = 0f;
+        public float MagicBarrierCursePE = 0f;
 
         // Current persistent-escalation multiplier applied by Cursed Growths. Default (1.1).
         [DataField]
         public float MagicBarrierCurseEffect = 1.1f;
 
         // Controls how quickly the hard-cap curve approaches its upper limit, the higher it is the faster it reaches the limit. Default (1.1)
-        [DataFeild]
+        [DataField]
         public float OCurseRate = 0.17f;
 
         // Number of active Cursed Growths and Rifts at which the hard-cap curve begins. Default (5).
@@ -58,7 +57,7 @@ namespace Content.Server.MagicBarrier.Components
 
         // Upper value approached by the hard-cap curve. Default (50)
         [DataField]
-        public float HHcurseLimit = 50f;
+        public float HHCurseLimit = 50f;
 
         [DataField]
         public int Cycle = 0;
