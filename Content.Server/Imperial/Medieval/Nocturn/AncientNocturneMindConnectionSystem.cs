@@ -140,8 +140,10 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
 
         var escapedName = FormattedMessage.EscapeText(Name(nameSource));
         var escapedMessage = FormattedMessage.EscapeText(message);
+        var channel = Loc.GetString("medieval-ancient-nocturne-mind-connection-channel-name");
         var wrappedMessage = Loc.GetString(
             "medieval-ancient-nocturne-mind-connection-wrap-message",
+            ("channel", $"\\[{channel}\\]"),
             ("name", escapedName),
             ("message", escapedMessage));
         wrappedMessage = $"[color={chat.ChatColor.ToHex()}]{wrappedMessage}[/color]";
