@@ -664,6 +664,7 @@ public sealed partial class TradingSystem
         out TradingMarketOffer offer)
     {
         offer = default!;
+        var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
             (price == 0 && immediateRecipient == null) ||
             !CanTradeProduct(commodity.Product, config) ||
@@ -727,7 +728,6 @@ public sealed partial class TradingSystem
     {
         commodityId = default;
         offer = default!;
-        var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
             !TryResolveCommodityForItem(market, sourceItem, price, true, out var commodity) ||
             MetaData(sourceItem).EntityPrototype?.ID is not { } product)

@@ -133,6 +133,7 @@ public sealed partial class TradingSystem
         Entity<TradingMarketComponent> market,
         TradingMarketConfigPrototype config)
     {
+        MatchAll(market, config);
         CreateGuildInterventions(market, config);
         MatchAll(market, config);
         AdvanceReputationScarcity(market);
@@ -152,13 +153,14 @@ public sealed partial class TradingSystem
                 continue;
 
             var referencePrice = GetGuildReferencePrice(commodity);
+            var sellReferencePrice = GetGuildSellReferencePrice(commodity);
             var sellCount = Math.Min(GetGuildOfferTarget(commodity, config), config.MaximumGuildSellOfferCount);
             for (var index = 0; index < sellCount; index++)
             {
                 var depth = GetInitialGuildOfferDepth(index, sellCount, config.InitialGuildPriceDepth);
                 var price = RoundInitialGuildOfferPrice(
                     GetInitialGuildOfferPrice(
-                        referencePrice,
+                        sellReferencePrice,
                         TradingOfferSide.Sell,
                         config.InitialGuildPriceSpread,
                         depth),
@@ -208,8 +210,7 @@ public sealed partial class TradingSystem
     {
         var price = Math.Max(1, commodity.StandardPrice);
         var referencePrice = Math.Max(1, config.LiquidityReferencePrice);
-        var expected = config.LiquidityReferenceOfferCount *
-                       MathF.Pow((float) referencePrice / price, config.LiquidityPriceExponent);
+        var expected = config.LiquidityReferenceOfferCount * (float) referencePrice / price;
         return Math.Clamp(expected, config.MinimumGuildOfferCount, config.MaximumGuildOfferCount);
     }
 
@@ -241,12 +242,12 @@ public sealed partial class TradingSystem
         });
     }
 
-    private static int RoundMarketPrice(double price)
+    private static int RoundMarketPrice(float price)
     {
-        if (double.IsNaN(price) || price <= 1d)
+        if (float.IsNaN(price) || price <= 1f)
             return 1;
 
-        return price >= int.MaxValue ? int.MaxValue : (int) Math.Round(price);
+        return price >= int.MaxValue ? int.MaxValue : (int) MathF.Round(price);
     }
 
     private void AddOffer(
@@ -306,14 +307,9 @@ public sealed partial class TradingSystem
         }
     }
 
-    private static bool CanMatchOffers(TradingMarketOffer ask, TradingMarketOffer bid)
+    internal static bool CanMatchOffers(TradingMarketOffer ask, TradingMarketOffer bid)
     {
-        if (bid.Price < ask.Price || IsSameParticipant(ask, bid))
-            return false;
-
-        return bid.Price > ask.Price ||
-               ask.ParticipantKind != TradingParticipantKind.Guild ||
-               bid.ParticipantKind != TradingParticipantKind.Guild;
+        return bid.Price >= ask.Price && !IsSameParticipant(ask, bid);
     }
 
     private static bool IsSameParticipant(TradingMarketOffer first, TradingMarketOffer second)

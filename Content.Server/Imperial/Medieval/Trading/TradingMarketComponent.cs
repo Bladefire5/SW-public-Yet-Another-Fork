@@ -11,8 +11,9 @@ public sealed partial class TradingMarketComponent : Component
     public Dictionary<EntProtoId, Guid> CommonCommodities = new();
     public List<Guild> Guilds = new();
     public Dictionary<Guid, TradingMarketOffer> Offers = new();
-    public long NextSequence;
+    public int NextSequence;
     public ProtoId<TradingMarketConfigPrototype> Config = "MedievalMarket";
+    public float PriceWeightBase = 0.5f;
 }
 
 public sealed class TradingCommodity
@@ -49,7 +50,7 @@ public sealed class TradingMarketOffer
     public EntityUid? Item;
     public string ListedItemName = string.Empty;
     public bool IsImmediate;
-    public long Sequence;
+    public int Sequence;
 }
 
 [RegisterComponent]

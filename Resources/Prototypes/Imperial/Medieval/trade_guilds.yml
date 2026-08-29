@@ -11,11 +11,10 @@
   - MedievalRevent
   stepInterval: 30
   reputationScarcityMinutesPerPoint: 3
-  liquidityReferencePrice: 5
-  liquidityReferenceOfferCount: 60
-  liquidityPriceExponent: 0.4
-  minimumGuildOfferCount: 2
-  maximumGuildOfferCount: 120
+  liquidityReferencePrice: 300
+  liquidityReferenceOfferCount: 20
+  minimumGuildOfferCount: 10
+  maximumGuildOfferCount: 40
   initialGuildPriceSpread: 0.12
   initialGuildPriceDepth: 0.18
   maximumGuildSellOfferCount: 200

@@ -22,19 +22,16 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
     public float ReputationScarcityMinutesPerPoint = 3f;
 
     [DataField]
-    public int LiquidityReferencePrice = 5;
+    public int LiquidityReferencePrice = 300;
 
     [DataField]
-    public int LiquidityReferenceOfferCount = 60;
+    public int LiquidityReferenceOfferCount = 20;
 
     [DataField]
-    public float LiquidityPriceExponent = 0.4f;
+    public int MinimumGuildOfferCount = 10;
 
     [DataField]
-    public int MinimumGuildOfferCount = 2;
-
-    [DataField]
-    public int MaximumGuildOfferCount = 120;
+    public int MaximumGuildOfferCount = 40;
 
     [DataField]
     public float InitialGuildPriceSpread = 0.12f;
