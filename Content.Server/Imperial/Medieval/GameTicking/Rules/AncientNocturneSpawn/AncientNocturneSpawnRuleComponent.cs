@@ -1,3 +1,4 @@
+using Content.Shared.Roles;
 using Robust.Shared.Prototypes;
 
 namespace Content.Server.Imperial.Medieval.GameTicking.Rules;
@@ -10,6 +11,9 @@ public sealed partial class AncientNocturneSpawnRuleComponent : Component
 
     [DataField]
     public EntProtoId SpawnerPrototype = "MedievalAncientNocturneGhostRoleSpawner";
+
+    [DataField]
+    public ProtoId<AntagPrototype> AntagPrototype = "AncientNocturne";
 
     [DataField]
     public TimeSpan InquisitionDelay = TimeSpan.FromMinutes(10);

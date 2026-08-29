@@ -38,6 +38,8 @@
     name: ghost-role-information-ancient-nocturne-name
     description: ghost-role-information-ancient-nocturne-description
     rules: ghost-role-information-ancient-nocturne-rules
+    mindRoles:
+    - MindRoleAncientNocturne
     raffle:
       settings: MedievalAncientNocturneRaffle
   - type: GhostRoleMobSpawner

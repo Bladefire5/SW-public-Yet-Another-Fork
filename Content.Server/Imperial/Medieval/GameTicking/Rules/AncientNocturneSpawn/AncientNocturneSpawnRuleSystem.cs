@@ -2,13 +2,17 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Content.Server.Chat.Systems;
+using Content.Server.GameTicking;
 using Content.Server.GameTicking.Rules;
 using Content.Server.Ghost.Roles.Events;
 using Content.Server.Humanoid;
+using Content.Server.Nocturn;
 using Content.Server.Preferences.Managers;
+using Content.Server.Roles;
 using Content.Shared.GameTicking.Components;
 using Content.Shared.Humanoid;
 using Content.Shared.Humanoid.Markings;
+using Content.Shared.Mind;
 using Content.Shared.Nocturn.Components;
 using Content.Shared.Preferences;
 using Robust.Shared.Prototypes;
@@ -23,6 +27,7 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
     [Dependency] private readonly MetaDataSystem _metaData = default!;
     [Dependency] private readonly IServerPreferencesManager _preferences = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
+    [Dependency] private readonly RoleSystem _role = default!;
 
     public override void Initialize()
     {
@@ -109,6 +114,67 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
             profile.Appearance.HairStyleId,
             profile.Appearance.HairColor,
             humanoid: humanoid);
+    }
+
+    protected override void AppendRoundEndText(
+        EntityUid uid,
+        AncientNocturneSpawnRuleComponent component,
+        GameRuleComponent gameRule,
+        ref RoundEndTextAppendEvent args)
+    {
+        base.AppendRoundEndText(uid, component, gameRule, ref args);
+
+        var ruleQuery = EntityQueryEnumerator<AncientNocturneSpawnRuleComponent>();
+        while (ruleQuery.MoveNext(out var ruleUid, out _))
+        {
+            if (ruleUid.Id < uid.Id)
+                return;
+        }
+
+        var nocturneMinds = new List<Entity<MindComponent>>();
+        var query = EntityQueryEnumerator<MindComponent>();
+        while (query.MoveNext(out var mindUid, out var mind))
+        {
+            if (_role.MindGetAllRoleInfo(mindUid)
+                .Any(role => role.Antagonist && role.Prototype == component.AntagPrototype.Id))
+                nocturneMinds.Add((mindUid, mind));
+        }
+
+        if (nocturneMinds.Count == 0)
+            return;
+
+        args.AddLine(Loc.GetString(
+            "medieval-ancient-nocturne-round-end-summary",
+            ("count", nocturneMinds.Count)));
+
+        foreach (var mind in nocturneMinds)
+        {
+            var owner = GetEntity(mind.Comp.OriginalOwnedEntity);
+            var name = mind.Comp.CharacterName;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = owner is { } ownerUid
+                    ? Name(ownerUid)
+                    : Loc.GetString("medieval-ancient-nocturne-round-end-unknown-name");
+            }
+
+            if (owner is not { } bloodRubyOwner ||
+                !TryComp<BloodRubyOwnerComponent>(bloodRubyOwner, out var ownerComponent) ||
+                ownerComponent.BloodRuby is not { } ruby ||
+                TerminatingOrDeleted(ruby) ||
+                !TryComp<BloodRubyComponent>(ruby, out var rubyComponent))
+            {
+                args.AddLine(Loc.GetString(
+                    "medieval-ancient-nocturne-round-end-ruby-lost",
+                    ("name", name)));
+                continue;
+            }
+
+            args.AddLine(Loc.GetString(
+                "medieval-ancient-nocturne-round-end-blood-collected",
+                ("name", name),
+                ("amount", (int) MathF.Round(rubyComponent.TotalBlood))));
+        }
     }
 
     private void OnInquisitorSpawned(
