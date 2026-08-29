@@ -43,6 +43,7 @@ namespace Content.Server.MagicBarrier.Components
         [DataField]
         public float MagicBarrierCurseEffect = 1.1f;
 
+        // How much the MagicBarrierCurseEffect is increased when a cursed growth is distroyed. Default (0.01)
         [DataField] 
         public float MagicBarrierCurseEM = 0.01f;
 
