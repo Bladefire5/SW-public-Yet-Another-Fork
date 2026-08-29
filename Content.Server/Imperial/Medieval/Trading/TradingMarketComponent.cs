@@ -33,6 +33,26 @@ public sealed class TradingCommodity
     public string DisplayName = string.Empty;
     public string Description = string.Empty;
     public HashSet<ProtoId<GuildTypePrototype>> Categories = new();
+    public TradingOrderBook BuyBook = new();
+    public TradingOrderBook SellBook = new();
+}
+
+public sealed class TradingOrderBook
+{
+    public Dictionary<int, int> PriceLevels = new();
+    public int GuildOfferCount;
+    public TradingPriceAggregate Prices = new();
+}
+
+public sealed class TradingPriceAggregate
+{
+    public int Count;
+    public float AveragePrice = float.NaN;
+    public float ReferencePrice;
+    public float PriceWeightBase;
+    public float MaximumLogWeight = float.NegativeInfinity;
+    public double ScaledWeightSum;
+    public double ScaledPriceSum;
 }
 
 public sealed class TradingMarketOffer

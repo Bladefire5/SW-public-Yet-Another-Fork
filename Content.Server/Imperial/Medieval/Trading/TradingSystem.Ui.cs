@@ -411,6 +411,7 @@ public sealed partial class TradingSystem
             !TryGetMarket(out var market) ||
             !market.Comp.Offers.TryGetValue(msg.OfferId, out var bid) ||
             bid.Side != TradingOfferSide.Buy ||
+            bid.ParticipantKind != TradingParticipantKind.Trader ||
             bid.Pit == uid ||
             !market.Comp.Commodities.TryGetValue(bid.CommodityId, out var commodity) ||
             !_hands.TryGetActiveItem(msg.Actor, out var held) ||

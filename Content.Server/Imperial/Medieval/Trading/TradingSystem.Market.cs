@@ -133,6 +133,7 @@ public sealed partial class TradingSystem
         Entity<TradingMarketComponent> market,
         TradingMarketConfigPrototype config)
     {
+        RefreshMarketOrderBooks(market.Comp);
         MatchAll(market, config);
         CreateGuildInterventions(market, config);
         MatchAll(market, config);
@@ -255,6 +256,12 @@ public sealed partial class TradingSystem
         TradingMarketOffer offer)
     {
         market.Comp.Offers.Add(offer.Id, offer);
+        AddOfferToBook(
+            market.Comp.Commodities[offer.CommodityId],
+            offer.Side,
+            offer.Price,
+            offer.ParticipantKind == TradingParticipantKind.Guild,
+            market.Comp.PriceWeightBase);
         if (offer.Pit is { } pit && TryComp<TradingComponent>(pit, out var trading))
             trading.MarketOffers.Add(offer.Id);
     }
@@ -309,7 +316,10 @@ public sealed partial class TradingSystem
 
     internal static bool CanMatchOffers(TradingMarketOffer ask, TradingMarketOffer bid)
     {
-        return bid.Price >= ask.Price && !IsSameParticipant(ask, bid);
+        return bid.Price >= ask.Price &&
+               !IsSameParticipant(ask, bid) &&
+               !(ask.ParticipantKind == TradingParticipantKind.Trader &&
+                 bid.ParticipantKind == TradingParticipantKind.Guild);
     }
 
     private static bool IsSameParticipant(TradingMarketOffer first, TradingMarketOffer second)
@@ -479,7 +489,15 @@ public sealed partial class TradingSystem
         Entity<TradingMarketComponent> market,
         TradingMarketOffer offer)
     {
-        market.Comp.Offers.Remove(offer.Id);
+        if (!market.Comp.Offers.Remove(offer.Id))
+            return;
+
+        RemoveOfferFromBook(
+            market.Comp.Commodities[offer.CommodityId],
+            offer.Side,
+            offer.Price,
+            offer.ParticipantKind == TradingParticipantKind.Guild,
+            market.Comp.PriceWeightBase);
         if (offer.Pit is { } pit && TryComp<TradingComponent>(pit, out var trading))
             trading.MarketOffers.Remove(offer.Id);
     }

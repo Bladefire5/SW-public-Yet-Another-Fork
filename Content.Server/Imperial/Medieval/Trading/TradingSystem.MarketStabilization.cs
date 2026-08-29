@@ -27,15 +27,8 @@ public sealed partial class TradingSystem
             if (!market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
                 continue;
 
-            var offers = market.Comp.Offers.Values
-                .Where(offer => offer.CommodityId == commodity.Id && offer.Price > 0)
-                .ToList();
             var referencePrice = GetGuildReferencePrice(commodity);
-            var marketPrice = GetMarketPrice(
-                offers.Where(offer => offer.Side == TradingOfferSide.Buy).Select(offer => offer.Price),
-                offers.Where(offer => offer.Side == TradingOfferSide.Sell).Select(offer => offer.Price),
-                referencePrice,
-                market.Comp.PriceWeightBase);
+            var marketPrice = GetCachedMarketPrice(commodity);
             if (!float.IsFinite(marketPrice))
                 continue;
 
@@ -77,21 +70,12 @@ public sealed partial class TradingSystem
         TradingMarketConfigPrototype config)
     {
         var referencePrice = GetGuildReferencePrice(commodity);
-        var offers = market.Comp.Offers.Values
-            .Where(offer => offer.CommodityId == commodity.Id)
-            .ToList();
-        var buyPrices = offers
-            .Where(offer => offer.Side == TradingOfferSide.Buy && offer.Price > 0)
-            .Select(offer => offer.Price)
-            .ToList();
-        var sellPrices = offers
-            .Where(offer => offer.Side == TradingOfferSide.Sell && offer.Price > 0)
-            .Select(offer => offer.Price)
-            .ToList();
+        var buyCount = commodity.BuyBook.Prices.Count;
+        var sellCount = commodity.SellBook.Prices.Count;
         var referenceOfferCount = GetGuildOfferTarget(commodity, config);
         var missingSide = GetMissingBookSide(
-            buyPrices.Count,
-            sellPrices.Count,
+            buyCount,
+            sellCount,
             config.MaximumGuildBuyOrderCount,
             config.MaximumGuildSellOfferCount);
         if (missingSide is { } recoverySide)
@@ -100,15 +84,11 @@ public sealed partial class TradingSystem
             return;
         }
 
-        var marketPrice = GetMarketPrice(
-            buyPrices,
-            sellPrices,
-            referencePrice,
-            market.Comp.PriceWeightBase);
+        var marketPrice = GetCachedMarketPrice(commodity);
         if ((GetInterventionSide(marketPrice, referencePrice) ??
              GetLiquidityInterventionSide(
-                 buyPrices.Count,
-                 sellPrices.Count,
+                 buyCount,
+                 sellCount,
                  referenceOfferCount,
                  config.MaximumGuildBuyOrderCount,
                  config.MaximumGuildSellOfferCount)) is not { } side)
@@ -128,7 +108,7 @@ public sealed partial class TradingSystem
             config.InterventionCorrectionStrength);
 
         TradingMarketOffer? replaceable = null;
-        if (GetGuildOfferCount(market, commodity, side) >= maximumOffers)
+        if (GetGuildOfferCount(commodity, side) >= maximumOffers)
         {
             replaceable = GetReplaceableGuildOffer(market, commodity, side);
             if (replaceable == null || !IsMoreCompetitivePrice(price, replaceable.Price, side))
@@ -136,17 +116,14 @@ public sealed partial class TradingSystem
         }
 
         var currentOfferCount = side == TradingOfferSide.Buy
-            ? buyPrices.Count
-            : sellPrices.Count;
+            ? buyCount
+            : sellCount;
         var quantityChance = replaceable == null
             ? GetQuantityInterventionChance(currentOfferCount, referenceOfferCount)
             : 0f;
 
-        var updatedMarketPrice = GetMarketPriceAfterIntervention(
-            buyPrices,
-            sellPrices,
-            referencePrice,
-            market.Comp.PriceWeightBase,
+        var updatedMarketPrice = GetProjectedMarketPrice(
+            commodity,
             side,
             price,
             replaceable?.Price);
@@ -207,15 +184,9 @@ public sealed partial class TradingSystem
             price);
     }
 
-    private static int GetGuildOfferCount(
-        Entity<TradingMarketComponent> market,
-        TradingCommodity commodity,
-        TradingOfferSide side)
+    private static int GetGuildOfferCount(TradingCommodity commodity, TradingOfferSide side)
     {
-        return market.Comp.Offers.Values.Count(offer =>
-            offer.CommodityId == commodity.Id &&
-            offer.ParticipantKind == TradingParticipantKind.Guild &&
-            offer.Side == side);
+        return GetOrderBook(commodity, side).GuildOfferCount;
     }
 
     private static TradingMarketOffer? GetReplaceableGuildOffer(
@@ -345,94 +316,6 @@ public sealed partial class TradingSystem
         }
 
         return MathF.Max(price / referencePrice, referencePrice / price);
-    }
-
-    internal static float GetPriceWeight(
-        float price,
-        float referencePrice,
-        float priceWeightBase)
-    {
-        return MathF.Exp(GetLogPriceWeight(price, referencePrice, priceWeightBase));
-    }
-
-    private static float GetLogPriceWeight(
-        float price,
-        float referencePrice,
-        float priceWeightBase)
-    {
-        if (!float.IsFinite(priceWeightBase) || priceWeightBase <= 0f || priceWeightBase > 1f)
-            throw new ArgumentOutOfRangeException(nameof(priceWeightBase));
-
-        return (GetDistanceRatio(price, referencePrice) - 1f) * MathF.Log(priceWeightBase);
-    }
-
-    internal static float GetWeightedAveragePrice(
-        IEnumerable<int> prices,
-        float referencePrice,
-        float priceWeightBase)
-    {
-        if (!float.IsFinite(referencePrice) || referencePrice <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(referencePrice));
-
-        var weightedPrices = new List<(int Price, float LogWeight)>();
-        var maximumLogWeight = float.NegativeInfinity;
-        foreach (var price in prices)
-        {
-            if (price <= 0)
-                continue;
-
-            var logWeight = GetLogPriceWeight(price, referencePrice, priceWeightBase);
-            weightedPrices.Add((price, logWeight));
-            maximumLogWeight = MathF.Max(maximumLogWeight, logWeight);
-        }
-
-        if (weightedPrices.Count == 0)
-            return float.NaN;
-
-        var weightedPriceSum = 0f;
-        var weightSum = 0f;
-        foreach (var (price, logWeight) in weightedPrices)
-        {
-            var weight = MathF.Exp(logWeight - maximumLogWeight);
-            weightedPriceSum += price * weight;
-            weightSum += weight;
-        }
-
-        return weightedPriceSum / weightSum;
-    }
-
-    internal static float GetMarketPrice(
-        IEnumerable<int> buyPrices,
-        IEnumerable<int> sellPrices,
-        float referencePrice,
-        float priceWeightBase)
-    {
-        var bidPrice = GetWeightedAveragePrice(buyPrices, referencePrice, priceWeightBase);
-        var askPrice = GetWeightedAveragePrice(sellPrices, referencePrice, priceWeightBase);
-        if (float.IsNaN(bidPrice) || float.IsNaN(askPrice))
-            return float.NaN;
-
-        return (bidPrice + askPrice) / 2f;
-    }
-
-    internal static float GetMarketPriceAfterIntervention(
-        IReadOnlyCollection<int> buyPrices,
-        IReadOnlyCollection<int> sellPrices,
-        float referencePrice,
-        float priceWeightBase,
-        TradingOfferSide side,
-        int price,
-        int? replacedPrice = null)
-    {
-        var updatedBuyPrices = buyPrices.ToList();
-        var updatedSellPrices = sellPrices.ToList();
-        var updatedSide = side == TradingOfferSide.Buy
-            ? updatedBuyPrices
-            : updatedSellPrices;
-        if (replacedPrice is { } removed)
-            updatedSide.Remove(removed);
-        updatedSide.Add(price);
-        return GetMarketPrice(updatedBuyPrices, updatedSellPrices, referencePrice, priceWeightBase);
     }
 
     internal static bool MovesMarketTowardReference(
