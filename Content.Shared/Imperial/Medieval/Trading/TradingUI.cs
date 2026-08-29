@@ -46,8 +46,6 @@ public sealed class TradingMarketItemState
     public bool HasStack;
     public int BaselineStackCount;
     public bool IsDamagedEquipment;
-    public float Demand;
-    public float Supply;
     public int? LowestSellPrice;
     public int? HighestBuyPrice;
     public int SellOfferCount;
@@ -66,8 +64,6 @@ public sealed class TradingMarketItemState
         bool hasStack,
         int baselineStackCount,
         bool damagedEquipment,
-        float demand,
-        float supply,
         int? lowestSellPrice,
         int? highestBuyPrice,
         int sellOfferCount,
@@ -85,8 +81,6 @@ public sealed class TradingMarketItemState
         HasStack = hasStack;
         BaselineStackCount = baselineStackCount;
         IsDamagedEquipment = damagedEquipment;
-        Demand = demand;
-        Supply = supply;
         LowestSellPrice = lowestSellPrice;
         HighestBuyPrice = highestBuyPrice;
         SellOfferCount = sellOfferCount;

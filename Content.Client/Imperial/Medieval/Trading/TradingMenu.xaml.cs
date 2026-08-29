@@ -463,40 +463,26 @@ public sealed partial class TradingMenu : DefaultWindow
             };
             row.AddChild(selectOffer);
 
-            if (offer.Side == TradingOfferSide.Buy &&
-                offer.ParticipantKind == TradingParticipantKind.Guild)
+            var action = new Button
             {
-                row.AddChild(new Label
-                {
-                    Text = offer.Price.ToString(),
-                    MinWidth = 76,
-                    Align = Label.AlignMode.Center,
-                    VAlign = Label.VAlignMode.Center,
-                });
-            }
-            else
+                Text = offer.Price.ToString(),
+                MinWidth = 76,
+                Disabled = !_state.IsOwner ||
+                           offer.IsOwn ||
+                           offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
+                StyleBoxOverride = offer.Side == TradingOfferSide.Sell
+                    ? CreateActionButtonStyle("#c79612", "#f0d36f")
+                    : CreateActionButtonStyle("#b13a3a", "#e66b63"),
+            };
+            action.Label.FontColorOverride = Color.White;
+            action.OnPressed += _ =>
             {
-                var action = new Button
-                {
-                    Text = offer.Price.ToString(),
-                    MinWidth = 76,
-                    Disabled = !_state.IsOwner ||
-                               offer.IsOwn ||
-                               offer.Side == TradingOfferSide.Sell && offer.Price > _state.Balance,
-                    StyleBoxOverride = offer.Side == TradingOfferSide.Sell
-                        ? CreateActionButtonStyle("#c79612", "#f0d36f")
-                        : CreateActionButtonStyle("#b13a3a", "#e66b63"),
-                };
-                action.Label.FontColorOverride = Color.White;
-                action.OnPressed += _ =>
-                {
-                    if (offer.Side == TradingOfferSide.Sell)
-                        OnBuyOffer?.Invoke(offer.Id);
-                    else
-                        OnSellOffer?.Invoke(offer.Id);
-                };
-                row.AddChild(action);
-            }
+                if (offer.Side == TradingOfferSide.Sell)
+                    OnBuyOffer?.Invoke(offer.Id);
+                else
+                    OnSellOffer?.Invoke(offer.Id);
+            };
+            row.AddChild(action);
 
             if (offer.IsOwn)
             {

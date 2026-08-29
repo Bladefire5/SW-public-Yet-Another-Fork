@@ -21,8 +21,6 @@ public sealed class TradingCommodity
     public EntProtoId Product;
     public TradingMarketSection Sections;
     public int StandardPrice;
-    public float Demand;
-    public float Supply;
     public int MinReputation;
     public int InitialScarcitySteps;
     public int RemainingScarcitySteps;
@@ -45,7 +43,6 @@ public sealed class TradingMarketOffer
     public TradingParticipantKind ParticipantKind;
     public string ParticipantName = string.Empty;
     public int Price;
-    public int MarketPrice;
     public Guid? GuildId;
     public EntityUid? Pit;
     public EntityUid? ImmediateRecipient;
@@ -53,8 +50,6 @@ public sealed class TradingMarketOffer
     public string ListedItemName = string.Empty;
     public bool IsImmediate;
     public long Sequence;
-    public float SupplyContribution;
-    public float DemandContribution;
 }
 
 [RegisterComponent]

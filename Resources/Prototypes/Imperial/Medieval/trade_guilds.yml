@@ -10,26 +10,18 @@
   blockedTraderItemTags:
   - MedievalRevent
   stepInterval: 30
-  initialDemand: 0
-  initialSupply: 0
   reputationScarcityMinutesPerPoint: 3
   liquidityReferencePrice: 5
   liquidityReferenceOfferCount: 60
   liquidityPriceExponent: 0.4
   minimumGuildOfferCount: 2
   maximumGuildOfferCount: 120
-  guildSellOfferChance: 0.1
-  guildBuyOrderChance: 0.1
+  initialGuildPriceSpread: 0.12
+  initialGuildPriceDepth: 0.18
   maximumGuildSellOfferCount: 200
   maximumGuildBuyOrderCount: 100
-  guildSellOfferRemovalChance: 0.01
-  guildBuyOrderRemovalChance: 0.01
-  marketImpactReferenceOfferCount: 6
-  supplyPlacementImpact: 3
-  demandPlacementImpact: 3
-  pricePressure: 1.3
-  priceSpread: 0.12
-  priceNoise: 0.18
+  interventionChanceScale: 0.4
+  interventionCorrectionStrength: 0.25
 - type: guildIcon
   id: MagicGuild1
   texturePath: "/Textures/Imperial/Medieval/GuildsIcons/MagicGuild1.png"

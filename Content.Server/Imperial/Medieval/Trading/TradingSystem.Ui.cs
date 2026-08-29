@@ -126,8 +126,6 @@ public sealed partial class TradingSystem
                     commodity.HasStack,
                     commodity.BaselineStackCount,
                     damagedEquipment,
-                    commodity.Demand,
-                    commodity.Supply,
                     lowestSellOffer?.Price,
                     traderBids.Count == 0 ? null : traderBids.Max(offer => offer.Price),
                     asks.Count,
@@ -413,7 +411,6 @@ public sealed partial class TradingSystem
             !TryGetMarket(out var market) ||
             !market.Comp.Offers.TryGetValue(msg.OfferId, out var bid) ||
             bid.Side != TradingOfferSide.Buy ||
-            bid.ParticipantKind != TradingParticipantKind.Trader ||
             bid.Pit == uid ||
             !market.Comp.Commodities.TryGetValue(bid.CommodityId, out var commodity) ||
             !_hands.TryGetActiveItem(msg.Actor, out var held) ||
@@ -480,7 +477,6 @@ public sealed partial class TradingSystem
                 market,
                 ask.Id,
                 true,
-                _prototypeManager.Index(market.Comp.Config),
                 msg.Actor);
             RestoreSplitStack(item, heldStack, originalStackCount, splitItem);
             return;
@@ -623,7 +619,6 @@ public sealed partial class TradingSystem
             market,
             msg.OfferId,
             true,
-            _prototypeManager.Index(market.Comp.Config),
             msg.Actor);
         UpdateAllInterfaces(market);
     }
@@ -669,7 +664,6 @@ public sealed partial class TradingSystem
         out TradingMarketOffer offer)
     {
         offer = default!;
-        var config = _prototypeManager.Index(market.Comp.Config);
         if (price < 0 ||
             (price == 0 && immediateRecipient == null) ||
             !CanTradeProduct(commodity.Product, config) ||
@@ -694,7 +688,7 @@ public sealed partial class TradingSystem
             IsImmediate = immediateRecipient != null,
             Sequence = market.Comp.NextSequence++,
         };
-        AddOffer(market, offer, config);
+        AddOffer(market, offer);
         return true;
     }
 
@@ -774,7 +768,7 @@ public sealed partial class TradingSystem
             IsImmediate = immediate,
             Sequence = market.Comp.NextSequence++,
         };
-        AddOffer(market, offer, config);
+        AddOffer(market, offer);
         commodityId = commodity.Id;
         return true;
     }

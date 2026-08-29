@@ -59,7 +59,6 @@ public sealed partial class TradingSystem : EntitySystem
     {
         if (TryGetMarket(out var market))
         {
-            var config = _prototypeManager.Index(market.Comp.Config);
             var offers = market.Comp.Offers.Values
                 .Where(offer => offer.Pit == pit.Owner)
                 .Select(offer => offer.Id)
@@ -67,7 +66,7 @@ public sealed partial class TradingSystem : EntitySystem
 
             foreach (var offer in offers)
             {
-                RemoveOffer(market, offer, false, config);
+                RemoveOffer(market, offer, false);
             }
         }
 
