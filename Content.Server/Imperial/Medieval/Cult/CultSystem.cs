@@ -429,7 +429,7 @@ namespace Content.Server.Cult
                     {
                         foreach (var barrier in EntityManager.EntityQuery<MagicBarrierComponent>())
                         {
-                            barrier.Stability *= 0.7f;
+                            barrier.Stability *= 0.85f;
                         }
                         Spawn("ShockWaveEffect", coords);
                         _audioSystem.PlayPvs(comp.SuccesSound, uid);

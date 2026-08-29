@@ -183,7 +183,7 @@ namespace Content.Server.MagicBarrier
         private void RecalculateLose(MagicBarrierComponent comp)
         {
             var growthCount = EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
-            var riftCount   = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
+            var riftCount = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
 
             comp.Lose = MagicBarrierDrainCalculator.Calculate(comp, growthCount, riftCount);
             comp.LastLoseCalculateTime = _timing.CurTime;
@@ -351,18 +351,18 @@ namespace Content.Server.MagicBarrier
 
                     if (comp.Stability > 0f)
                     {
-                     var growthCount =
+                        var growthCount =
                             EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
-                        
-                     var riftCount =
+
+                        var riftCount =
                             EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
 
-                    comp.Lose = MagicBarrierDrainCalculator.Calculate(
+                        comp.Lose = MagicBarrierDrainCalculator.Calculate(
                          comp,
                          growthCount,
                          riftCount);
 
-                    comp.Stability -= comp.Lose;
+                        comp.Stability -= comp.Lose;
                     }
                     else
                     {
