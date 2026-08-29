@@ -21,6 +21,7 @@
   maximumGuildBuyOrderCount: 100
   interventionChanceScale: 0.4
   interventionCorrectionStrength: 0.25
+  guildOfferRemovalChanceScale: 0.01
 - type: guildIcon
   id: MagicGuild1
   texturePath: "/Textures/Imperial/Medieval/GuildsIcons/MagicGuild1.png"

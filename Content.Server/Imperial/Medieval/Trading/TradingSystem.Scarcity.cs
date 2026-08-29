@@ -31,7 +31,7 @@ public sealed partial class TradingSystem
         return Math.Max(1, (int) MathF.Ceiling(secondsPerPoint / Math.Max(float.Epsilon, config.StepInterval)));
     }
 
-    internal static float GetReputationScarcityPriceMultiplier(TradingCommodity commodity)
+    internal static float GetReputationScarcityReferenceMultiplier(TradingCommodity commodity)
     {
         if (commodity.InitialScarcitySteps <= 0 || commodity.RemainingScarcitySteps <= 0)
             return 1f;

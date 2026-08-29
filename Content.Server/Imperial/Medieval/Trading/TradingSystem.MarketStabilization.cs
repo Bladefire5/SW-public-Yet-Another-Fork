@@ -18,6 +18,59 @@ public sealed partial class TradingSystem
         }
     }
 
+    private void RemoveUncompetitiveGuildOffers(
+        Entity<TradingMarketComponent> market,
+        TradingMarketConfigPrototype config)
+    {
+        foreach (var commodityId in market.Comp.CommonCommodities.Values)
+        {
+            if (!market.Comp.Commodities.TryGetValue(commodityId, out var commodity))
+                continue;
+
+            var offers = market.Comp.Offers.Values
+                .Where(offer => offer.CommodityId == commodity.Id && offer.Price > 0)
+                .ToList();
+            var referencePrice = GetGuildReferencePrice(commodity);
+            var marketPrice = GetMarketPrice(
+                offers.Where(offer => offer.Side == TradingOfferSide.Buy).Select(offer => offer.Price),
+                offers.Where(offer => offer.Side == TradingOfferSide.Sell).Select(offer => offer.Price),
+                referencePrice,
+                market.Comp.PriceWeightBase);
+            if (!float.IsFinite(marketPrice))
+                continue;
+
+            TryRemoveUncompetitiveGuildOffer(
+                market,
+                commodity,
+                TradingOfferSide.Sell,
+                marketPrice,
+                config.GuildOfferRemovalChanceScale);
+            TryRemoveUncompetitiveGuildOffer(
+                market,
+                commodity,
+                TradingOfferSide.Buy,
+                marketPrice,
+                config.GuildOfferRemovalChanceScale);
+        }
+    }
+
+    private void TryRemoveUncompetitiveGuildOffer(
+        Entity<TradingMarketComponent> market,
+        TradingCommodity commodity,
+        TradingOfferSide side,
+        float marketPrice,
+        float chanceScale)
+    {
+        var offer = GetReplaceableGuildOffer(market, commodity, side);
+        if (offer == null ||
+            _random.NextFloat() >= GetGuildOfferRemovalChance(offer.Price, marketPrice, chanceScale))
+        {
+            return;
+        }
+
+        RemoveOffer(market, offer.Id, false);
+    }
+
     private void TryCreateGuildIntervention(
         Entity<TradingMarketComponent> market,
         TradingCommodity commodity,
@@ -72,9 +125,7 @@ public sealed partial class TradingSystem
         var price = GetGuildInterventionPrice(
             marketPrice,
             referencePrice,
-            config.InterventionCorrectionStrength,
-            side,
-            GetGuildSellReferencePrice(commodity));
+            config.InterventionCorrectionStrength);
 
         TradingMarketOffer? replaceable = null;
         if (GetGuildOfferCount(market, commodity, side) >= maximumOffers)
@@ -141,12 +192,9 @@ public sealed partial class TradingSystem
         if (candidates.Count == 0)
             return;
 
-        var recoveryReferencePrice = side == TradingOfferSide.Sell
-            ? GetGuildSellReferencePrice(commodity)
-            : referencePrice;
         var price = RoundInitialGuildOfferPrice(
             GetInitialGuildOfferPrice(
-                recoveryReferencePrice,
+                referencePrice,
                 side,
                 config.InitialGuildPriceSpread,
                 0f),
@@ -194,20 +242,34 @@ public sealed partial class TradingSystem
             : candidatePrice > currentPrice;
     }
 
+    internal static float GetGuildOfferRemovalChance(
+        float offerPrice,
+        float marketPrice,
+        float chanceScale)
+    {
+        if (!float.IsFinite(offerPrice) ||
+            !float.IsFinite(marketPrice) ||
+            offerPrice <= 0f ||
+            marketPrice <= 0f)
+        {
+            return 0f;
+        }
+
+        return Math.Clamp(
+            MathF.Max(0f, chanceScale) * GetDistanceRatio(offerPrice, marketPrice),
+            0f,
+            1f);
+    }
+
     internal static int GetGuildInterventionPrice(
         float marketPrice,
         float referencePrice,
-        float correctionStrength,
-        TradingOfferSide side,
-        float minimumSellPrice)
+        float correctionStrength)
     {
-        var price = RoundMarketPrice(GetInternalOrderPrice(
+        return RoundMarketPrice(GetInternalOrderPrice(
             marketPrice,
             referencePrice,
             correctionStrength));
-        return side == TradingOfferSide.Sell
-            ? Math.Max(price, RoundMarketPrice(minimumSellPrice))
-            : price;
     }
 
     internal static TradingOfferSide? GetInterventionSide(
@@ -269,12 +331,7 @@ public sealed partial class TradingSystem
 
     internal static float GetGuildReferencePrice(TradingCommodity commodity)
     {
-        return MathF.Max(1f, commodity.StandardPrice);
-    }
-
-    internal static float GetGuildSellReferencePrice(TradingCommodity commodity)
-    {
-        return GetGuildReferencePrice(commodity) * GetReputationScarcityPriceMultiplier(commodity);
+        return MathF.Max(1f, commodity.StandardPrice) * GetReputationScarcityReferenceMultiplier(commodity);
     }
 
     internal static float GetDistanceRatio(float price, float referencePrice)

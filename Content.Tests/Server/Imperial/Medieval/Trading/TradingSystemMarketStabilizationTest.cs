@@ -300,7 +300,7 @@ public sealed class TradingSystemMarketStabilizationTest
     }
 
     [Test]
-    public void ScarcityRaisesOnlyGuildSellReference()
+    public void ScarcityRaisesGuildReference()
     {
         var commodity = new TradingCommodity
         {
@@ -310,29 +310,7 @@ public sealed class TradingSystemMarketStabilizationTest
             RemainingScarcitySteps = 10,
         };
 
-        Assert.That(TradingSystem.GetGuildReferencePrice(commodity), Is.EqualTo(100f));
-        Assert.That(TradingSystem.GetGuildSellReferencePrice(commodity), Is.EqualTo(1000f));
-    }
-
-    [Test]
-    public void ScarcityFloorDoesNotRaiseGuildBuyPrice()
-    {
-        Assert.That(
-            TradingSystem.GetGuildInterventionPrice(
-                80f,
-                100f,
-                0.25f,
-                TradingOfferSide.Buy,
-                1000f),
-            Is.EqualTo(85));
-        Assert.That(
-            TradingSystem.GetGuildInterventionPrice(
-                120f,
-                100f,
-                0.25f,
-                TradingOfferSide.Sell,
-                1000f),
-            Is.EqualTo(1000));
+        Assert.That(TradingSystem.GetGuildReferencePrice(commodity), Is.EqualTo(1000f));
     }
 
     [Test]

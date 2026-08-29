@@ -50,4 +50,7 @@ public sealed partial class TradingMarketConfigPrototype : IPrototype
 
     [DataField]
     public float InterventionCorrectionStrength = 0.25f;
+
+    [DataField]
+    public float GuildOfferRemovalChanceScale = 0.01f;
 }

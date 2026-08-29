@@ -136,6 +136,7 @@ public sealed partial class TradingSystem
         MatchAll(market, config);
         CreateGuildInterventions(market, config);
         MatchAll(market, config);
+        RemoveUncompetitiveGuildOffers(market, config);
         AdvanceReputationScarcity(market);
     }
 
@@ -153,14 +154,13 @@ public sealed partial class TradingSystem
                 continue;
 
             var referencePrice = GetGuildReferencePrice(commodity);
-            var sellReferencePrice = GetGuildSellReferencePrice(commodity);
             var sellCount = Math.Min(GetGuildOfferTarget(commodity, config), config.MaximumGuildSellOfferCount);
             for (var index = 0; index < sellCount; index++)
             {
                 var depth = GetInitialGuildOfferDepth(index, sellCount, config.InitialGuildPriceDepth);
                 var price = RoundInitialGuildOfferPrice(
                     GetInitialGuildOfferPrice(
-                        sellReferencePrice,
+                        referencePrice,
                         TradingOfferSide.Sell,
                         config.InitialGuildPriceSpread,
                         depth),
@@ -208,7 +208,7 @@ public sealed partial class TradingSystem
         TradingCommodity commodity,
         TradingMarketConfigPrototype config)
     {
-        var price = Math.Max(1, commodity.StandardPrice);
+        var price = GetGuildReferencePrice(commodity);
         var referencePrice = Math.Max(1, config.LiquidityReferencePrice);
         var expected = config.LiquidityReferenceOfferCount * (float) referencePrice / price;
         return Math.Clamp(expected, config.MinimumGuildOfferCount, config.MaximumGuildOfferCount);
