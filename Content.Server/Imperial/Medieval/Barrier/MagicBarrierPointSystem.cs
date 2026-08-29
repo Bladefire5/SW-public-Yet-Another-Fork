@@ -174,13 +174,27 @@ namespace Content.Server.MagicBarrier
             foreach (var comp in EntityManager.EntityQuery<MagicBarrierComponent>())
             {
                 comp.MagicBarrierCursePE++;
-                comp.MagicBarrierCurseEffect += 0.01f;
+                comp.MagicBarrierCurseEffect += comp.MagicBarrierCurseEM;
                 comp.Stability += 4f;
             }
         }
 
+
+        private void RecalculateLose(MagicBarrierComponent comp)
+        {
+            var growthCount = EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
+            var riftCount   = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
+
+            comp.Lose = MagicBarrierDrainCalculator.Calculate(comp, growthCount, riftCount);
+            comp.LastLoseCalculateTime = _timing.CurTime;
+        }
         private void OnExamine(EntityUid uid, MagicBarrierComponent component, ExaminedEvent args)
         {
+            if (_timing.CurTime >= component.LastLoseCalculateTime + TimeSpan.FromSeconds(5))
+            {
+            RecalculateLose(component);
+            }
+
             args.PushMarkup("[color=red]Текущая стабильность барьера " + Math.Round(component.Stability, 2) + " из " + component.MaxStability + "[/color]", 1);
             args.PushMarkup("[color=cyan]Текущий расход " + Math.Round(component.Lose, 2) + " стабильности в минуту[/color]", 0);
             int sector1 = 0;
@@ -337,26 +351,18 @@ namespace Content.Server.MagicBarrier
 
                     if (comp.Stability > 0f)
                     {
-                        var growthCount = EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
-                        var riftCount = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
+                     var growthCount =
+                            EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
+                        
+                     var riftCount =
+                            EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
 
-                        // Calculate the raw drain from the base drain, active Rifts,
-                        // the persistent Growth escalation, and the number of active Growths.
-                        var LowCurse =
-                            (comp.BaseCurseDrain + comp.RiftCurseDrain * riftCount) *
-                            MathF.Pow(comp.MagicBarrierCurseEffect, 1f + growthCount);
+                    comp.Lose = MagicBarrierDrainCalculator.Calculate(
+                         comp,
+                         growthCount,
+                         riftCount);
 
-                        // The hard cap is based on the total number of active Growths and Rifts.
-                        var totalSources = growthCount + riftCount;
-                        var HighCurse = totalSources <= comp.ACurseLimit
-                            ? comp.HLCurseLimit
-                            : comp.HLCurseLimit +
-                              (comp.HHCurseLimit - comp.HLCurseLimit) *
-                              (1f - MathF.Exp(-comp.OCurseRate * (totalSources - comp.ACurseLimit)));
-
-                        // Apply the lower of the raw drain or the hard cap, rounded to two decimals.
-                        comp.Lose = MathF.Round(MathF.Min(LowCurse, HighCurse), 2);
-                        comp.Stability -= comp.Lose;
+                    comp.Stability -= comp.Lose;
                     }
                     else
                     {

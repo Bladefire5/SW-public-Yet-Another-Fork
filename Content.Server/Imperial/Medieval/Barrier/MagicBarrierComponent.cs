@@ -43,7 +43,10 @@ namespace Content.Server.MagicBarrier.Components
         [DataField]
         public float MagicBarrierCurseEffect = 1.1f;
 
-        // Controls how quickly the hard-cap curve approaches its upper limit, the higher it is the faster it reaches the limit. Default (1.1)
+        [DataField] 
+        public float MagicBarrierCurseEM = 0.01f;
+
+        // Controls how quickly the hard-cap curve approaches its upper limit, the higher it is the faster it reaches the limit. Default (0.17)
         [DataField]
         public float OCurseRate = 0.17f;
 
@@ -58,6 +61,9 @@ namespace Content.Server.MagicBarrier.Components
         // Upper value approached by the hard-cap curve. Default (50)
         [DataField]
         public float HHCurseLimit = 50f;
+
+        [DataField]
+        public TimeSpan LastLoseCalculateTime = TimeSpan.Zero;
 
         [DataField]
         public int Cycle = 0;
