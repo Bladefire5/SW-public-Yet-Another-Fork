@@ -162,33 +162,33 @@
         liver: OrganAnimalLiver
         kidneys: OrganHumanKidneys
       connections:
-      - right arm
-      - left arm
-      - right leg
-      - left leg
-    right arm:
+      - right_arm
+      - left_arm
+      - right_leg
+      - left_leg
+    right_arm:
       part: RightArmDrou
       connections:
-      - right hand
-    left arm:
+      - right_hand
+    left_arm:
       part: LeftArmDrou
       connections:
-      - left hand
-    right hand:
+      - left_hand
+    right_hand:
       part: RightHandDrou
-    left hand:
+    left_hand:
       part: LeftHandDrou
-    right leg:
+    right_leg:
       part: RightLegDrou
       connections:
-      - right foot
-    left leg:
+      - right_foot
+    left_leg:
       part: LeftLegDrou
       connections:
-      - left foot
-    right foot:
+      - left_foot
+    right_foot:
       part: RightFootDrou
-    left foot:
+    left_foot:
       part: LeftFootDrou
 
 # 3

@@ -261,13 +261,16 @@ public sealed class AncientNocturneSystem : EntitySystem
     {
         foreach (var (_, item) in snapshot)
         {
-            _hands.TryDrop(entity, item, checkActionBlocker: false);
+            if (_hands.IsHolding(entity, item, out var hand))
+                _hands.DoDrop(entity, hand, doDropInteraction: false, log: false);
         }
 
         foreach (var (hand, item) in snapshot)
         {
-            if (!TerminatingOrDeleted(item))
-                _hands.TryPickup(entity, item, hand, checkActionBlocker: false);
+            if (TerminatingOrDeleted(item))
+                continue;
+
+            _hands.DoPickup(entity, hand, item, log: false);
         }
 
         _hands.TrySetActiveHand(entity, activeHand);
