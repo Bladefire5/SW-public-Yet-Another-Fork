@@ -33,7 +33,7 @@ namespace Content.Server.MagicBarrier.Components
 
         // Stability drain added by each active Rift before the Growth escalation multiplier is applied. Default (4.5).
         [DataField]
-        public float RiftCurseDrain = 4.5f;
+        public float RiftCurseDrain = 3.5f;
 
         // Number of Cursed Growths that have been destroyed. This provides persistent escalation.
         [DataField]
