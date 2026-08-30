@@ -244,3 +244,73 @@
     state: buckshot
   - type: TimedDespawn
     lifetime: 0.5
+
+- type: entity
+  parent: BaseWeaponSniper
+  id: MedievalPistole1
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Event/Weapons/gun/pistole1.rsi
+  - type: Item
+    size: Normal
+  - type: Clothing
+    sprite: Imperial/Medieval/Event/Weapons/gun/pistole1.rsi
+    quickEquip: false
+    slots:
+    - Back
+    - suitStorage
+  - type: AmmoCounter
+  - type: Gun
+    fireRate: 0.75
+    selectedMode: SemiAuto
+    availableModes:
+    - SemiAuto
+    soundGunshot:
+      path: /Audio/Imperial/Medieval/Event/fire3.ogg
+    minAngle: 10
+    maxAngle: 10
+
+- type: entity
+  parent: BaseWeaponSniper
+  id: MedievalPistole2
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Event/Weapons/gun/pistole2.rsi
+  - type: Item
+    size: Normal
+  - type: Clothing
+    sprite: Imperial/Medieval/Event/Weapons/gun/pistole2.rsi
+    quickEquip: false
+    slots:
+    - Back
+    - suitStorage
+  - type: AmmoCounter
+  - type: Gun
+    fireRate: 0.75
+    selectedMode: SemiAuto
+    availableModes:
+    - SemiAuto
+    soundGunshot:
+      path: /Audio/Imperial/Medieval/Event/fire3.ogg
+    minAngle: 10
+    maxAngle: 10
+
+- type: entity
+  id: MedievalPaperBullet
+  parent: BaseItem
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Event/Weapons/gun/bullet.rsi
+    state: bullet
+  - type: Item
+    size: Small
+
+- type: entity
+  id: MedievalGunRamrod
+  parent: BaseItem
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Event/Weapons/gun/ramrod.rsi
+    state: icon
+  - type: Item
+    size: Small
