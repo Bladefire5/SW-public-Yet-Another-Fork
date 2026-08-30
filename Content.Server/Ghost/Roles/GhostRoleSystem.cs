@@ -13,7 +13,6 @@ using Content.Shared.Database;
 using Content.Shared.Follower;
 using Content.Shared.GameTicking;
 using Content.Shared.Ghost;
-using Content.Shared.Imperial.Medieval.GhostSkills;
 using Content.Shared.Ghost.Roles;
 using Content.Shared.Mind;
 using Content.Shared.Mind.Components;
@@ -604,9 +603,6 @@ public sealed class GhostRoleSystem : EntitySystem
 
         DebugTools.AssertNotNull(player.ContentData());
 
-        if (player.AttachedEntity is { } attached)
-            RaiseLocalEvent(attached, new ApplyGhostSkillsToRoleEvent(mob));
-
         // After taking a ghost role, the player cannot return to the original body, so wipe the player's current mind
         // unless it is a visiting mind
         if(_mindSystem.TryGetMind(player.UserId, out _, out var mind) && !mind.IsVisitingEntity)
@@ -790,7 +786,7 @@ public sealed class GhostRoleSystem : EntitySystem
         var mob = Spawn(component.Prototype, Transform(uid).Coordinates);
         _transform.AttachToGridOrMap(mob);
 
-        var spawnedEvent = new GhostRoleSpawnerUsedEvent(uid, mob, args.Player);
+        var spawnedEvent = new GhostRoleSpawnerUsedEvent(uid, mob);
         RaiseLocalEvent(mob, spawnedEvent);
 
         if (ghostRole.MakeSentient)

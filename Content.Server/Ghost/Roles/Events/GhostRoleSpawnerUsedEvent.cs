@@ -1,5 +1,3 @@
-using Robust.Shared.Player;
-
 namespace Content.Server.Ghost.Roles.Events
 {
     /// <summary>
@@ -17,13 +15,11 @@ namespace Content.Server.Ghost.Roles.Events
         /// </summary>
         public EntityUid Spawned;
 
-        public ICommonSession Player;
-
-        public GhostRoleSpawnerUsedEvent(EntityUid spawner, EntityUid spawned, ICommonSession player)
+        public GhostRoleSpawnerUsedEvent(EntityUid spawner, EntityUid spawned)
         {
             Spawner = spawner;
+
             Spawned = spawned;
-            Player = player;
         }
     }
 }

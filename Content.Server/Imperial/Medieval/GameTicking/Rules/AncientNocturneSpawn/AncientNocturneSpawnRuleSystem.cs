@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Content.Server.Chat.Systems;
 using Content.Server.GameTicking;
 using Content.Server.GameTicking.Rules;
-using Content.Server.Ghost.Roles.Events;
 using Content.Server.Humanoid;
 using Content.Server.Nocturn;
 using Content.Server.Preferences.Managers;
@@ -16,6 +15,7 @@ using Content.Shared.Mind;
 using Content.Shared.Nocturn.Components;
 using Content.Shared.Preferences;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Player;
 using Robust.Shared.Random;
 
 namespace Content.Server.Imperial.Medieval.GameTicking.Rules;
@@ -33,8 +33,8 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
     {
         base.Initialize();
 
-        SubscribeLocalEvent<AncientNocturneComponent, GhostRoleSpawnerUsedEvent>(OnAncientNocturneSpawned);
-        SubscribeLocalEvent<HellfireInquisitionMemberComponent, GhostRoleSpawnerUsedEvent>(OnInquisitorSpawned);
+        SubscribeLocalEvent<AncientNocturneComponent, PlayerAttachedEvent>(OnAncientNocturneAttached);
+        SubscribeLocalEvent<HellfireInquisitionMemberComponent, PlayerAttachedEvent>(OnInquisitorAttached);
     }
 
     protected override void Started(
@@ -76,11 +76,14 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
         GameTicker.EndGameRule(uid, gameRule);
     }
 
-    private void OnAncientNocturneSpawned(
+    private void OnAncientNocturneAttached(
         EntityUid uid,
         AncientNocturneComponent component,
-        GhostRoleSpawnerUsedEvent args)
+        PlayerAttachedEvent args)
     {
+        if (component.ProfileApplied)
+            return;
+
         if (!_preferences.TryGetCachedPreferences(args.Player.UserId, out var preferences))
         {
             Log.Error($"Ancient nocturne ghost role taken without cached preferences for {args.Player.UserId}");
@@ -114,6 +117,7 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
             profile.Appearance.HairStyleId,
             profile.Appearance.HairColor,
             humanoid: humanoid);
+        component.ProfileApplied = true;
     }
 
     protected override void AppendRoundEndText(
@@ -177,11 +181,14 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
         }
     }
 
-    private void OnInquisitorSpawned(
+    private void OnInquisitorAttached(
         EntityUid uid,
         HellfireInquisitionMemberComponent component,
-        GhostRoleSpawnerUsedEvent args)
+        PlayerAttachedEvent args)
     {
+        if (component.ProfileApplied)
+            return;
+
         if (!_preferences.TryGetCachedPreferences(args.Player.UserId, out var preferences))
         {
             Log.Error($"Hellfire inquisitor ghost role taken without cached preferences for {args.Player.UserId}");
@@ -208,6 +215,7 @@ public sealed class AncientNocturneSpawnRuleSystem : GameRuleSystem<AncientNoctu
         var profile = _random.Pick(profiles).WithSpecies("Human");
         _metaData.SetEntityName(uid, profile.Name);
         _humanoidAppearance.LoadProfile(uid, profile, humanoid);
+        component.ProfileApplied = true;
     }
 
     private void StartInquisitionTimer(EntityUid uid, AncientNocturneSpawnRuleComponent component)

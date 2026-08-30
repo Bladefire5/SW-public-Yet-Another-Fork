@@ -17,6 +17,8 @@ public sealed partial class AncientNocturneConversionDoAfterEvent : SimpleDoAfte
 [RegisterComponent]
 public sealed partial class AncientNocturneComponent : Component
 {
+    public bool ProfileApplied;
+
     [DataField]
     public ProtoId<PolymorphPrototype> BatPolymorph = "MedievalAncientNocturneBatPolymorph";
 

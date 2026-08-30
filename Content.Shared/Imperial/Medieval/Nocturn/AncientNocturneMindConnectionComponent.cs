@@ -35,6 +35,21 @@ public sealed partial class AncientNocturneMindChatComponent : Component
 }
 
 [Serializable, NetSerializable]
+public sealed class AncientNocturneMindChatMessageEvent : EntityEventArgs
+{
+    public string Message = string.Empty;
+
+    public AncientNocturneMindChatMessageEvent(string message)
+    {
+        Message = message;
+    }
+
+    public AncientNocturneMindChatMessageEvent()
+    {
+    }
+}
+
+[Serializable, NetSerializable]
 public sealed class AncientNocturneConversionNotificationEvent : EntityEventArgs
 {
     public AncientNocturneConversionNotification Type;

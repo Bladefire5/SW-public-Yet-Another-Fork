@@ -695,19 +695,13 @@ public sealed partial class ChatUIController : UIController
 
     public void UpdateSelectedChannel(ChatBox box)
     {
-        var input = box.ChatInput.Input.Text;
-        if (TryUpdateCustomSelectedChannel(box, input))
-            return;
-
-        var (prefixChannel, _, radioChannel) = SplitInputContents(input.ToLower());
+        var (prefixChannel, _, radioChannel) = SplitInputContents(box.ChatInput.Input.Text.ToLower());
 
         if (prefixChannel == ChatSelectChannel.None)
             box.ChatInput.ChannelSelector.UpdateChannelSelectButton(box.SelectedChannel, null);
         else
             box.ChatInput.ChannelSelector.UpdateChannelSelectButton(prefixChannel, radioChannel);
     }
-
-    private partial bool TryUpdateCustomSelectedChannel(ChatBox box, string text);
 
     public (ChatSelectChannel chatChannel, string text, RadioChannelPrototype? radioChannel) SplitInputContents(string text)
     {

@@ -1,9 +1,14 @@
+using System.Globalization;
 using System.Linq;
 using Content.Server.Chat.Managers;
 using Content.Server.Chat.Systems;
+using Content.Shared.CCVar;
 using Content.Shared.Chat;
 using Content.Shared.Nocturn.Components;
+using Content.Shared.Players;
+using Content.Shared.Players.RateLimiting;
 using Content.Shared.Polymorph;
+using Robust.Shared.Configuration;
 using Robust.Shared.Player;
 using Robust.Shared.Utility;
 
@@ -12,6 +17,8 @@ namespace Content.Server.Nocturn;
 public sealed class AncientNocturneMindConnectionSystem : EntitySystem
 {
     [Dependency] private readonly IChatManager _chat = default!;
+    [Dependency] private readonly ChatSystem _chatSystem = default!;
+    [Dependency] private readonly IConfigurationManager _configuration = default!;
 
     public override void Initialize()
     {
@@ -20,10 +27,9 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
         SubscribeLocalEvent<AncientNocturneMindConnectionComponent, ComponentStartup>(OnMasterStartup);
         SubscribeLocalEvent<AncientNocturneMindConnectionComponent, ComponentShutdown>(OnMasterShutdown);
         SubscribeLocalEvent<AncientNocturneTrallMindConnectionComponent, ComponentShutdown>(OnTrallShutdown);
-        SubscribeLocalEvent<AncientNocturneMindConnectionComponent, BeforeInGameICMessageEvent>(OnMasterMessage);
-        SubscribeLocalEvent<AncientNocturneTrallMindConnectionComponent, BeforeInGameICMessageEvent>(OnTrallMessage);
         SubscribeLocalEvent<AncientNocturneMindConnectionComponent, PolymorphedEvent>(OnMasterPolymorphed);
         SubscribeLocalEvent<AncientNocturneTrallMindConnectionComponent, PolymorphedEvent>(OnTrallPolymorphed);
+        SubscribeNetworkEvent<AncientNocturneMindChatMessageEvent>(OnMindMessage);
     }
 
     private void OnMasterStartup(
@@ -78,47 +84,62 @@ public sealed class AncientNocturneMindConnectionSystem : EntitySystem
             master.Tralls.Remove(ent.Owner);
     }
 
-    private void OnMasterMessage(
-        Entity<AncientNocturneMindConnectionComponent> ent,
-        ref BeforeInGameICMessageEvent args)
+    private void OnMindMessage(
+        AncientNocturneMindChatMessageEvent args,
+        EntitySessionEventArgs eventArgs)
     {
-        SendMindMessage((ent.Owner, ent.Comp), ent.Owner, ent.Owner, ref args);
-    }
-
-    private void OnTrallMessage(
-        Entity<AncientNocturneTrallMindConnectionComponent> ent,
-        ref BeforeInGameICMessageEvent args)
-    {
-        if (!TryComp<AncientNocturneMindConnectionComponent>(ent.Comp.Master, out var master))
+        var player = eventArgs.SenderSession;
+        if (player.AttachedEntity is not { Valid: true } source ||
+            player.ContentData()?.Mind == null ||
+            !TryComp<AncientNocturneMindChatComponent>(source, out var chat))
             return;
 
-        var nameSource = ent.Comp.IsMasterRelay ? ent.Comp.Master : ent.Owner;
-        SendMindMessage((ent.Comp.Master, master), ent.Owner, nameSource, ref args);
+        if (_chat.HandleRateLimit(player) != RateLimitStatus.Allowed ||
+            _chat.MessageCharacterLimit(player, args.Message))
+            return;
+
+        var culture = CultureInfo.CurrentCulture;
+        var capitalizeTheWordI = (!culture.IsNeutralCulture && culture.Parent.Name == "en") ||
+                                 (culture.IsNeutralCulture && culture.Name == "en");
+        var message = _chatSystem.SanitizeInGameICMessage(
+            source,
+            args.Message,
+            out _,
+            punctuate: _configuration.GetCVar(CCVars.ChatPunctuation),
+            capitalizeTheWordI: capitalizeTheWordI);
+        var prefix = message.StartsWith(chat.ChatPrefix, StringComparison.OrdinalIgnoreCase)
+            ? chat.ChatPrefix
+            : message.StartsWith(chat.AlternateChatPrefix, StringComparison.OrdinalIgnoreCase)
+                ? chat.AlternateChatPrefix
+                : null;
+        if (prefix == null)
+            return;
+
+        message = message[prefix.Length..].TrimStart();
+        if (string.IsNullOrWhiteSpace(message))
+            return;
+
+        if (TryComp<AncientNocturneMindConnectionComponent>(source, out var master))
+        {
+            SendMindMessage((source, master), source, source, message, chat);
+            return;
+        }
+
+        if (!TryComp<AncientNocturneTrallMindConnectionComponent>(source, out var trall) ||
+            !TryComp<AncientNocturneMindConnectionComponent>(trall.Master, out master))
+            return;
+
+        var nameSource = trall.IsMasterRelay ? trall.Master : source;
+        SendMindMessage((trall.Master, master), source, nameSource, message, chat);
     }
 
     private void SendMindMessage(
         Entity<AncientNocturneMindConnectionComponent> master,
         EntityUid source,
         EntityUid nameSource,
-        ref BeforeInGameICMessageEvent args)
+        string message,
+        AncientNocturneMindChatComponent chat)
     {
-        if (!TryComp<AncientNocturneMindChatComponent>(source, out var chat))
-            return;
-
-        var prefix = args.Message.StartsWith(chat.ChatPrefix, StringComparison.OrdinalIgnoreCase)
-            ? chat.ChatPrefix
-            : args.Message.StartsWith(chat.AlternateChatPrefix, StringComparison.OrdinalIgnoreCase)
-                ? chat.AlternateChatPrefix
-                : null;
-
-        if (prefix == null)
-            return;
-
-        args.Handled = true;
-        var message = args.Message[prefix.Length..].TrimStart();
-        if (string.IsNullOrWhiteSpace(message))
-            return;
-
         var recipients = Filter.Empty();
         if (master.Comp.ActiveEntity is { } activeMaster)
             AddRecipient(recipients, activeMaster);
