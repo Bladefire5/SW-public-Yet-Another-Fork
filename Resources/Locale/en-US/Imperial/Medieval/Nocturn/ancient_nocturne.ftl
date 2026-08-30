@@ -55,6 +55,6 @@ medieval-ancient-nocturne-event-sender = Event
 roles-antag-ancient-nocturne-name = Ancient nocturne
 roles-antag-ancient-nocturne-objective = Fill your blood ruby with blood and turn humans into nocturnes.
 medieval-ancient-nocturne-round-end-summary = Ancient nocturnes: { $count }
-medieval-ancient-nocturne-round-end-blood-collected = - { $name }: blood collected in the blood ruby — { $amount }
+medieval-ancient-nocturne-round-end-blood-collected = - { $name }: blood collected in the ruby — { $amount }
 medieval-ancient-nocturne-round-end-ruby-lost = - { $name }: Lost their ruby
 medieval-ancient-nocturne-round-end-unknown-name = Unknown ancient nocturne
