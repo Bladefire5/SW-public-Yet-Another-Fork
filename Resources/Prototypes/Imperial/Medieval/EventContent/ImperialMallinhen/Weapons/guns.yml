@@ -245,9 +245,13 @@
   - type: TimedDespawn
     lifetime: 0.5
 
+- type: Tag
+  id: MedievalBullet
+
 - type: entity
   parent: BaseWeaponSniper
   id: MedievalPistole1
+  name: medieval pistol
   components:
   - type: Sprite
     sprite: Imperial/Medieval/Event/Weapons/gun/pistole1.rsi
@@ -269,10 +273,22 @@
       path: /Audio/Imperial/Medieval/Event/fire3.ogg
     minAngle: 10
     maxAngle: 10
+  - type: BallisticAmmoProvider
+    capacity: 1
+    proto: MedievalPowderCartridgePistole
+  - type: MedievalGun
+    loadTime: 2.0
+    loadSound:
+      path: /Audio/Imperial/Medieval/Event/powder.ogg
+    ramrodTime: 5.0
+    ammoWhitelist:
+      tags:
+      - MedievalBullet
 
 - type: entity
   parent: BaseWeaponSniper
   id: MedievalPistole2
+  name: medieval pistol
   components:
   - type: Sprite
     sprite: Imperial/Medieval/Event/Weapons/gun/pistole2.rsi
@@ -294,9 +310,21 @@
       path: /Audio/Imperial/Medieval/Event/fire3.ogg
     minAngle: 10
     maxAngle: 10
+  - type: BallisticAmmoProvider
+    capacity: 2
+    proto: MedievalPowderCartridgePistole
+  - type: MedievalGun
+    loadTime: 2.0
+    loadSound:
+      path: /Audio/Imperial/Medieval/Event/powder.ogg
+    ramrodTime: 5.0
+    ammoWhitelist:
+      tags:
+      - MedievalBullet
 
 - type: entity
   id: MedievalPaperBullet
+  name: paper cartridge
   parent: BaseItem
   components:
   - type: Sprite
@@ -304,9 +332,13 @@
     state: bullet
   - type: Item
     size: Small
+  - type: Tag
+    tags:
+    - MedievalBullet
 
 - type: entity
   id: MedievalGunRamrod
+  name: ramrod
   parent: BaseItem
   components:
   - type: Sprite
@@ -314,3 +346,6 @@
     state: icon
   - type: Item
     size: Small
+  - type: MedievalGunRamrod
+    actionSound:
+      path: /Audio/Imperial/Medieval/Cannon/ramrod_action.ogg
