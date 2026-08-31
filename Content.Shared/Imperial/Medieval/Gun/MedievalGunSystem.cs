@@ -144,22 +144,12 @@ public sealed class MedievalGunSystem : EntitySystem
         if (!args.IsInDetailsRange)
             return;
 
-        if (ent.Comp.UnrammedCount > 0)
-        {
-            args.PushMarkup($"[color=#C6B28A]{Loc.GetString("medieval-gun-state-loaded-examine")}[/color]");
+        if (!TryComp<BallisticAmmoProviderComponent>(ent.Owner, out var ballistic))
             return;
-        }
 
-        if (TryComp<BallisticAmmoProviderComponent>(ent.Owner, out var ballistic))
-        {
-            var ammoCount = ballistic.UnspawnedCount + ballistic.Entities.Count;
-            if (ammoCount > 0)
-            {
-                args.PushMarkup($"[color=#C6B28A]{Loc.GetString("medieval-gun-state-ready-examine")}[/color]");
-                return;
-            }
-        }
+        var readyAmmo = ballistic.UnspawnedCount + ballistic.Entities.Count;
+        var unrammedAmmo = ent.Comp.UnrammedCount;
 
-        args.PushMarkup($"[color=#C6B28A]{Loc.GetString("medieval-gun-state-empty-examine")}[/color]");
+        args.PushMarkup($"[color=#C6B28A]{Loc.GetString("medieval-gun-examine-counts", ("ready", readyAmmo), ("unrammed", unrammedAmmo))}[/color]");
     }
 }
