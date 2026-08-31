@@ -33,13 +33,12 @@ public sealed class MedievalGunSystem : EntitySystem
         SubscribeLocalEvent<MedievalGunComponent, MedievalGunLoadDoAfterEvent>(OnLoadDoAfter);
         SubscribeLocalEvent<MedievalGunComponent, MedievalGunRamrodDoAfterEvent>(OnRamrodDoAfter);
 
-        // Подписка на изменение скорости для нашего компонента-маркера
         SubscribeLocalEvent<MedievalGunReloadingComponent, RefreshMovementSpeedModifiersEvent>(OnRefreshSpeed);
     }
 
     private void OnRefreshSpeed(Entity<MedievalGunReloadingComponent> ent, ref RefreshMovementSpeedModifiersEvent args)
     {
-        args.ModifySpeed(0.6f, 0.6f); // Замедление на 40%
+        args.ModifySpeed(0.6f, 0.6f);
     }
 
     private void OnInteractUsing(Entity<MedievalGunComponent> ent, ref InteractUsingEvent args)
@@ -70,8 +69,8 @@ public sealed class MedievalGunSystem : EntitySystem
 
             var doAfterArgs = new DoAfterArgs(EntityManager, args.User, ent.Comp.RamrodTime, new MedievalGunRamrodDoAfterEvent(), ent.Owner, target: ent.Owner, used: args.Used)
             {
-                BreakOnMove = false, // Позволяем двигаться
-                BreakOnDamage = true, // Урон всё ещё сбивает полоску
+                BreakOnMove = false,
+                BreakOnDamage = true,
                 NeedHand = true,
             };
 
