@@ -1,12 +1,14 @@
 using Content.Shared.DoAfter;
 using Content.Shared.Examine;
 using Content.Shared.Interaction;
+using Content.Shared.Movement.Systems;
 using Content.Shared.Popups;
 using Content.Shared.Weapons.Ranged.Components;
 using Content.Shared.Weapons.Ranged.Events;
 using Content.Shared.Weapons.Ranged.Systems;
 using Content.Shared.Whitelist;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Network;
 
 namespace Content.Shared.Imperial.Medieval.Gun;
 
@@ -17,6 +19,8 @@ public sealed class MedievalGunSystem : EntitySystem
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly EntityWhitelistSystem _whitelist = default!;
     [Dependency] private readonly SharedGunSystem _gun = default!;
+    [Dependency] private readonly INetManager _netManager = default!;
+    [Dependency] private readonly MovementSpeedModifierSystem _movementSpeed = default!;
 
     public override void Initialize()
     {
@@ -24,11 +28,18 @@ public sealed class MedievalGunSystem : EntitySystem
 
         SubscribeLocalEvent<MedievalGunComponent, ExaminedEvent>(OnExamined);
         SubscribeLocalEvent<MedievalGunComponent, InteractUsingEvent>(OnInteractUsing, before: [typeof(SharedGunSystem)]);
-
         SubscribeLocalEvent<MedievalGunComponent, ShotAttemptedEvent>(OnShootAttempt);
 
         SubscribeLocalEvent<MedievalGunComponent, MedievalGunLoadDoAfterEvent>(OnLoadDoAfter);
         SubscribeLocalEvent<MedievalGunComponent, MedievalGunRamrodDoAfterEvent>(OnRamrodDoAfter);
+
+        // Подписка на изменение скорости для нашего компонента-маркера
+        SubscribeLocalEvent<MedievalGunReloadingComponent, RefreshMovementSpeedModifiersEvent>(OnRefreshSpeed);
+    }
+
+    private void OnRefreshSpeed(Entity<MedievalGunReloadingComponent> ent, ref RefreshMovementSpeedModifiersEvent args)
+    {
+        args.ModifySpeed(0.6f, 0.6f); // Замедление на 40%
     }
 
     private void OnInteractUsing(Entity<MedievalGunComponent> ent, ref InteractUsingEvent args)
@@ -45,24 +56,35 @@ public sealed class MedievalGunSystem : EntitySystem
 
             if (ent.Comp.UnrammedCount <= 0)
             {
-                _popup.PopupClient(Loc.GetString("medieval-gun-no-bullet-to-ram"), ent.Owner, args.User, PopupType.SmallCaution);
+                var readyAmmo = ballistic.UnspawnedCount + ballistic.Entities.Count;
+                if (readyAmmo >= ballistic.Capacity)
+                {
+                    _popup.PopupClient(Loc.GetString("medieval-gun-already-loaded"), ent.Owner, args.User, PopupType.SmallCaution);
+                }
+                else
+                {
+                    _popup.PopupClient(Loc.GetString("medieval-gun-no-bullet-to-ram"), ent.Owner, args.User, PopupType.SmallCaution);
+                }
                 return;
             }
 
             var doAfterArgs = new DoAfterArgs(EntityManager, args.User, ent.Comp.RamrodTime, new MedievalGunRamrodDoAfterEvent(), ent.Owner, target: ent.Owner, used: args.Used)
             {
-                BreakOnMove = true,
-                BreakOnDamage = true,
+                BreakOnMove = false, // Позволяем двигаться
+                BreakOnDamage = true, // Урон всё ещё сбивает полоску
                 NeedHand = true,
             };
 
             if (_doAfter.TryStartDoAfter(doAfterArgs))
             {
+                EnsureComp<MedievalGunReloadingComponent>(args.User);
+                _movementSpeed.RefreshMovementSpeedModifiers(args.User);
+
                 if (ent.Comp.RamrodSound != null || TryComp<MedievalGunRamrodComponent>(args.Used, out _))
                 {
                     var sound = ent.Comp.RamrodSound ?? Comp<MedievalGunRamrodComponent>(args.Used).ActionSound;
-                    if (sound != null)
-                        _audio.PlayPredicted(sound, ent.Owner, ent.Owner);
+                    if (sound != null && _netManager.IsServer)
+                        _audio.PlayPvs(sound, ent.Owner);
                 }
             }
 
@@ -82,13 +104,19 @@ public sealed class MedievalGunSystem : EntitySystem
 
             var doAfterArgs = new DoAfterArgs(EntityManager, args.User, ent.Comp.LoadTime, new MedievalGunLoadDoAfterEvent(), ent.Owner, target: ent.Owner, used: args.Used)
             {
-                BreakOnMove = true,
+                BreakOnMove = false,
                 BreakOnDamage = true,
                 NeedHand = true,
             };
 
-            if (_doAfter.TryStartDoAfter(doAfterArgs) && ent.Comp.LoadSound != null)
-                _audio.PlayPredicted(ent.Comp.LoadSound, ent.Owner, ent.Owner);
+            if (_doAfter.TryStartDoAfter(doAfterArgs))
+            {
+                EnsureComp<MedievalGunReloadingComponent>(args.User);
+                _movementSpeed.RefreshMovementSpeedModifiers(args.User);
+
+                if (ent.Comp.LoadSound != null && _netManager.IsServer)
+                    _audio.PlayPvs(ent.Comp.LoadSound, ent.Owner);
+            }
         }
     }
 
@@ -108,6 +136,9 @@ public sealed class MedievalGunSystem : EntitySystem
 
     private void OnLoadDoAfter(Entity<MedievalGunComponent> ent, ref MedievalGunLoadDoAfterEvent args)
     {
+        RemComp<MedievalGunReloadingComponent>(args.User);
+        _movementSpeed.RefreshMovementSpeedModifiers(args.User);
+
         if (args.Cancelled || args.Handled || args.Used == null || Deleted(args.Used.Value))
             return;
 
@@ -118,7 +149,9 @@ public sealed class MedievalGunSystem : EntitySystem
         if (totalAmmo >= ballistic.Capacity)
             return;
 
-        QueueDel(args.Used.Value);
+        if (_netManager.IsServer)
+            QueueDel(args.Used.Value);
+
         ent.Comp.UnrammedCount++;
         Dirty(ent);
         args.Handled = true;
@@ -126,6 +159,9 @@ public sealed class MedievalGunSystem : EntitySystem
 
     private void OnRamrodDoAfter(Entity<MedievalGunComponent> ent, ref MedievalGunRamrodDoAfterEvent args)
     {
+        RemComp<MedievalGunReloadingComponent>(args.User);
+        _movementSpeed.RefreshMovementSpeedModifiers(args.User);
+
         if (args.Cancelled || args.Handled || ent.Comp.UnrammedCount <= 0)
             return;
 
@@ -151,5 +187,13 @@ public sealed class MedievalGunSystem : EntitySystem
         var unrammedAmmo = ent.Comp.UnrammedCount;
 
         args.PushMarkup($"[color=#C6B28A]{Loc.GetString("medieval-gun-examine-counts", ("ready", readyAmmo), ("unrammed", unrammedAmmo))}[/color]");
+
+        if (readyAmmo < ballistic.Capacity)
+        {
+            if (unrammedAmmo > 0)
+                args.PushMarkup($"\n[color=gray]{Loc.GetString("medieval-gun-examine-instruction-ramrod")}[/color]");
+            else
+                args.PushMarkup($"\n[color=gray]{Loc.GetString("medieval-gun-examine-instruction-load")}[/color]");
+        }
     }
 }
