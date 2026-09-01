@@ -744,7 +744,7 @@ public sealed partial class TradingSystem
             return false;
         }
 
-        EmptyItemContainers(sourceItem, seller);
+        EmptyItemStorage(sourceItem, seller);
 
         if (!_containers.Insert(sourceItem, destination, force: true))
         {
@@ -774,16 +774,13 @@ public sealed partial class TradingSystem
         return true;
     }
 
-    private void EmptyItemContainers(EntityUid item, EntityUid seller)
+    private void EmptyItemStorage(EntityUid item, EntityUid seller)
     {
-        if (!TryComp<ContainerManagerComponent>(item, out var containerManager))
+        if (!TryComp<StorageComponent>(item, out var storage))
             return;
 
         var coordinates = Transform(seller).Coordinates;
-        foreach (var container in _containers.GetAllContainers(item, containerManager))
-        {
-            _containers.EmptyContainer(container, true, coordinates);
-        }
+        _containers.EmptyContainer(storage.Container, true, coordinates);
     }
 
     private bool TryFindInventoryItem(
