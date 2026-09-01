@@ -60,7 +60,12 @@ public sealed class GhostSkillProfileSystem : EntitySystem
 
     private void OnMapInit(Entity<GhostSkillProfileComponent> ent, ref MapInitEvent args)
     {
-        if (!SharedSkillsSystem.TryValidateSkillLevels(_prototypes, ent.Comp.Levels, out var levels))
+        if (!SharedSkillsSystem.TryValidateSkillLevels(
+                _prototypes,
+                ent.Comp.Levels,
+                out var levels,
+                GhostSkillProfileComponent.MinimumLevel,
+                GhostSkillProfileComponent.MaximumLevel))
             levels = SharedSkillsSystem.GetDefaultSkillLevels(_prototypes);
 
         ent.Comp.Levels = levels;
@@ -87,7 +92,12 @@ public sealed class GhostSkillProfileSystem : EntitySystem
             !TryComp<GhostSkillProfileComponent>(uid, out var component))
             return;
 
-        if (!SharedSkillsSystem.TryValidateSkillLevels(_prototypes, message.Levels, out var levels))
+        if (!SharedSkillsSystem.TryValidateSkillLevels(
+                _prototypes,
+                message.Levels,
+                out var levels,
+                GhostSkillProfileComponent.MinimumLevel,
+                GhostSkillProfileComponent.MaximumLevel))
         {
             _popup.PopupEntity(Loc.GetString("ghost-skills-invalid-points"), uid, uid, PopupType.MediumCaution);
             return;
