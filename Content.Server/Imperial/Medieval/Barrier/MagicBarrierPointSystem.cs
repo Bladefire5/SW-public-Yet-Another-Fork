@@ -172,7 +172,8 @@ namespace Content.Server.MagicBarrier
             QueueDel(uid);
             _chat.DispatchGlobalAnnouncement("Проклятый нарост уничтожен, расход стабильности барьера снижен.", playSound: false, colorOverride: Color.LimeGreen, sender: "Барьер");
             foreach (var comp in EntityManager.EntityQuery<MagicBarrierComponent>())
-            {
+            {    /* this counts the cursed growths
+                    Подсчитывает проклятые наросты.*/
                 comp.MagicBarrierCursePE++;
                 comp.MagicBarrierCurseEffect += comp.MagicBarrierCurseEM;
                 comp.Stability += 4f;
@@ -189,7 +190,8 @@ namespace Content.Server.MagicBarrier
             comp.LastLoseCalculateTime = _timing.CurTime;
         }
         private void OnExamine(EntityUid uid, MagicBarrierComponent component, ExaminedEvent args)
-        {
+        {    /* TimeSpan.FromSeconds(5) is the time bettween every check to prevent spamming
+                TimeSpan.FromSeconds(5) — интервал между проверками, чтобы предотвратить спам */
             if (_timing.CurTime >= component.LastLoseCalculateTime + TimeSpan.FromSeconds(5))
             {
             RecalculateLose(component);
