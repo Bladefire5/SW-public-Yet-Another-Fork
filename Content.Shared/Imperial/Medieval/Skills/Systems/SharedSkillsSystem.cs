@@ -101,7 +101,9 @@ public abstract partial class SharedSkillsSystem : EntitySystem
     public static bool TryValidateSkillLevels(
         IPrototypeManager prototypes,
         IReadOnlyDictionary<string, int> levels,
-        out Dictionary<string, int> validated)
+        out Dictionary<string, int> validated,
+        int minimumLevel = 1,
+        int maximumLevel = 20)
     {
         validated = new();
         var skills = prototypes.EnumeratePrototypes<SkillPrototype>().ToList();
@@ -110,7 +112,7 @@ public abstract partial class SharedSkillsSystem : EntitySystem
 
         foreach (var skill in skills)
         {
-            if (!levels.TryGetValue(skill.ID, out var level) || level is < 1 or > 20)
+            if (!levels.TryGetValue(skill.ID, out var level) || level < minimumLevel || level > maximumLevel)
                 return false;
 
             validated[skill.ID] = level;
