@@ -4,6 +4,7 @@ using System.Numerics;
 using Content.Shared.Actions;
 using Robust.Shared.Serialization;
 using Content.Shared.DoAfter;
+using Content.Shared.Humanoid.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 using Robust.Shared.Prototypes;
 using Content.Shared.Alert;
@@ -98,6 +99,9 @@ namespace Content.Shared.Nocturn.Components
 
         [DataField]
         public bool IsDisguised = false;
+
+        [DataField]
+        public ProtoId<SpeciesPrototype> UnmaskedSpecies = "Drou";
 
         [DataField, AutoNetworkedField]
         public EntProtoId DisguiseAction = "NocturnDisguiseAction";

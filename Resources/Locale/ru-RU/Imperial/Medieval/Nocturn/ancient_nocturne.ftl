@@ -1,6 +1,7 @@
 ent-MedievalAncientNocturneBloodArrowAction = Кровавая стрела
     .desc = Сформируйте из крови стрелу и выпустите её из рук
 ent-BloodArrow = кровавая стрела
+species-name-ancient-nocturne = Древний ноктюрн
 
 ent-MedievalClothingNeckAncientNocturneCloak = Графский плащ
     .desc = Спустя столько лет, всё ещё находится в идеальном состоянии

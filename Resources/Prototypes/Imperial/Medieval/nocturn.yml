@@ -360,6 +360,8 @@
     - MedievalAncientNocturneEmergencyTeleportAction
     - MedievalAncientNocturneConversionAction
   - type: AncientNocturne
+  - type: Nocturn
+    unmaskedSpecies: AncientDrou
   - type: MedievalSpecialDamageReceiver
     targetType: Werewolf
   - type: BloodRubyOwner
@@ -385,7 +387,7 @@
 
 - type: species
   id: AncientDrou
-  name: Древний ноктюрн
+  name: species-name-ancient-nocturne
   roundStart: false
   prototype: MobAncientDrou
   sprites: MobDrouSprites

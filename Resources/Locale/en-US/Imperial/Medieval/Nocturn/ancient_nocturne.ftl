@@ -1,6 +1,7 @@
 ent-MedievalAncientNocturneBloodArrowAction = Blood arrow
     .desc = Shape an arrow from blood and release it from your hand
 ent-BloodArrow = blood arrow
+species-name-ancient-nocturne = Ancient nocturne
 
 ent-MedievalClothingNeckAncientNocturneCloak = Count's cloak
     .desc = After so many years, it remains in perfect condition

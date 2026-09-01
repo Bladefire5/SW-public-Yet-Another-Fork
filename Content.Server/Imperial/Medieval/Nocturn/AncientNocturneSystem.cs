@@ -3,14 +3,11 @@ using Content.Server.Destructible;
 using Content.Server.Polymorph.Components;
 using Content.Server.Polymorph.Systems;
 using Content.Shared.Actions;
-using Content.Shared.Alert;
 using Content.Shared.Damage;
 using Content.Shared.DoAfter;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Humanoid;
-using Content.Shared.Imperial.Medieval.Additions;
 using Content.Shared.Imperial.Medieval.Magic;
-using Content.Shared.Inventory;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Nocturn.Components;
@@ -24,14 +21,13 @@ public sealed class AncientNocturneSystem : EntitySystem
 {
     [Dependency] private readonly DamageableSystem _damageable = default!;
     [Dependency] private readonly SharedHandsSystem _hands = default!;
-    [Dependency] private readonly InventorySystem _inventory = default!;
     [Dependency] private readonly MobThresholdSystem _mobThreshold = default!;
     [Dependency] private readonly PolymorphSystem _polymorph = default!;
     [Dependency] private readonly SharedActionsSystem _actions = default!;
-    [Dependency] private readonly AlertsSystem _alerts = default!;
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly NocturnBloodSpellSystem _bloodSpells = default!;
+    [Dependency] private readonly NocturneConversionSystem _conversion = default!;
 
     public override void Initialize()
     {
@@ -127,28 +123,16 @@ public sealed class AncientNocturneSystem : EntitySystem
             return;
         }
 
-        var inventory = GetInventorySnapshot(target);
-        var hands = GetHandsSnapshot(target);
-        var activeHand = _hands.GetActiveHand(target);
-
-        if (_polymorph.PolymorphEntity(target, ent.Comp.ConversionPolymorph) is not { } converted)
+        if (!_conversion.TryConvertHumanToNocturne(target, ent.Comp))
             return;
 
-        RestoreInventory(converted, inventory);
-        RestoreHands(converted, hands, activeHand);
-
-        RemComp<PolymorphedEntityComponent>(converted);
-        _alerts.ClearAlert(converted, "SpawnProtection");
-        RemComp<ShieldOnStartupComponent>(converted);
-        QueueDel(target);
-
         var connection = EnsureComp<AncientNocturneMindConnectionComponent>(ent.Owner);
-        var trall = EnsureComp<AncientNocturneTrallMindConnectionComponent>(converted);
-        EnsureComp<AncientNocturneMindChatComponent>(converted);
+        var trall = EnsureComp<AncientNocturneTrallMindConnectionComponent>(target);
+        EnsureComp<AncientNocturneMindChatComponent>(target);
         trall.Master = ent.Owner;
-        connection.Tralls.Add(converted);
+        connection.Tralls.Add(target);
 
-        SendConversionNotification(converted, AncientNocturneConversionNotification.Converted);
+        SendConversionNotification(target, AncientNocturneConversionNotification.Converted);
         if (!connection.HasConvertedTrall)
         {
             connection.HasConvertedTrall = true;
@@ -157,13 +141,13 @@ public sealed class AncientNocturneSystem : EntitySystem
 
         _popup.PopupEntity(
             Loc.GetString("medieval-ancient-nocturne-conversion-success-user"),
-            converted,
+            target,
             ent.Owner,
             PopupType.Medium);
         _popup.PopupEntity(
             Loc.GetString("medieval-ancient-nocturne-conversion-success-target"),
-            converted,
-            converted,
+            target,
+            target,
             PopupType.Large);
     }
 
@@ -211,69 +195,6 @@ public sealed class AncientNocturneSystem : EntitySystem
         {
             _damageable.SetDamage(target, targetDamage, new DamageSpecifier(sourceDamage.Damage));
         }
-    }
-
-    private List<(EntityUid Item, string Slot)> GetInventorySnapshot(EntityUid entity)
-    {
-        var snapshot = new List<(EntityUid Item, string Slot)>();
-        if (!TryComp<InventoryComponent>(entity, out var inventory))
-            return snapshot;
-
-        var enumerator = _inventory.GetSlotEnumerator((entity, inventory));
-        while (enumerator.NextItem(out var item, out var slot))
-        {
-            snapshot.Add((item, slot.Name));
-        }
-
-        return snapshot;
-    }
-
-    private List<(string Hand, EntityUid Item)> GetHandsSnapshot(EntityUid entity)
-    {
-        var snapshot = new List<(string Hand, EntityUid Item)>();
-        foreach (var hand in _hands.EnumerateHands(entity))
-        {
-            if (_hands.TryGetHeldItem(entity, hand, out var item))
-                snapshot.Add((hand, item.Value));
-        }
-
-        return snapshot;
-    }
-
-    private void RestoreInventory(EntityUid entity, List<(EntityUid Item, string Slot)> snapshot)
-    {
-        foreach (var (item, slot) in snapshot)
-        {
-            if (TerminatingOrDeleted(item))
-                continue;
-
-            if (_inventory.TryGetSlotEntity(entity, slot, out var equipped) && equipped == item)
-                continue;
-
-            _inventory.TryEquip(entity, item, slot, true, true, triggerHandContact: true);
-        }
-    }
-
-    private void RestoreHands(
-        EntityUid entity,
-        List<(string Hand, EntityUid Item)> snapshot,
-        string? activeHand)
-    {
-        foreach (var (_, item) in snapshot)
-        {
-            if (_hands.IsHolding(entity, item, out var hand))
-                _hands.DoDrop(entity, hand, doDropInteraction: false, log: false);
-        }
-
-        foreach (var (hand, item) in snapshot)
-        {
-            if (TerminatingOrDeleted(item))
-                continue;
-
-            _hands.DoPickup(entity, hand, item, log: false);
-        }
-
-        _hands.TrySetActiveHand(entity, activeHand);
     }
 
     private bool IsValidConversionTarget(EntityUid target, AncientNocturneComponent component)
