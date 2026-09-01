@@ -34,6 +34,17 @@ namespace Content.Shared.Nocturn.Components
         [ViewVariables(VVAccess.ReadWrite)]
         public float BloodLevel = 250.0f;
 
+        [ViewVariables]
+        public Dictionary<EntityUid, float> CastedBloodSpells = new();
+
+        [DataField]
+        [ViewVariables(VVAccess.ReadWrite)]
+        public float MaximumBloodLevel = 400f;
+
+        [DataField]
+        [ViewVariables(VVAccess.ReadWrite)]
+        public float MinimumBloodLevelForSpells = 50f;
+
         [ViewVariables(VVAccess.ReadWrite)]
         public float BloodDrainPerSecond = 0.115f;
         public TimeSpan StartTime = TimeSpan.FromSeconds(0f);

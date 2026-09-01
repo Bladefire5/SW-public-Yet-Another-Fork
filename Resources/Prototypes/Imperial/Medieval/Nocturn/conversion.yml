@@ -1,0 +1,31 @@
+- type: entity
+  id: MedievalAncientNocturneConversionAction
+  name: Turn into a nocturne
+  description: Turn a human into a young nocturne.
+  components:
+  - type: Action
+    itemIconStyle: BigAction
+    icon:
+      sprite: Imperial/Medieval/Nocturn/Conversion/action.rsi
+      state: conversion
+  - type: TargetAction
+    interactOnMiss: false
+    targetingIndicator: true
+    deselectOnMiss: true
+    repeat: false
+    checkCanAccess: true
+  - type: EntityTargetAction
+    canTargetSelf: false
+    event: !type:AncientNocturneConversionActionEvent
+
+- type: polymorph
+  id: MedievalAncientNocturneConversionPolymorph
+  configuration:
+    entity: MobDrou
+    forced: true
+    transferName: true
+    transferDamage: true
+    inventory: Transfer
+    revertOnCrit: false
+    revertOnDeath: false
+    revertOnDelete: false
