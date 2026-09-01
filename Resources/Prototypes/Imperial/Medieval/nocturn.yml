@@ -285,10 +285,10 @@
     thresholds:
       0: Alive
       95: Critical
-      180: Dead
+      190: Dead
   - type: Mana
     maxManaRaceModifier: 0.95
-    regenRaceModifier: 0.95
+    regenRaceModifier: 0.97
   - type: Nocturn
   - type: LocalLight
     energy: 0.4
@@ -360,6 +360,8 @@
     - MedievalAncientNocturneEmergencyTeleportAction
     - MedievalAncientNocturneConversionAction
   - type: AncientNocturne
+  - type: Nocturn
+    unmaskedSpecies: AncientDrou
   - type: MedievalSpecialDamageReceiver
     targetType: Werewolf
   - type: BloodRubyOwner
@@ -385,7 +387,7 @@
 
 - type: species
   id: AncientDrou
-  name: Древний ноктюрн
+  name: species-name-ancient-nocturne
   roundStart: false
   prototype: MobAncientDrou
   sprites: MobDrouSprites

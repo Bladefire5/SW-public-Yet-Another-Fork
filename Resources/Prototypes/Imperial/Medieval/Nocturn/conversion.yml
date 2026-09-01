@@ -17,15 +17,3 @@
   - type: EntityTargetAction
     canTargetSelf: false
     event: !type:AncientNocturneConversionActionEvent
-
-- type: polymorph
-  id: MedievalAncientNocturneConversionPolymorph
-  configuration:
-    entity: MobDrou
-    forced: true
-    transferName: true
-    transferDamage: true
-    inventory: Transfer
-    revertOnCrit: false
-    revertOnDeath: false
-    revertOnDelete: false

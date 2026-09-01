@@ -29,11 +29,23 @@ public sealed partial class AncientNocturneComponent : Component
     public TimeSpan BatActionCooldown = TimeSpan.FromMinutes(1);
 
     [DataField]
-    public ProtoId<PolymorphPrototype> ConversionPolymorph = "MedievalAncientNocturneConversionPolymorph";
+    public ProtoId<SpeciesPrototype> ConversionSpecies = "Drou";
 
     [DataField]
     public TimeSpan ConversionDuration = TimeSpan.FromSeconds(6);
 
     [DataField]
     public ProtoId<SpeciesPrototype> ConversionTargetSpecies = "Human";
+
+    [DataField]
+    public float ConversionMaxHealthModifier = 0.95f;
+
+    [DataField]
+    public float ConversionCriticalThresholdModifier = 0.95f;
+
+    [DataField]
+    public float ConversionMaxManaModifier = 0.95f;
+
+    [DataField]
+    public float ConversionManaRegenerationModifier = 0.97f;
 }

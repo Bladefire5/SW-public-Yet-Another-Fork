@@ -446,7 +446,7 @@ namespace Content.Server.Nocturn
             if (!component.IsDisguised)
                 return;
 
-            appearance.Species = "Drou";
+            appearance.Species = component.UnmaskedSpecies;
             component.BloodDrainPerSecond /= 1.3f;
 
             component.IsDisguised = false;
