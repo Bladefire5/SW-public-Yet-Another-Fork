@@ -44,7 +44,8 @@ public sealed class TradingPitCollectSystem : EntitySystem
 
     private void OnGetAltVerb(EntityUid uid, TradingPitCollectComponent component, GetVerbsEvent<AlternativeVerb> args)
     {
-        if (!args.CanAccess || !args.CanInteract)
+        if (!args.CanAccess ||
+            !args.CanInteract)
             return;
 
         args.Verbs.Add(new AlternativeVerb
