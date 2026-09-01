@@ -55,6 +55,7 @@ public sealed class NocturneConversionSystem : EntitySystem
         _humanoidAppearance.SetSkinColor(target, nocturneSpecies.DefaultSkinTone, humanoid: appearance);
 
         var nocturne = EnsureComp<NocturnComponent>(target);
+        nocturne.UnmaskedSpecies = configuration.ConversionSpecies;
         if (TryComp<TypingIndicatorComponent>(target, out var typingIndicator))
         {
             typingIndicator.TypingIndicatorPrototype = nocturne.TypingIndicatorPrototypeMod;
