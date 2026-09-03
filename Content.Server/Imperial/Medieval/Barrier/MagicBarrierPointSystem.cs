@@ -355,11 +355,8 @@ namespace Content.Server.MagicBarrier
 
                     if (comp.Stability > 0f)
                     {
-                        var growthCount =
-                            EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
-
-                        var riftCount =
-                            EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
+                        var growthCount = EntityQuery<MagicBarrierCurseComponent>().Count();
+                        var riftCount = EntityQuery<MagicBarrierRiftComponent>().Count();
 
                         comp.Lose = MagicBarrierDrainCalculator.Calculate(
                          comp,
