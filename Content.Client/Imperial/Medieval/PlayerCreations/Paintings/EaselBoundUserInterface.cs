@@ -42,7 +42,7 @@ public sealed class EaselBoundUserInterface : BoundUserInterface
         if (localSession == null)
             return;
 
-        SendMessage(new EaselSendPaintingMessage(_window.CanvasTexture, name, description, author, localSession.UserId));
+        SendMessage(new EaselSendPaintingMessage(_window.CanvasTexture, name, description, author));
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)

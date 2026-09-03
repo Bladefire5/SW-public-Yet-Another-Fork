@@ -181,7 +181,7 @@
             - !type:SnapToGrid { }
           steps:
             - material: WoodPlank
-              amount: 12
+              amount: 8
               doAfter: 16
     - node: medievalstockadeHigh
       entity: MedievalStockadeHigh
@@ -190,7 +190,7 @@
           completed:
             - !type:SpawnPrototype
               prototype: MaterialWoodPlank
-              amount: 12
+              amount: 8
           steps:
             - tool: Prying
               doAfter: 1500
@@ -995,6 +995,12 @@
   name: golden cup
   description: An elegant golden cup.
   components:
+  - type: Currency
+    price:
+      Revent: 10
+  - type: MedievalCurrency
+    price:
+      Revent: 10
   - type: SolutionContainerManager
     solutions:
       drink:
@@ -1028,6 +1034,12 @@
     solutions:
       drink:
         maxVol: 25
+  - type: Currency
+    price:
+      Revent: 10
+  - type: MedievalCurrency
+    price:
+      Revent: 10
   - type: Sprite
     sprite: Imperial/Medieval/Misc/silvercup.rsi
     layers:
@@ -4019,6 +4031,7 @@
   placement:
     mode: SnapgridCenter
   components:
+  - type: MedievalHornPlaytimeRequirement
   - type: MeleeSound
     soundGroups:
       Brute:
@@ -7742,6 +7755,14 @@
     damageCoefficient: 3
 
 - type: entity
+  id: MedievalBlastDoorOpen
+  parent: MedievalBlastDoor
+  suffix: Open
+  components:
+  - type: Door
+    state: Open
+
+- type: entity
   id: MedievalGatesGear
   parent: BannerBase
   name: nanotrasen banner
@@ -9192,3 +9213,107 @@
             ShardGlass:
               min: 1
               max: 3
+
+- type: entity
+  name: villager farmer stash
+  parent: BaseItem
+  id: MedievalVillagerPresetFarmer
+  description: Some things for village work
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+  - type: SpawnItemsOnUse
+    items:
+    - id: MedievalShovel
+    - id: MedievalShovel
+    - id: EggySeeds
+    - id: WheatSeeds
+    - id: CarrotSeeds
+
+- type: entity
+  name: villager beekeeper stash
+  parent: BaseItem
+  id: MedievalVillagerPresetBeekeeper
+  description: Some things for village work
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+  - type: SpawnItemsOnUse
+    items:
+    - id: MedievalBeeSmoke
+    - id: MedievalCustomBeeHiveCraft
+    - id: MedievalMagicDust
+    - id: MedievalMagicDust
+    - id: MedievalMagicDust
+    - id: MedievalMagicDust
+    - id: MedievalMagicDust
+
+- type: entity
+  name: villager drinker stash
+  parent: BaseItem
+  id: MedievalVillagerPresetDrinker
+  description: Some things for village work
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+  - type: SpawnItemsOnUse
+    items:
+    - id: MedievalBarrelAle
+    - id: MedievalBeaker
+    - id: MedievalBeaker
+    - id: d6Dice
+
+- type: entity
+  name: villager tailor stash
+  parent: BaseItem
+  id: MedievalVillagerPresetTailor
+  description: Some things for village work
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+  - type: SpawnItemsOnUse
+    items:
+    - id: MaterialCloth
+    - id: MedievalClothWorkingPlaceCraft
+    - id: MedievalLeather10
+
+- type: entity
+  name: villager woodcutter stash
+  parent: BaseItem
+  id: MedievalVillagerPresetWoodCutter
+  description: Some things for village work
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/Misc/secretbox.rsi
+  - type: SpawnItemsOnUse
+    items:
+    - id: MedievalHatchet
+    - id: MedievalRepairStone
+    - id: TowercapSeeds
+    - id: TowercapSeeds
+

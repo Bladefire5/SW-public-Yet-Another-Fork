@@ -1,6 +1,7 @@
 using System.Numerics;
 using Content.Server.NPC;
 using Content.Server.NPC.Systems;
+using Content.Shared.Follower;
 using Content.Shared.Imperial.Medieval.Magic;
 using Robust.Shared.Map;
 using Robust.Shared.Timing;
@@ -11,6 +12,7 @@ namespace Content.Server.Imperial.Medieval.Magic.MedievalProjectilePlayerFollowe
 public sealed partial class MedievalProjectilePlayerFollowerSystem : EntitySystem
 {
     [Dependency] private readonly NPCSystem _npc = default!;
+    [Dependency] private readonly FollowerSystem _follower = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
 
 
@@ -37,6 +39,14 @@ public sealed partial class MedievalProjectilePlayerFollowerSystem : EntitySyste
 
     public void OnStartup(EntityUid uid, MedievalProjectilePlayerFollowerComponent component, MedievalAfterSpawnEntityBySpellEvent args)
     {
+        if (component.OrbitAroundTarget)
+        {
+            component.Binded = true;
+            _npc.SleepNPC(uid);
+            _follower.StartFollowingEntity(uid, args.Performer);
+            return;
+        }
+
         component.Target = args.Performer;
         component.NextTargetSelect = _timing.CurTime + component.ActivateTime;
     }

@@ -1,0 +1,39 @@
+{
+    "version": 1,
+    "size": {
+      "x": 32,
+      "y": 32
+    },
+    "copyright": "drawing by prazat911",
+    "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
+    "states": [
+      {
+        "name": "monk3",
+        "directions": 4
+      },
+      {
+        "name": "chub",
+        "directions": 4
+      },
+      {
+        "name": "hair1",
+        "directions": 4
+      },
+      {
+        "name": "hair2",
+        "directions": 4
+      },
+      {
+        "name": "hair5",
+        "directions": 4
+      },
+      {
+        "name": "monk",
+        "directions": 4
+      },
+      {
+        "name": "monk2",
+        "directions": 4
+      }
+    ]
+  }

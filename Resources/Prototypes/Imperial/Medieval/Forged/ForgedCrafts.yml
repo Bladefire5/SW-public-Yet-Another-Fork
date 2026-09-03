@@ -29,42 +29,42 @@
   id: ForgedWoodenHeadCraft
   result: ForgedWoodenHead
   stacks:
-    WoodPlank: 5
+    WoodPlank: 3
     MedievalMagicGlina: 1
 
 - type: CP14Recipe
   id: ForgedWoodenTorsoCraft
   result: ForgedWoodenTorso
   stacks:
-    WoodPlank: 25
+    WoodPlank: 7
     MedievalMagicGlina: 1
 
 - type: CP14Recipe
   id: ForgedWoodenRArmCraft
   result: ForgedWoodenRArm
   stacks:
-    WoodPlank: 15
+    WoodPlank: 5
     MedievalMagicGlina: 1
 
 - type: CP14Recipe
   id: ForgedWoodenLArmCraft
   result: ForgedWoodenLArm
   stacks:
-    WoodPlank: 15
+    WoodPlank: 5
     MedievalMagicGlina: 1
 
 - type: CP14Recipe
   id: ForgedWoodenRLegCraft
   result: ForgedWoodenRLeg
   stacks:
-    WoodPlank: 15
+    WoodPlank: 5
     MedievalMagicGlina: 1
 
 - type: CP14Recipe
   id: ForgedWoodenLLegCraft
   result: ForgedWoodenLLeg
   stacks:
-    WoodPlank: 15
+    WoodPlank: 5
     MedievalMagicGlina: 1
 
 - type: CP14Recipe
@@ -391,9 +391,9 @@
   id: ForgedTorsoExplosiveCraft
   result: ForgedTorsoExplosive
   stacks:
-    Gunpowder: 1
+    Gunpowder: 3
     MedievalFireSerdolick: 3
-    MedievalMagicGlina: 1
+    MedievalMagicGlina: 2
 
 - type: CP14Recipe
   id: ForgedLHandCannon1Craft

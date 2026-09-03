@@ -43,3 +43,38 @@
         Burn: 5
   - type: SpellCastEffect
     effectProto: MagicLightSpellCastEffectBeginner
+  - type: ActionUpgrade
+    effectedLevels:
+      2: MedievalActionMagicLightMiddle
+
+# Middle
+
+- type: entity
+  id: MedievalActionMagicLightMiddle
+  parent: MedievalActionMagicLightBeginner
+  name: medieval-store-spells-light-magic-light-middle-name
+  description: medieval-store-spells-light-magic-light-middle-desc
+  components:
+  - type: Action
+    useDelay: 20
+    itemIconStyle: BigAction
+    sound: !type:SoundPathSpecifier
+      path: /Audio/Imperial/Medieval/lightsphere_cast.ogg
+    icon:
+      sprite: Imperial/Medieval/Magic/Light/MagicLight/light2.rsi
+      state: light2
+  - type: InstantAction
+    event: !type:MedievalInstantSpawnEvent
+      spawnedEntityPrototype: MedievalProjectileLightOrbiter
+      speechPoints:
+        0:
+          speech: medieval-spell-speach-magic-light
+          color: "#FFE57E"
+          hideChat: true
+  - type: ManaDrainSpell
+    manaDrain: 30
+    canUseWithoutMana: true
+    manaLowMessage: medieval-spell-speach-not-enough-mana-fire-spell
+    damageOnUseWithoutMana:
+      groups:
+        Burn: 5

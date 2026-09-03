@@ -156,16 +156,7 @@ public sealed class ServerWindSystem : EntitySystem
     private void UpdateStormWeather(float stormLevel)
     {
         var rainLevelReached = stormLevel >= _cfg.GetCVar(ShipsCCVars.StormRainLevel);
-        var rainWeatherId = new ProtoId<WeatherPrototype>(_cfg.GetCVar(ShipsCCVars.StormRainWeather));
-        WeatherPrototype? rain = null;
-        if (rainLevelReached && !_prototype.TryIndex(rainWeatherId, out rain))
-            return;
-
         var stormLevelReached = stormLevel >= _cfg.GetCVar(ShipsCCVars.StormStormLevel);
-        var stormWeatherId = new ProtoId<WeatherPrototype>(_cfg.GetCVar(ShipsCCVars.StormStormWeather));
-        WeatherPrototype? storm = null;
-        if (stormLevelReached && !_prototype.TryIndex(stormWeatherId, out storm))
-            return;
 
         var seaMaps = new HashSet<MapId>();
         foreach (var seaComp in EntityManager.EntityQuery<SeaComponent>())
@@ -177,14 +168,50 @@ public sealed class ServerWindSystem : EntitySystem
             if (mapId == MapId.Nullspace || !seaMaps.Add(mapId))
                 continue;
 
+            if (stormLevelReached)
+            {
+                if (seaComp.StormWeather == null)
+                {
+                    Log.Error($"Unable to set storm weather for sea {ToPrettyString(seaComp.Owner)}: " +
+                              $"{nameof(SeaComponent.StormWeather)} is null.");
+                    return;
+                }
+
+                if (!_prototype.TryIndex(seaComp.StormWeather, out var storm, false))
+                {
+                    Log.Error($"Unable to set storm weather for sea {ToPrettyString(seaComp.Owner)}: " +
+                              $"prototype '{seaComp.StormWeather}' was not found.");
+                    return;
+                }
+
+                _weather.SetWeather(mapId, storm, null);
+                continue;
+            }
+
             if (rainLevelReached)
-                _weather.SetWeather(mapId, rain!, null);
-            else
+            {
+                if (seaComp.RainWeather == null)
+                {
+                    Log.Error($"Unable to set rain weather for sea {ToPrettyString(seaComp.Owner)}: " +
+                              $"{nameof(SeaComponent.RainWeather)} is null.");
+                    return;
+                }
+
+                if (!_prototype.TryIndex(seaComp.RainWeather, out var rain, false))
+                {
+                    Log.Error($"Unable to set rain weather for sea {ToPrettyString(seaComp.Owner)}: " +
+                              $"prototype '{seaComp.RainWeather}' was not found.");
+                    return;
+                }
+
+                _weather.SetWeather(mapId, rain, null);
+                continue;
+            }
+
+            if (seaComp.RainWeather is { } rainWeatherId)
                 DisableWeather(mapId, rainWeatherId);
 
-            if (stormLevelReached)
-                _weather.SetWeather(mapId, storm!, null);
-            else
+            if (seaComp.StormWeather is { } stormWeatherId)
                 DisableWeather(mapId, stormWeatherId);
         }
     }

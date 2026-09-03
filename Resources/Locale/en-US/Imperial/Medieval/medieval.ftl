@@ -106,6 +106,10 @@ job-name-legionTreasurer-medieval = Legion Treasurer
 
 job-description-legionTreasurer-medieval = Keeps, records, and dispenses the coin of the legion treasury.
 
+job-name-legionTreasurerAssistant-medieval = Assistant Treasurer
+
+job-description-legionTreasurerAssistant-medieval = Help the treasurer manage the affairs. Learn and adopt his knowledge.
+
 job-name-archivist-medieval = Archivist
 
 job-description-archivist-medieval = Keeps the archives safe, along with the secrets buried within them.
@@ -294,6 +298,38 @@ ent-MedievalBossNecroDragonNoAnnouncement = cursed dragon
     .desc = A creature that has broken the laws of life and death.
     .suffix = { "No announcement, Medieval, mob, boss" }
 
+ent-MedievalBabyBossIceDragon = ice baby dragon
+    .desc = Size doesn't matter!
+    .suffix = { "Medieval, mob, boss" }
+
+ent-MedievalBabyBossFireDragon = fire baby dragon
+    .desc = Size doesn't matter!
+    .suffix = { "Medieval, mob, boss" }
+
+ent-MedievalBabyBossAcidDragon = acid baby dragon
+    .desc = Size doesn't matter!
+    .suffix = { "Medieval, mob, boss" }
+
+ent-MedievalBabyBossThunderDragon = thunder baby dragon
+    .desc = Size doesn't matter!
+    .suffix = { "Medieval, mob, boss" }
+
+ent-MedievalBossIceDragon = ice dragon
+    .desc = A peasant with a spear is powerless... Run with all your strength.
+    .suffix = { "No announcement, Medieval, mob, boss" }
+
+ent-MedievalBossFireDragon = fire dragon
+    .desc = A peasant with a spear is powerless... Run with all your strength.
+    .suffix = { "No announcement, Medieval, mob, boss" }
+
+ent-MedievalBossAcidDragon = acid dragon
+    .desc = A peasant with a spear is powerless... Run with all your strength.
+    .suffix = { "No announcement, Medieval, mob, boss" }
+
+ent-MedievalBossThunderDragon = thunder dragon
+    .desc = A peasant with a spear is powerless... Run with all your strength.
+    .suffix = { "No announcement, Medieval, mob, boss" }
+
 ent-MedievalBossNecroDragon = cursed dragon
     .desc = A creature that has broken the laws of life and death.
     .suffix = { "Medieval, mob, boss" }
@@ -406,40 +442,44 @@ medieval-interact-verb = Pet
 
 medieval-interaction-popup = You pet { $target } on { POSS-ADJ($target) } soft feathered head.
 
-ent-MedievalClothingOuterArmorIronCuirassLightZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorIronCuirassLightZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorBrigantinZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorBrigantinZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorIronCuirassZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorIronCuirassZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorChainMailZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorChainMailZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorIronZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorChainMailLightZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorUpIron2Zablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorIronZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorUpIron3Zablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorUpIron2Zablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-MedievalClothingOuterArmorUpIronZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorUpIron3Zablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
-ent-ClothingOuterArmorPodWarsZablik = plated hussar armor
-    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Surprisingly light and comfortable to wear.
+ent-MedievalClothingOuterArmorUpIronZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
+    .suffix = { "SKIN, Medieval, clothing" }
+
+ent-ClothingOuterArmorPodWarsZablik = plated adorned armor
+    .desc = Gilded cavalry armor offering excellent protection for the torso. It is segmented, with the belly guarded by overlapping plates and the breast and collarbones covered by two separate sheets of steel layered over one another. Most commonly found on Hussars, it sometimes falls into someone else’s hands on the Archipelago, either as a gift from one of the original Banished Hussars or looted. Surprisingly light and comfortable to wear.
     .suffix = { "SKIN, Medieval, clothing" }
 
 ent-MedievalIronGlovesZablik = plated bracers

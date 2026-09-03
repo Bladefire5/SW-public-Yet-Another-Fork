@@ -2,6 +2,7 @@
 using Content.Shared.Actions;
 using Robust.Shared.Player;
 using Content.Server.Administration;
+using Content.Server.Imperial.Medieval.ChargeableAnnounce;
 using Content.Shared.Speech;
 using Content.Server.Chat.Systems;
 using Content.Shared.Imperial.Medieval.Factions;
@@ -22,6 +23,7 @@ public sealed partial class MedievalFactionsSystem : SharedMedievalFactionsSyste
     [Dependency] private readonly QuickDialogSystem _quickDialog = default!;
     [Dependency] private readonly ISharedPlayerManager _sharedPlayerManager = default!;
     [Dependency] private readonly ChatSystem _chat = default!;
+    [Dependency] private readonly ChargeableAnnounceSystem _chargeableAnnounce = default!;
 
     public override void Initialize()
     {
@@ -47,9 +49,11 @@ public sealed partial class MedievalFactionsSystem : SharedMedievalFactionsSyste
             var query = EntityQueryEnumerator<CloackRecieverComponent>();
             while (query.MoveNext(out var cloackOwner, out var cloack))
             {
+                if (cloack.Faction != comp.Faction)
+                    continue;
+
                 EnsureComp<SpeechComponent>(cloackOwner);
-                if (cloack.Faction == comp.Faction)
-                    _chat.TrySendInGameICMessage(cloackOwner, message, InGameICChatType.Whisper, false);
+                _chargeableAnnounce.SendCommsCrystalWhisper(cloackOwner, uid, message);
             }
 
             _chat.TrySendInGameICMessage(uid, message, InGameICChatType.Whisper, false);

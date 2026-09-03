@@ -315,7 +315,7 @@
         damage:
           types:
             Heat: 1
-            Poison: 3.5
+            Poison: 2
 
 - type: entity
   id: MedievalMyrmexTrapBase
@@ -371,7 +371,7 @@
     solution:
       reagents:
       - ReagentId: MedievalMyrmexPoison
-        Quantity: 30
+        Quantity: 15
   - type: SpawnOnDespawn
     prototype: MedievalMyrmexTrapEmpty
   - type: Sprite
@@ -677,7 +677,7 @@
     rechargeSound:
       path: /Audio/Imperial/Medieval/ant_acidrecharge.ogg
   - type: BasicEntityAmmoProvider
-    proto: BulletAcid
+    proto: MedievalMyrmexSpitterBulletAcid
     capacity: 1
     count: 1
   - type: MeleeWeapon
@@ -690,8 +690,7 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 5
-        Airloss: 2
+        Brute: 7
       types:
         ParryAble: 1
   - type: Gun
@@ -738,6 +737,17 @@
   - type: MedievalUnthrowable
 
 - type: entity
+  id: MedievalMyrmexSpitterBulletAcid
+  parent: BulletAcid
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Projectile
+    damage:
+      types:
+        Caustic: 2.0
+        Blunt: 3.0
+
+- type: entity
   name: myrmalisk
   parent: MedievalMyrmexBase
   id: MedievalMyrmexElite
@@ -760,15 +770,13 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 14
-        Airloss: 3
+        Brute: 22
       types:
         ParryAble: 1
-        Bloodloss: 4
   - type: MobThresholds
     thresholds:
       0: Alive
-      310: Critical # curse of 220. no. 310
+      310: Critical # curse of 220. no. 310.
       450: Dead
   - type: MovementSpeedModifier
     baseWalkSpeed: 3
@@ -824,11 +832,9 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 10
-        Airloss: 2
+        Brute: 14
       types:
         ParryAble: 1
-        Bloodloss: 2
   - type: MobThresholds
     thresholds:
       0: Alive
@@ -976,11 +982,11 @@
       collection: MyrmexAttack
     damage:
       groups:
-        Brute: 20
-        Airloss: 3
+        Brute: 28
+        Airloss: 1
       types:
         ParryAble: 1
-        Bloodloss: 5
+        Bloodloss: 2
         Structural: 155
   - type: MobThresholds
     thresholds:

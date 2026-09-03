@@ -31,6 +31,22 @@ public sealed class FactionRelationsUiController : UIController
         menu.OpenCentered();
     }
 
+    /// <summary>
+    /// Asks the declaring leader for a reason and then sends the declaration. The dialog is the confirmation to raise DispatchWarEvent.
+    /// </summary>
+    public void OpenDeclareWarMenu(ProtoId<MedievalFactionPrototype> userFaction, ProtoId<MedievalFactionPrototype> targetFaction)
+    {
+        var menu = new DeclareWarMenu(userFaction, targetFaction);
+        menu.DeclarePressed += reason => DispatchWar(userFaction, targetFaction, reason);
+        menu.OpenCentered();
+    }
+
+    public void ShowWarDeclaredWindow(MedievalWarDeclaredEvent ev)
+    {
+        var window = new WarDeclaredWindow(ev);
+        window.OpenCentered();
+    }
+
     private void SetFactionRelation(ProtoId<MedievalFactionPrototype> userFaction, ProtoId<MedievalFactionPrototype> targetFaction, ProtoId<FactionRelationsPrototype> relation)
     {
         var ev = new AcceptFactionRelationsEvent(userFaction, targetFaction, relation);
@@ -46,6 +62,12 @@ public sealed class FactionRelationsUiController : UIController
     private void CreateRequest(NetEntity target, ProtoId<MedievalFactionPrototype> userFaction, ProtoId<MedievalFactionPrototype> targetFaction, ProtoId<FactionRelationsPrototype> relation)
     {
         var ev = new CreateFactionRelationsRequestEvent(target, userFaction, targetFaction, relation);
+        EntityManager.RaisePredictiveEvent(ev);
+    }
+
+    private void DispatchWar(ProtoId<MedievalFactionPrototype> userFaction, ProtoId<MedievalFactionPrototype> targetFaction, string reason)
+    {
+        var ev = new DispatchWarEvent(userFaction, targetFaction, reason);
         EntityManager.RaisePredictiveEvent(ev);
     }
 }

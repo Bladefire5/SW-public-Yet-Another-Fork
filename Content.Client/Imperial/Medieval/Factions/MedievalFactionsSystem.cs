@@ -48,6 +48,7 @@ public sealed partial class MedievalFactionsSystem : SharedMedievalFactionsSyste
         SubscribeNetworkEvent<OpenOfferFactionRelationsEvent>(OnOpenOfferWindow);
         SubscribeNetworkEvent<OpenAcceptFactionRelationsEvent>(OnOpenAcceptWindow);
         SubscribeNetworkEvent<OpenFactionRelationsRequestEvent>(OnOpenRequestWindow);
+        SubscribeNetworkEvent<MedievalWarDeclaredEvent>(OnWarDeclared);
     }
 
     private void AfterAutoHandleState(EntityUid uid, FactionDataContainerComponent comp, ref AfterAutoHandleStateEvent args)
@@ -74,15 +75,15 @@ public sealed partial class MedievalFactionsSystem : SharedMedievalFactionsSyste
 
     private void OnGetStatusIcons(EntityUid uid, MedievalFactionMemberComponent comp, ref GetStatusIconsEvent args)
     {
-        if (uid == _player.LocalEntity)// Юид это не мы
+        if (uid == _player.LocalEntity)// Never show an icon on ourselves
              return;
 
-        if (!TryComp<MedievalFactionMemberComponent>(_player.LocalEntity, out var playerFaction)) // а он вообще из фракции?
+        if (!TryComp<MedievalFactionMemberComponent>(_player.LocalEntity, out var playerFaction)) // Are we in a faction at all?
             return;
 
         if (comp.Faction != playerFaction.Faction)
         {
-            if (IsRelationEnemy(playerFaction.Faction, comp.Faction))// если он из вражеской фракции и если он бил нашу фраку
+            if (IsRelationEnemy(playerFaction.Faction, comp.Faction))// Enemy faction, and only once they have actually attacked ours
             {
                 if (!comp.AttackedFactions.Contains(playerFaction.Faction))
                     return;
@@ -112,6 +113,11 @@ public sealed partial class MedievalFactionsSystem : SharedMedievalFactionsSyste
     private void OnOpenRequestWindow(OpenFactionRelationsRequestEvent ev)
     {
         _uiMan.GetUIController<FactionRelationsUiController>().OpenRequestRelationMenu(ev.Target, ev.From);
+    }
+
+    private void OnWarDeclared(MedievalWarDeclaredEvent ev)
+    {
+        _uiMan.GetUIController<FactionRelationsUiController>().ShowWarDeclaredWindow(ev);
     }
 
     public override void OpenMenu(ProtoId<MedievalFactionPrototype> proto, Dictionary<int, FactionMemberData> data, FactionMenuAccess access)

@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Shared.Actions;
 using Content.Shared.Actions.Components;
 using Content.Shared.Chemistry.Components;
@@ -41,6 +42,7 @@ public sealed class ForgedAbilitySystem : EntitySystem
     [Dependency] private readonly INetManager _netManager = default!;
     [Dependency] private readonly HungerSystem _hungerSystem = default!;
     [Dependency] private readonly SharedMindSystem _mindSystem = default!;
+    [Dependency] private readonly ForgedSystem _forged = default!;
 
     public override void Initialize()
     {
@@ -196,7 +198,7 @@ public sealed class ForgedAbilitySystem : EntitySystem
                     DamageDict = { ["Slash"] = FixedPoint2.New(10000) }
                 };
                 _damageable.TryChangeDamage(uid, damage);
-                
+
                 _explosionSystem.QueueExplosion(uid, "Default", 250, 5, 200);
                 _actions.RemoveAction(uid, args.Action.Owner);
             }
@@ -279,13 +281,13 @@ public sealed class ForgedAbilitySystem : EntitySystem
         }
     }
 
-    private void OnBoost(EntityUid forgedUid, ForgedComponent comp, ForgedBoostActionEvent args)
+    private void OnBoost(EntityUid forgedUid, ForgedComponent forged, ForgedBoostActionEvent args)
     {
         if (args.Handled)
             return;
 
-        if (!TryComp<ActionComponent>(args.Action, out var actionComponent)) return;
-        if (!TryComp<ForgedComponent>(forgedUid, out var forged)) return;
+        if (!TryComp<ActionComponent>(args.Action, out var actionComponent))
+            return;
 
         foreach (var mod in forged.FittedModules)
         {
@@ -295,18 +297,19 @@ public sealed class ForgedAbilitySystem : EntitySystem
 
                 if (!isToggled)
                 {
-                    module.SpeedModifier += 0.50f;
-                    module.ResistanceModifier -= 1.25f;
+                    module.SpeedModifier = module.BaseSpeedModifier + 0.75f;
+                    module.ResistanceModifier = module.BaseResistanceModifier - 0.25f;
                 }
                 else
                 {
-                    module.SpeedModifier -= 0.50f;
-                    module.ResistanceModifier += 1.25f;
+                    module.SpeedModifier = module.BaseSpeedModifier;
+                    module.ResistanceModifier = module.BaseResistanceModifier;
                 }
 
+                Dirty(mod.Value, module);
                 _movementSpeedModifier.RefreshMovementSpeedModifiers(forgedUid);
+
                 _actions.SetToggled(args.Action.Owner, !isToggled);
-                Dirty(forgedUid, forged);
             }
         }
         args.Handled = true;
@@ -326,14 +329,15 @@ public sealed class ForgedAbilitySystem : EntitySystem
         }
     }
 
-    private void OnSila(EntityUid forgedUid, ForgedComponent comp, ForgedSilaActionEvent args)
+    private void OnSila(EntityUid forgedUid, ForgedComponent forged, ForgedSilaActionEvent args)
     {
         if (args.Handled)
             return;
 
-        if (!TryComp<ActionComponent>(args.Action, out var actionComponent)) return;
-        if (!TryComp<ForgedComponent>(forgedUid, out var forged)) return;
-        if (!TryComp<SkillsComponent>(forgedUid, out var skills)) return;
+        if (!TryComp<ActionComponent>(args.Action, out var actionComponent))
+            return;
+        if (!TryComp<SkillsComponent>(forgedUid, out var skills))
+            return;
 
         foreach (var mod in forged.FittedModules)
         {
@@ -344,20 +348,23 @@ public sealed class ForgedAbilitySystem : EntitySystem
                 if (!isToggled)
                 {
                     skills.Levels["Strength"] = 20;
-                    module.SpeedModifier -= 0.25f;
+                    module.SpeedModifier = module.BaseSpeedModifier - 0.15f;
                 }
                 else
                 {
                     skills.Levels["Strength"] = 10;
-                    module.SpeedModifier += 0.25f;
+                    module.SpeedModifier = module.BaseSpeedModifier;
                 }
 
+                Dirty(mod.Value, module);
                 _movementSpeedModifier.RefreshMovementSpeedModifiers(forgedUid);
+
                 _actions.SetToggled(args.Action.Owner, !isToggled);
             }
         }
+
         Dirty(forgedUid, skills);
-        Dirty(forgedUid, forged);
+
         args.Handled = true;
     }
 
@@ -368,7 +375,7 @@ public sealed class ForgedAbilitySystem : EntitySystem
 
         if (!TryComp<DamageableComponent>(forgedUid, out var damageable)) return;
 
-        FixedPoint2 healLeft = 40;
+        FixedPoint2 healLeft = 50;
 
         var healSpecifier = new DamageSpecifier();
 
@@ -403,6 +410,72 @@ public sealed class ForgedAbilitySystem : EntitySystem
         skills.Levels["Intelligence"] = 20;
 
         Dirty(forgedUid, skills);
+    }
+
+    public void RemoveAbility(EntityUid forgedUid, EntityUid moduleUid, string abilityId)
+    {
+        switch (abilityId)
+        {
+            case "Right_blade":
+            case "Right_crossbow":
+            case "Right_magic_gun_1":
+            case "Right_magic_gun_2":
+            case "Right_magic_gun_3":
+            case "Right_magic_gun_4":
+            case "Right_magic_gun_5":
+                RemoveModuleFromHand(forgedUid, "body_part_slot_right_hand");
+                break;
+
+            case "Left_blade":
+            case "Left_crossbow":
+            case "Left_magic_gun_1":
+            case "Left_magic_gun_2":
+            case "Left_magic_gun_3":
+            case "Left_magic_gun_4":
+            case "Left_magic_gun_5":
+                RemoveModuleFromHand(forgedUid, "body_part_slot_left_hand");
+                break;
+
+            case "Torso_Explosion":
+                RemoveActionByPrototype(forgedUid, "ExplosiveAction");
+                break;
+
+            case "Invisibility_Nimbus":
+                RemoveActionByPrototype(forgedUid, "InvisibileNimbusAction");
+                RemComp<StealthComponent>(forgedUid);
+                RemComp<StealthOnMoveComponent>(forgedUid);
+                break;
+        }
+    }
+
+    private void RemoveActionByPrototype(EntityUid uid, string actionId)
+    {
+        if (!TryComp<ActionsComponent>(uid, out var actionsComp))
+            return;
+
+        var performer = new Entity<ActionsComponent?>(uid, actionsComp);
+
+        foreach (var action in _actions.GetActions(uid).ToArray())
+        {
+            if (TryComp<MetaDataComponent>(action.Owner, out var meta) && meta.EntityPrototype?.ID == actionId)
+            {
+                var actionTarget = new Entity<ActionComponent?>(action.Owner, action.Comp);
+                _actions.RemoveAction(performer, actionTarget);
+                break;
+            }
+        }
+    }
+
+    private void RemoveModuleFromHand(EntityUid forgedUid, string handId)
+    {
+        if (!_containerSystem.TryGetContainer(forgedUid, handId, out var container))
+            return;
+
+        foreach (var item in container.ContainedEntities.ToArray())
+        {
+            _containerSystem.Remove(item, container, force: true);
+            QueueDel(item);
+        }
     }
 }
 

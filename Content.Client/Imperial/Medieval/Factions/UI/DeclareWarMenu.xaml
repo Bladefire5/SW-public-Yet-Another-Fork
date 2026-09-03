@@ -1,0 +1,39 @@
+<ui:MedievalWindow xmlns="https://spacestation14.io"
+                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                   xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+                   xmlns:ui="clr-namespace:Content.Client.Imperial.Medieval.CapturePoint.UI.MedievalWindow"
+                   Title="{Loc faction-war-declare-title}"
+                   MinWidth="520"
+                   Resizable="False">
+    <PanelContainer Margin="4">
+        <PanelContainer.PanelOverride>
+            <gfx:StyleBoxFlat BackgroundColor="#1e1611" />
+        </PanelContainer.PanelOverride>
+        <BoxContainer Orientation="Vertical" Margin="0">
+            <PanelContainer>
+                <PanelContainer.PanelOverride>
+                    <gfx:StyleBoxFlat BackgroundColor="#2a1f18" BorderColor="#5c4a3d" BorderThickness="2" />
+                </PanelContainer.PanelOverride>
+                <BoxContainer Orientation="Vertical" Margin="16">
+                    <RichTextLabel Name="PromptLabel" Margin="0 0 0 8" />
+                    <RichTextLabel Name="AlliesLabel" Margin="0 0 0 12" />
+                    <Label Text="{Loc faction-war-declare-reason-label}" Margin="0 0 0 2" />
+                    <LineEdit Name="ReasonEdit"
+                              HorizontalExpand="True"
+                              Margin="0 0 0 12"
+                              PlaceHolder="{Loc faction-war-declare-reason-placeholder}" />
+                    <BoxContainer Orientation="Horizontal" HorizontalAlignment="Center">
+                        <ui:MedievalButton Name="DeclareButton"
+                                           Text="{Loc faction-war-declare-confirm}"
+                                           MinSize="150 32"
+                                           Margin="4" />
+                        <ui:MedievalButton Name="CancelButton"
+                                           Text="{Loc faction-war-declare-cancel}"
+                                           MinSize="150 32"
+                                           Margin="4" />
+                    </BoxContainer>
+                </BoxContainer>
+            </PanelContainer>
+        </BoxContainer>
+    </PanelContainer>
+</ui:MedievalWindow>

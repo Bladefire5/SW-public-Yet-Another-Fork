@@ -1,4 +1,5 @@
 using Content.Shared.Fishing.Enums;
+using Content.Shared.Tag;
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Map;
@@ -9,6 +10,9 @@ namespace Content.Shared.Imperial.Medieval.Fishing.Components;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class FishingRodComponent : Component
 {
+    [DataField]
+    public ProtoId<TagPrototype> MeatTag = "Meat";
+
     [DataField]
     public EntProtoId BobberPrototype = "FishingBobber";
 
@@ -65,6 +69,14 @@ public sealed partial class FishingRodComponent : Component
         ["FishTuna"] = 0.2f,
     };
 
+    [DataField]
+    public Dictionary<FishingBaitType, float> BaitQualityBiases = new()
+    {
+        [FishingBaitType.Meat] = 0.5f,
+        [FishingBaitType.Plant] = 0f,
+        [FishingBaitType.Worm] = -0.5f,
+    };
+
     [DataField, AutoNetworkedField]
     public int Level = 1;
 
@@ -73,6 +85,15 @@ public sealed partial class FishingRodComponent : Component
 
     [DataField, AutoNetworkedField]
     public int MaxChance = 5;
+
+    [DataField]
+    public float IslandSearchRange = 50f;
+
+    [DataField]
+    public float NearbyIslandMaxChanceMultiplier = 0.7f;
+
+    [DataField]
+    public bool HasNearbyIsland;
 
     [DataField, AutoNetworkedField]
     public FishingLocationType LastClickedWater = FishingLocationType.River;

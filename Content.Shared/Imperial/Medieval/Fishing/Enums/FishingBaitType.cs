@@ -6,5 +6,6 @@ namespace Content.Shared.Fishing.Enums;
 public enum FishingBaitType : byte
 {
     Meat,
-    Plant
+    Plant,
+    Worm
 }

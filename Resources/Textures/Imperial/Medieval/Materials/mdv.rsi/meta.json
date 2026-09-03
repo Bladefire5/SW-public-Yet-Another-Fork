@@ -1,7 +1,7 @@
 {
   "version": 1,
   "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
-  "copyright": "by dantanat#7095, revents and medals by void, rope by brotania, tochilo_mini and gear by pyrolizz, blacksmith things and lock by 67886789, glina by void, grass was Created by @doezoncanoe for ES14, but auhtor gave dantanat permission to use this sprite",
+  "copyright": "by dantanat#7095, revents and medals by void, rope by brotania, tochilo_mini and gear by pyrolizz, blacksmith things and lock by 67886789, glina by void, grass was Created by @doezoncanoe for ES14, but auhtor gave dantanat permission to use this sprite, silver by fortengamer",
   "size": {
     "x": 32,
     "y": 32
@@ -150,6 +150,9 @@
     },
     {
       "name": "stone_brick"
+    },
+    {
+      "name": "silver"
     }
   ]
 }

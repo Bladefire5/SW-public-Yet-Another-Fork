@@ -1,0 +1,27 @@
+{
+    "version": 1,
+    "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
+    "copyright": "Made by lavovy_skelet",
+    "size": {
+      "x": 32,
+      "y": 32
+    },
+    "states": [
+      {
+        "name": "chubby",
+        "directions": 4
+      },
+      {
+        "name": "gloomy",
+        "directions": 4
+      },
+      {
+        "name": "wide_jaw",
+        "directions": 4
+      },
+      {
+        "name": "wise",
+        "directions": 4
+      }
+    ]
+  }

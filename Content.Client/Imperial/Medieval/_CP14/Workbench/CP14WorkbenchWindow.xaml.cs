@@ -31,6 +31,7 @@ public sealed partial class CP14WorkbenchWindow : DefaultWindow
         IoCManager.InjectDependencies(this);
 
         _sprite = _entity.System<SpriteSystem>();
+        SearchBar.OnTextChanged += _ => UpdateSearch();
 
         CraftButton.OnPressed += _ =>
         {
@@ -65,6 +66,8 @@ public sealed partial class CP14WorkbenchWindow : DefaultWindow
             CraftsContainer.AddChild(control);
         }
 
+        UpdateSearch();
+
         if (_selectedEntry is not null && recipesState.Recipes.Contains(_selectedEntry.Value))
         {
             RecipeSelect(_selectedEntry.Value, _prototype.Index(_selectedEntry.Value.ProtoId));
@@ -72,6 +75,19 @@ public sealed partial class CP14WorkbenchWindow : DefaultWindow
         }
 
         RecipeSelect(recipesState);
+    }
+
+    private void UpdateSearch()
+    {
+        var search = SearchBar.Text.Trim();
+
+        foreach (var child in CraftsContainer.Children)
+        {
+            if (child is CP14WorkbenchRequirementControl recipe)
+            {
+                recipe.Visible = recipe.RecipeName.Contains(search, StringComparison.CurrentCultureIgnoreCase);
+            }
+        }
     }
 
     private void RecipeSelect(CP14WorkbenchUiRecipesState recipesState)

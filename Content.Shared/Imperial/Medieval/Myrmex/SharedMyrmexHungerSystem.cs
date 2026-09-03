@@ -2,8 +2,12 @@
 using Content.Shared.Damage;
 using Content.Shared.Damage.Events;
 using Content.Shared.Examine;
+using Content.Shared.Imperial.Dash;
+using Content.Shared.Imperial.Medieval.Sprint;
 using Content.Shared.Movement.Systems;
+using Content.Shared.Projectiles;
 using Content.Shared.Weapons.Melee.Events;
+using Content.Shared.Weapons.Ranged.Systems;
 using Content.Shared.Myrmex.Hive;
 using Robust.Shared.Network;
 using Robust.Shared.Timing;
@@ -23,8 +27,11 @@ namespace Content.Shared.Imperial.Medieval.Myrmex
             base.Initialize();
             SubscribeLocalEvent<MyrmexHungerComponent, RefreshMovementSpeedModifiersEvent>(OnSpeedRefresh);
             SubscribeLocalEvent<MyrmexHungerComponent, ComponentInit>(OnInit);
-            SubscribeLocalEvent<MyrmexHungerComponent, StaminaModifyEvent>(OnModifyStaminaDamage);
+            SubscribeLocalEvent<MyrmexHungerComponent, BeforeStaminaDamageEvent>(OnModifyStaminaDamage);
+            SubscribeLocalEvent<MyrmexHungerComponent, GetSprintStaminaDamageModifiersEvent>(OnModifySprintStaminaCost);
+            SubscribeLocalEvent<MyrmexHungerComponent, CheckDashStaminaCostModifiersEvent>(OnModifyDashStaminaCost);
             SubscribeLocalEvent<MyrmexHungerComponent, GetMeleeDamageEvent>(OnGetDamage);
+            SubscribeLocalEvent<MyrmexHungerComponent, GunShotEvent>(OnGunShot);
             SubscribeLocalEvent<MyrmexHungerComponent, DamageModifyEvent>(OnGetDamageModifiers);
             SubscribeLocalEvent<MyrmexHungerComponent, ExaminedEvent>(OnExamined);
         }
@@ -63,16 +70,50 @@ namespace Content.Shared.Imperial.Medieval.Myrmex
             args.PushMarkup(Loc.GetString("medieval-myrmex-buff-stamina-examine", ("value", Math.Round(buff.Stamina, 2))));
         }
 
-        private void OnModifyStaminaDamage(EntityUid uid, MyrmexHungerComponent comp, StaminaModifyEvent args)
+        private void OnModifyStaminaDamage(EntityUid uid, MyrmexHungerComponent comp, ref BeforeStaminaDamageEvent args)
+        {
+            if (args.Value <= 0f)
+                return;
+
+            var buff = MyrmexBuff.MultiplyBuffs(comp.Buffs);
+            args.Value *= buff.Stamina;
+        }
+
+        private void OnModifySprintStaminaCost(EntityUid uid, MyrmexHungerComponent comp, ref GetSprintStaminaDamageModifiersEvent args)
         {
             var buff = MyrmexBuff.MultiplyBuffs(comp.Buffs);
-            args.Damage *= buff.Stamina;
+            args.Modifier *= buff.Stamina;
+        }
+
+        private void OnModifyDashStaminaCost(EntityUid uid, MyrmexHungerComponent comp, ref CheckDashStaminaCostModifiersEvent args)
+        {
+            var buff = MyrmexBuff.MultiplyBuffs(comp.Buffs);
+            args.Modifier *= buff.Stamina;
         }
 
         private void OnGetDamage(EntityUid uid, MyrmexHungerComponent comp, ref GetMeleeDamageEvent args)
         {
+            if (!args.RaisedOnUser)
+                return;
+
             var buff = MyrmexBuff.MultiplyBuffs(comp.Buffs);
-            args.Damage *= buff.Damage;
+            var damage = args.Damage * buff.Damage;
+
+            if (args.Damage.DamageDict.TryGetValue("ParryAble", out var parryAble))
+                damage.DamageDict["ParryAble"] = parryAble;
+
+            args.Damage = damage;
+        }
+
+        private void OnGunShot(EntityUid uid, MyrmexHungerComponent comp, ref GunShotEvent args)
+        {
+            var buff = MyrmexBuff.MultiplyBuffs(comp.Buffs);
+
+            foreach (var (ammo, _) in args.Ammo)
+            {
+                if (TryComp<ProjectileComponent>(ammo, out var projectile))
+                    projectile.Damage *= buff.Damage;
+            }
         }
 
         private void OnGetDamageModifiers(EntityUid uid, MyrmexHungerComponent comp, ref DamageModifyEvent args)

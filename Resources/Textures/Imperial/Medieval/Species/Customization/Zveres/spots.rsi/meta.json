@@ -1,7 +1,7 @@
 {
     "version": 1,
     "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
-    "copyright": "Made by @crookielv",
+    "copyright": "Made by @crookielv, muzzle/side_streak by @tangaro",
     "size": {
       "x": 32,
       "y": 32
@@ -25,6 +25,14 @@
       },
       {
         "name": "jaw",
+        "directions": 4
+      },
+      {
+        "name": "muzzle",
+        "directions": 4
+      },
+      {
+        "name": "side_streak",
         "directions": 4
       }
     ]

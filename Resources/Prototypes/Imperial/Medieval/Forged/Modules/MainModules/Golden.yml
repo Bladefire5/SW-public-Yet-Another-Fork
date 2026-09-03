@@ -10,8 +10,8 @@
     partSlot: head
     layerState: golden_head
     rsiPath: Imperial/Medieval/Forged/golden.rsi
-    resistanceModifier: 0.04
-    speedModifier: -0.06
+    resistanceModifier: 0.06
+    speedModifier: -0.04
     abilityId: VerySmart
 
 - type: entity
@@ -58,8 +58,8 @@
     partSlot: torso
     layerState: golden_torso
     rsiPath: Imperial/Medieval/Forged/golden.rsi
-    resistanceModifier: 0.16
-    speedModifier: -0.22
+    resistanceModifier: 0.26
+    speedModifier: -0.15
     abilityId: Repair
 
 - type: entity
@@ -75,8 +75,8 @@
     partSlot: right_arm
     layerState: golden_right_arm
     rsiPath: Imperial/Medieval/Forged/golden.rsi
-    resistanceModifier: 0.04
-    speedModifier: -0.02
+    resistanceModifier: 0.05
+    speedModifier: -0.01
     abilityId: Sila
 
 - type: entity
@@ -93,8 +93,8 @@
     partSlot: left_arm
     layerState: golden_left_arm
     rsiPath: Imperial/Medieval/Forged/golden.rsi
-    resistanceModifier: 0.04
-    speedModifier: -0.02
+    resistanceModifier: 0.05
+    speedModifier: -0.01
     abilityId: SilaReq
 
 - type: entity
@@ -110,8 +110,8 @@
     partSlot: right_leg
     layerState: golden_right_leg
     rsiPath: Imperial/Medieval/Forged/golden.rsi
-    resistanceModifier: 0.06
-    speedModifier: 0.06
+    resistanceModifier: 0.04
+    speedModifier: 0.03
     abilityId: Boost
 
 - type: entity
@@ -128,6 +128,6 @@
     partSlot: left_leg
     layerState: golden_left_leg
     rsiPath: Imperial/Medieval/Forged/golden.rsi
-    resistanceModifier: 0.06
-    speedModifier: 0.06
+    resistanceModifier: 0.04
+    speedModifier: 0.03
     abilityId: BoostReq

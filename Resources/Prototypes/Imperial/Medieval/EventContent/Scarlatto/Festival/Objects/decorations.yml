@@ -1,0 +1,63 @@
+- type: entity
+  id: MedievalDecorationEventFestivalScarlatto1
+  name: flags
+  description: it up there
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Objects/pennants.rsi
+    state: flag1
+    drawdepth: BlastDoors
+  - type: Transform
+    anchored: true
+  - type: InteractionOutline
+  - type: Clickable
+
+- type: entity
+  id: MedievalDecorationEventFestivalScarlatto2
+  name: flags
+  description: it up there
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Objects/pennants.rsi
+    state: flag2
+    drawdepth: BlastDoors
+  - type: Transform
+    anchored: true
+  - type: InteractionOutline
+  - type: Clickable
+
+- type: entity
+  id: MedievalDecorationEventFestivalScarlatto3
+  name: flags
+  description: it up there
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Objects/pennants.rsi
+    state: flag3
+    drawdepth: BlastDoors
+  - type: Transform
+    anchored: true
+  - type: InteractionOutline
+  - type: Clickable
+
+- type: entity
+  id: MedievalDecorationEventFestivalScarlatto4
+  name: flags
+  description: it up there
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Objects/pennants.rsi
+    state: flag4
+    drawdepth: BlastDoors
+  - type: Transform
+    anchored: true
+  - type: InteractionOutline
+  - type: Clickable

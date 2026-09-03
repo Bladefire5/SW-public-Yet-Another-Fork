@@ -76,12 +76,17 @@ public sealed class ShipBuyTerminalSystem : EntitySystem
         if (!TryComp<CurrencyComponent>(args.Used, out var currency))
             return;
 
+        if (!TryComp<StackComponent>(args.Used, out var stack) ||
+            stack.StackTypeId != component.CurrencyStack)
+        {
+            return;
+        }
+
         var currencyId = (string)component.Currency;
         if (!currency.Price.TryGetValue(currencyId, out var pricePerUnit))
             return;
 
-        var amount = TryComp<StackComponent>(args.Used, out var stack) ? stack.Count : 1;
-        component.Balance += (int)(pricePerUnit * amount);
+        component.Balance += (int)(pricePerUnit * stack.Count);
 
         args.Handled = true;
         QueueDel(args.Used);

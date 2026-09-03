@@ -469,6 +469,30 @@
   - MedievalInsArmor
 
 - type: listing
+  id: MdvInsMedievalClothingOuterHorseArmorLeather
+  productEntity: MedievalClothingOuterHorseArmorLeather
+  cost:
+    MedalIns: 3
+  categories:
+  - MedievalInsArmor
+
+- type: listing
+  id: MdvInsMedievalClothingOuterHorseArmorChainMail
+  productEntity: MedievalClothingOuterHorseArmorChainMail
+  cost:
+    MedalIns: 7
+  categories:
+  - MedievalInsArmor
+
+- type: listing
+  id: MdvInsMedievalClothingOuterHorseArmorUpIron
+  productEntity: MedievalClothingOuterHorseArmorUpIron
+  cost:
+    MedalIns: 12
+  categories:
+  - MedievalInsArmor
+
+- type: listing
   id: MdvInsMedievalHorseWhistle
   productEntity: MedievalHorseWhistle
   cost:

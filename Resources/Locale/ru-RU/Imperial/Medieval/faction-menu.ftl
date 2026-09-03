@@ -1,6 +1,12 @@
 faction-menu-title = Контроль фракции
 character-info-faction-label = Фракция
 
+### Relations, shared by war and every other relation change
+
+faction-relations-verb-change = Изменить отношения
+faction-relations-verb-request = Сделать запрос на смену отношений
+faction-relations-changed-announcement = Отношения вашей фракции с { $faction } изменены на { $relation }
+
 paper-ui-faction-relations-request = Изменить отношения с фракцией { $from } на { $relation }?
 paper-ui-faction-relations-accept = Принять
 paper-ui-faction-relations-decline = Отказать

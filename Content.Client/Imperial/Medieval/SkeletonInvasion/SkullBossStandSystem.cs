@@ -18,10 +18,10 @@ public sealed class SkullBossStandSystem : EntitySystem
     {
         foreach (var idx in component.AttachedParts)
         {
-            if (!_sprite.TryGetLayer(uid, $"{idx}", out var layer, false))
+            if (!_sprite.TryGetLayer(uid, $"{idx.Key}", out var layer, false))
                 continue;
 
-            var state = idx.Value ? "holy-" : "" + $"skull{idx.Key}";
+            var state = $"{(idx.Value ? "holy-" : string.Empty)}skull{idx.Key}";
             _sprite.LayerSetRsiState(layer, new(state));
             _sprite.LayerSetVisible(layer, true);
         }

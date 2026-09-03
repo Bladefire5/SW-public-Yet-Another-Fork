@@ -45,6 +45,8 @@
     damage:
       groups:
         Brute: 18
+      types:
+        ParryAble: 0.5
   - type: Puller
   - type: Tag
     tags:
@@ -124,6 +126,8 @@
   - type: MedievalUnthrowable
   - type: TypingIndicator
     proto: wolf1
+  - type: MedievalSpecialDamageReceiver
+    targetType: Werewolf  
 
 - type: typingIndicator
   id: wolf1

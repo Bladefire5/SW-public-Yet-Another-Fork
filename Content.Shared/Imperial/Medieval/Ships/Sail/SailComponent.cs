@@ -32,6 +32,4 @@ public sealed partial class SailComponent : Component
     [DataField("Push")]
     public bool Push = true;
 
-    [ViewVariables]
-    public float LastSailEfficencyMod;
 }

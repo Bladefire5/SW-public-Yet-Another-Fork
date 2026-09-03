@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using Content.Server.Administration.Logs;
 using Content.Server.Chat.Managers;
 using Content.Shared.Imperial.Medieval.Factions;
@@ -24,6 +26,10 @@ public sealed partial class MedievalFactionsSystem
     [Dependency] private readonly PaperSystem _paper = default!;
     [Dependency] private readonly IBanManager _ban = default!;
     [Dependency] private readonly IAdminLogManager _adminLogger = default!;
+
+    private static readonly ProtoId<FactionRelationsPrototype> WarRelation = "War";
+    private static readonly ProtoId<FactionRelationsPrototype> UnionRelation = "Union";
+    private static readonly SoundSpecifier RelationChangedSound = new SoundPathSpecifier("/Audio/Imperial/Medieval/faction_group_assigned.ogg");
 
     private void InitializeRelations()
     {
@@ -54,7 +60,7 @@ public sealed partial class MedievalFactionsSystem
 
         AlternativeVerb verb = new()
         {
-            Text = "Изменить отношения",
+            Text = Loc.GetString("faction-relations-verb-change"),
             Act = () =>
             {
                 var ev = new OpenOfferFactionRelationsEvent(GetNetEntity(uid), friends.Faction, comp.Faction);
@@ -75,7 +81,7 @@ public sealed partial class MedievalFactionsSystem
 
         AlternativeVerb verb = new()
         {
-            Text = "Сделать запрос на смену отношений",
+            Text = Loc.GetString("faction-relations-verb-request"),
             Act = () =>
             {
                 var ev = new OpenFactionRelationsRequestEvent(GetNetEntity(uid), friends.Faction);
@@ -215,6 +221,87 @@ public sealed partial class MedievalFactionsSystem
     {
         _ban.CreateServerBan(session.UserId, session.Name, null, null, null, 0, Shared.Database.NoteSeverity.High, mes);
     }
+    /// <summary>
+    /// Normalises untrusted war reason text: a bad reason is clamped.
+    /// </summary>
+    private static string SanitizeWarReason(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        var trimmed = raw.AsSpan().Trim();
+        if (trimmed.Length > DispatchWarEvent.MaxReasonLength)
+            trimmed = trimmed[..DispatchWarEvent.MaxReasonLength];
+
+        var sb = new StringBuilder(trimmed.Length);
+        foreach (var c in trimmed)
+        {
+            // Newlines and tabs collapse into a single space so a reason cannot blow up the popup height.
+            if (c is '\n' or '\r' or '\t')
+            {
+                if (sb.Length > 0 && sb[^1] != ' ')
+                    sb.Append(' ');
+
+                continue;
+            }
+
+            // drops bad (zero-width, etc) unicode characters
+            if (char.IsControl(c) || char.GetUnicodeCategory(c) == UnicodeCategory.Format)
+                continue;
+
+            sb.Append(c);
+        }
+
+        return sb.ToString().Trim();
+    }
+
+    /// <summary>
+    /// Snapshot of every faction currently holding Union with <paramref name="faction"/>.
+    /// Returned as a fresh set so the caller may change Relations afterwards.
+    /// Never returns <paramref name="faction"/> itself or <paramref name="exclude"/>, which is
+    /// the other belligerent and is handled separately.
+    /// </summary>
+    private HashSet<ProtoId<MedievalFactionPrototype>> GetUnionAllies(
+        Entity<FactionDataContainerComponent> cont,
+        ProtoId<MedievalFactionPrototype> faction,
+        ProtoId<MedievalFactionPrototype> exclude)
+    {
+        var result = new HashSet<ProtoId<MedievalFactionPrototype>>();
+
+        if (!cont.Comp.Relations.TryGetValue(faction, out var row))
+            return result;
+
+        foreach (var (other, relation) in row)
+        {
+            if (other == faction || other == exclude || relation != UnionRelation)
+                continue;
+
+            result.Add(other);
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// False when the pair is the same faction, is already at war, or is permanently locked by <see cref="MedievalFactionPrototype.BlockedRelations"/>.
+    /// </summary>
+    private bool CanEnterWar(
+        Entity<FactionDataContainerComponent> cont,
+        ProtoId<MedievalFactionPrototype> a,
+        ProtoId<MedievalFactionPrototype> b)
+    {
+        if (a == b)
+            return false;
+
+        if (Proto.Index(a).BlockedRelations.Contains(b) || Proto.Index(b).BlockedRelations.Contains(a))
+            return false;
+
+        if (!cont.Comp.Relations.TryGetValue(a, out var row) || !row.TryGetValue(b, out var current))
+            return false;
+
+        return current != WarRelation;
+    }
+
     private void OnDispatchWar(DispatchWarEvent ev, EntitySessionEventArgs args)
     {
         if (!TryGetFactionDataContainer(out var cont))
@@ -233,29 +320,97 @@ public sealed partial class MedievalFactionsSystem
             return;
         }
 
-        _adminLogger.Add(LogType.MedievalFactionRelations, LogImpact.Medium,
-            $"Лидер {ToPrettyString(senderUid.Value):leader} фракции {Proto.Index(ev.UserFaction).Name} обьявил войну этой фракции: {Proto.Index(ev.TargetFaction).Name}");
+        // bad war reason is clamped.
+        var reason = SanitizeWarReason(ev.Reason);
 
+        var declarer = ev.UserFaction;
+        var target = ev.TargetFaction;
+
+        // Already at war, blocked, or self-targeted: nothing to change. The client button is disabled
+        // in that state, so this is only reachable from a modified client, returning prevents this
+        if (!CanEnterWar(cont.Value, declarer, target))
+            return;
+
+        // Snapshot alliances BEFORE any changes. Writing Relations[X][B] = War would otherwise
+        // destroy a Union that a later read depends on, making the outcome order-dependent.
+        var declarerAllies = GetUnionAllies(cont.Value, declarer, target);
+        var targetAllies = GetUnionAllies(cont.Value, target, declarer);
+
+        // Build the full pair list, still reading pre-change state.
+        // ONE HOP ONLY: declarerAllies and targetAllies are never re-expanded, so allies of allies
+        // are left out of the war.
+        var pairs = new List<(ProtoId<MedievalFactionPrototype> Ally, ProtoId<MedievalFactionPrototype> Foe)>
+        {
+            (declarer, target)
+        };
+
+        foreach (var ally in declarerAllies)
+        {
+            if (CanEnterWar(cont.Value, ally, target))
+                pairs.Add((ally, target));
+        }
+
+        foreach (var ally in targetAllies)
+        {
+            // To make a faction allied to BOTH sides stay out of the war instead, add here:
+            //     if (declarerAllies.Contains(ally)) continue;
+            // ...and the matching skip in the loop above.
+            if (CanEnterWar(cont.Value, ally, declarer))
+                pairs.Add((ally, declarer));
+        }
+
+        // Apply every pair, then Dirty once.
         ref var relations = ref cont.Value.Comp.Relations;
-        relations[ev.UserFaction][ev.TargetFaction] = "War";
-        relations[ev.TargetFaction][ev.UserFaction] = "War";
+        foreach (var (a, b) in pairs)
+        {
+            relations[a][b] = WarRelation;
+            relations[b][a] = WarRelation;
+        }
         Dirty(cont.Value);
 
-        var userFaction = Proto.Index(ev.UserFaction);
-        var targetFaction = Proto.Index(ev.TargetFaction);
-
-        var userMembers = cont.Value.Comp.CachedMembers.GetOrNew(ev.UserFaction);
-        var targetMembers = cont.Value.Comp.CachedMembers.GetOrNew(ev.TargetFaction);
-
-        foreach (var item in userMembers.Union(targetMembers))
+        // De-duplicated map of faction -> how that faction got dragged in, used to pick the popup variant.
+        var involvement = new Dictionary<ProtoId<MedievalFactionPrototype>, WarInvolvement>
         {
-            if (!GetFactionMemberById(item.Key, out var target) || !_sharedPlayerManager.TryGetSessionByEntity(target.Value, out var session))
+            [declarer] = WarInvolvement.Declarer,
+            [target] = WarInvolvement.Target
+        };
+
+        foreach (var (ally, foe) in pairs)
+        {
+            if (ally == declarer && foe == target)
                 continue;
 
-            var announcement = $"Отношения вашей фракции с {(item.Value.Faction == ev.UserFaction ? targetFaction.Name : userFaction.Name)} изменены на {Proto.Index<FactionRelationsPrototype>("War").Name}";
-            _chatMan.ChatMessageToOne(Shared.Chat.ChatChannel.Radio, announcement, announcement, EntityUid.Invalid, false, session.Channel, Proto.Index<FactionRelationsPrototype>("War").Color);
-            _audio.PlayGlobal(new SoundPathSpecifier("/Audio/Imperial/Medieval/faction_group_assigned.ogg"), session);
+            // foe is always either declarer or target.
+            var side = foe == target ? WarInvolvement.AllyOfDeclarer : WarInvolvement.AllyOfTarget;
+
+            involvement[ally] = involvement.TryGetValue(ally, out var existing) && existing != side
+                ? WarInvolvement.AllyOfBoth
+                : side;
         }
+
+        // One radio line per changed pair. The sound is suppressed here so the popup pass below can
+        // play it exactly once per player, otherwise anyone in two changed pairs hears it twice.
+        foreach (var (a, b) in pairs)
+            AnnounceRelationChange(cont.Value, a, b, WarRelation, playSound: false);
+
+        foreach (var (faction, kind) in involvement)
+        {
+            foreach (var member in cont.Value.Comp.CachedMembers.GetOrNew(faction))
+            {
+                if (!GetFactionMemberById(member.Key, out var memberUid) || !_sharedPlayerManager.TryGetSessionByEntity(memberUid.Value, out var session))
+                    continue;
+
+                RaiseNetworkEvent(new MedievalWarDeclaredEvent(declarer, target, reason, kind), session);
+                _audio.PlayGlobal(RelationChangedSound, session);
+            }
+        }
+
+        var dragged = pairs.Count > 1
+            ? string.Join(", ", pairs.Skip(1).Select(p => Proto.Index(p.Ally).Name))
+            : "none";
+
+        _adminLogger.Add(LogType.MedievalFactionRelations, LogImpact.High,
+            $"Leader {ToPrettyString(senderUid.Value):leader} of faction {Proto.Index(declarer).Name:declarer} declared war on {Proto.Index(target).Name:target}. Reason: {reason:reason}. Allies dragged in: {dragged:allies}");
     }
 
     private void SetRelations(ProtoId<MedievalFactionPrototype> userFaction, ProtoId<MedievalFactionPrototype> targetFaction, ProtoId<FactionRelationsPrototype> relation)
@@ -268,19 +423,42 @@ public sealed partial class MedievalFactionsSystem
         relations[targetFaction][userFaction] = relation;
         Dirty(cont.Value);
 
+        AnnounceRelationChange(cont.Value, userFaction, targetFaction, relation);
+    }
+
+    /// <summary>
+    /// Radio-channel notice to every member of both factions telling them their relation changed.
+    /// </summary>
+    private void AnnounceRelationChange(
+        Entity<FactionDataContainerComponent> cont,
+        ProtoId<MedievalFactionPrototype> userFaction,
+        ProtoId<MedievalFactionPrototype> targetFaction,
+        ProtoId<FactionRelationsPrototype> relation,
+        bool playSound = true)
+    {
+        var relationProto = Proto.Index(relation);
         var userFactionProto = Proto.Index(userFaction);
         var targetFactionProto = Proto.Index(targetFaction);
-        var userMembers = cont.Value.Comp.CachedMembers.GetOrNew(userFaction);
-        var targetMembers = cont.Value.Comp.CachedMembers.GetOrNew(targetFaction);
+
+        var userMembers = cont.Comp.CachedMembers.GetOrNew(userFaction);
+        var targetMembers = cont.Comp.CachedMembers.GetOrNew(targetFaction);
 
         foreach (var item in userMembers.Union(targetMembers))
         {
             if (!GetFactionMemberById(item.Key, out var target) || !_sharedPlayerManager.TryGetSessionByEntity(target.Value, out var session))
                 continue;
 
-            var announcement = $"Отношения вашей фракции с {(item.Value.Faction == userFaction ? targetFactionProto.Name : userFactionProto.Name)} изменены на {Proto.Index(relation).Name}";
-            _chatMan.ChatMessageToOne(Shared.Chat.ChatChannel.Radio, announcement, announcement, EntityUid.Invalid, false, session.Channel, Proto.Index(relation).Color);
-            _audio.PlayGlobal(new SoundPathSpecifier("/Audio/Imperial/Medieval/faction_group_assigned.ogg"), session);
+            // The recipient is told about the OTHER faction, so pick whichever side is not their own.
+            var otherFaction = item.Value.Faction == userFaction ? targetFactionProto : userFactionProto;
+
+            var announcement = Loc.GetString("faction-relations-changed-announcement",
+                ("faction", otherFaction.Name),
+                ("relation", relationProto.Name));
+
+            _chatMan.ChatMessageToOne(Shared.Chat.ChatChannel.Radio, announcement, announcement, EntityUid.Invalid, false, session.Channel, relationProto.Color);
+
+            if (playSound)
+                _audio.PlayGlobal(RelationChangedSound, session);
         }
     }
 
@@ -337,15 +515,16 @@ public sealed partial class MedievalFactionsSystem
         ProtoId<MedievalFactionPrototype> targetFaction,
         ProtoId<FactionRelationsPrototype> relation)
     {
+        // Both leaders were tagged ":leader" before, which collided in the log and pushed the second one out to a "leader_2" key. They are now tagged distinctly.
         if (offeredBy != null)
         {
             _adminLogger.Add(LogType.MedievalFactionRelations, LogImpact.Medium,
-                $"лидеры фракций {ToPrettyString(offeredBy.Value):leader} и {ToPrettyString(acceptedBy):leader} изменили отношения между фракциями {Proto.Index(userFaction).Name} и {Proto.Index(targetFaction).Name} на {relation.Id}");
+                $"Faction leaders {ToPrettyString(offeredBy.Value):offeredBy} and {ToPrettyString(acceptedBy):acceptedBy} changed relations between factions {Proto.Index(userFaction).Name:userFaction} and {Proto.Index(targetFaction).Name:targetFaction} to {relation.Id:relation}");
             return;
         }
 
         _adminLogger.Add(LogType.MedievalFactionRelations, LogImpact.Medium,
-            $"лидеры фракций неизвестно и {ToPrettyString(acceptedBy):leader} изменили отношения между фракциями {Proto.Index(userFaction).Name} и {Proto.Index(targetFaction).Name} на {relation.Id}");
+            $"Faction leaders unknown and {ToPrettyString(acceptedBy):acceptedBy} changed relations between factions {Proto.Index(userFaction).Name:userFaction} and {Proto.Index(targetFaction).Name:targetFaction} to {relation.Id:relation}");
     }
 
     private void OnFactionDataContainerInit(EntityUid uid, FactionDataContainerComponent comp, MapInitEvent args)

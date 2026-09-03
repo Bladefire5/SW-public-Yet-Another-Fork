@@ -1,0 +1,254 @@
+- type: entity
+  parent: MedievalClothingOuterArmorCharmer
+  id: MedievalClothingCharmerArmorPass1
+  name: MedievalClothingCharmerArmorPass1
+  description: MedievalClothingCharmerArmorPass1
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/darkness.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+        shader: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/darkness.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+        shader: unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmer
+  id: MedievalClothingCharmerArmorPass2
+  name: MedievalClothingCharmerArmorPass2
+  description: MedievalClothingCharmerArmorPass2
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/earth.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/earth.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmer
+  id: MedievalClothingCharmerArmorPass3
+  name: MedievalClothingCharmerArmorPass3
+  description: MedievalClothingCharmerArmorPass3
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/fire.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+        shader: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/fire.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+        shader: unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmer
+  id: MedievalClothingCharmerArmorPass4
+  name: MedievalClothingCharmerArmorPass4
+  description: MedievalClothingCharmerArmorPass4
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/light.rsi
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/light.rsi
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmer
+  id: MedievalClothingCharmerArmorPass5
+  name: MedievalClothingCharmerArmorPass5
+  description: MedievalClothingCharmerArmorPass5
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/water.rsi
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/water.rsi
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerLight
+  id: MedievalClothingCharmerLightArmorPass1
+  name: MedievalClothingCharmerLightArmorPass1
+  description: MedievalClothingCharmerLightArmorPass1
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/darkness.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+        shader: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/darkness.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+        shader: unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerLight
+  id: MedievalClothingCharmerLightArmorPass2
+  name: MedievalClothingCharmerLightArmorPass2
+  description: MedievalClothingCharmerLightArmorPass2
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/earth.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/earth.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerLight
+  id: MedievalClothingCharmerLightArmorPass3
+  name: MedievalClothingCharmerLightArmorPass3
+  description: MedievalClothingCharmerLightArmorPass3
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/fire.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+        shader: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/fire.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+        shader: unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerLight
+  id: MedievalClothingCharmerLightArmorPass4
+  name: MedievalClothingCharmerLightArmorPass4
+  description: MedievalClothingCharmerLightArmorPass4
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/light.rsi
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/light.rsi
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerLight
+  id: MedievalClothingCharmerLightArmorPass5
+  name: MedievalClothingCharmerLightArmorPass5
+  description: MedievalClothingCharmerLightArmorPass5
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/water.rsi
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/water.rsi
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerWeak
+  id: MedievalClothingCharmerWeakArmorPass1
+  name: MedievalClothingCharmerWeakArmorPass1
+  description: MedievalClothingCharmerWeakArmorPass1
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/darkness.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+        shader: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/darkness.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+        shader: unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerWeak
+  id: MedievalClothingCharmerWeakArmorPass2
+  name: MedievalClothingCharmerWeakArmorPass2
+  description: MedievalClothingCharmerWeakArmorPass2
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/earth.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/earth.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerWeak
+  id: MedievalClothingCharmerWeakArmorPass3
+  name: MedievalClothingCharmerWeakArmorPass3
+  description: MedievalClothingCharmerWeakArmorPass3
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/fire.rsi
+    layers:
+      - state: icon
+      - state: unshaded
+        shader: unshaded
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/fire.rsi
+    clothingVisuals:
+      outerClothing:
+      - state: equipped-OUTERCLOTHING
+      - state: equipped-unshaded
+        shader: unshaded
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerWeak
+  id: MedievalClothingCharmerWeakArmorPass4
+  name: MedievalClothingCharmerWeakArmorPass4
+  description: MedievalClothingCharmerWeakArmorPass4
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/light.rsi
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/light.rsi
+
+- type: entity
+  parent: MedievalClothingOuterArmorCharmerWeak
+  id: MedievalClothingCharmerWeakArmorPass5
+  name: MedievalClothingCharmerWeakArmorPass5
+  description: MedievalClothingCharmerWeakArmorPass5
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/water.rsi
+  - type: Insulated
+  - type: Clothing
+    sprite: Imperial/Medieval/Monetization/Clothing/Outerclothing/water.rsi

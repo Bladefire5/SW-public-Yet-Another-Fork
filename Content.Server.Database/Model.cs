@@ -1,10 +1,9 @@
-    using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -55,6 +54,7 @@ namespace Content.Server.Database
         public DbSet<FlavorImage> FlavorImages { get; set; } = null!;
         public DbSet<PlayerAchievement> PlayerAchievements { get; set; } = null!;
         public DbSet<PlayerAchievementProgress> PlayerAchievementsProgress { get; set; } = null!;
+        public DbSet<Praise> Praises { get; set; } = null!;
         // Imperial Medieval End
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -111,6 +111,9 @@ namespace Content.Server.Database
                 .WithMany()
                 .HasForeignKey(p => p.PlayerUserId)
                 .HasPrincipalKey(p => p.UserId);
+
+            modelBuilder.Entity<Praise>()
+                .HasKey(p => new { p.GivenTo, p.GivenBy, p.Date });
             // Imperial Medieval End
 
             modelBuilder.Entity<ProfileRoleLoadout>()
@@ -618,6 +621,28 @@ namespace Content.Server.Database
 
         [Required]
         public int Value { get; set; }
+    }
+
+    [Table("praise")]
+    public sealed class Praise
+    {
+        [Required, Key]
+        public Guid GivenTo { get; set; }
+
+        [Required, Key]
+        public Guid GivenBy { get; set; }
+
+        [Required, Key]
+        public DateTime Date { get; set; }
+
+        [Required, MaxLength(10)]
+        public string GivenByName { get; set; } = default!;
+
+        [Required, MaxLength(50)]
+        public string Reason { get; set; } = default!;
+
+        [Required]
+        public int Weight { get; set; }
     }
 
     #endregion

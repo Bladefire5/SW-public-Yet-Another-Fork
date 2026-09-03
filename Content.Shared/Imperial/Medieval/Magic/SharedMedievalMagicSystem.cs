@@ -63,20 +63,16 @@ public abstract partial class SharedMedievalMagicSystem : EntitySystem
 
         _speedModifierSystem.RefreshMovementSpeedModifiers(uid);
 
-        if (_handsSystem.TryGetEmptyHand(args.User, out _) == false)
+        if (args.Cancelled)
         {
-            _popupSystem.PopupClient(Loc.GetString("medieval-magic-free-hand-required"), args.User);
+            RaiseSpellCastFailed(GetEntity(spellData.Action), uid);
             return;
         }
 
-        if (args.Cancelled)
+        if (_handsSystem.TryGetEmptyHand(args.User, out _) == false)
         {
-            RaiseLocalEvent(GetEntity(spellData.Action), new MedievalFailCastSpellEvent()
-            {
-                Action = GetEntity(spellData.Action),
-                Performer = uid
-            });
-
+            _popupSystem.PopupClient(Loc.GetString("medieval-magic-free-hand-required"), args.User);
+            RaiseSpellCastFailed(GetEntity(spellData.Action), uid);
             return;
         }
 
@@ -103,15 +99,62 @@ public abstract partial class SharedMedievalMagicSystem : EntitySystem
 
     #region Helpers
 
-    protected bool PassesSpellPrerequisites(EntityUid spell, EntityUid performer, EntityCoordinates target)
+    protected bool PassesSpellPrerequisites(
+        EntityUid spell,
+        EntityUid performer,
+        EntityCoordinates target,
+        bool isContinuation = false)
     {
-        var ev = new MedievalBeforeCastSpellEvent(performer, target);
+        var ev = new MedievalBeforeCastSpellEvent(performer, target)
+        {
+            IsContinuation = isContinuation
+        };
         RaiseLocalEvent(spell, ref ev);
 
-        if (_handsSystem.TryGetEmptyHand(performer, out _) == false) // TODO: Если в игре появятся магические катализаторы (посохи, палочки), что дают баффы при сотворении чар, то нужно будет добавить их в исключение
+        if (ev.Cancelled ||
+            _handsSystem.TryGetEmptyHand(performer, out _) == false)
+        {
+            if (ev.HasResourceReservation)
+                RaiseSpellCastFailed(spell, performer);
             return false;
+        }
 
-        return !ev.Cancelled;
+        return true;
+    }
+
+    protected void RaiseSpellCastFailed(EntityUid action, EntityUid performer)
+    {
+        if (TryComp<MedievalSpellCasterComponent>(performer, out var caster))
+        {
+            caster.TargetStack.Remove(action);
+            caster.SpellStack.Remove(action);
+        }
+
+        RaiseLocalEvent(action, new MedievalFailCastSpellEvent
+        {
+            Action = action,
+            Performer = performer
+        });
+    }
+
+    protected bool TryStartSpellDoAfter(
+        EntityUid performer,
+        EntityUid action,
+        MedievalSpellCasterComponent caster,
+        float speedModifier,
+        DoAfterArgs doAfterArgs)
+    {
+        if (_doAfterSystem.TryStartDoAfter(doAfterArgs))
+        {
+            _speedModifierSystem.RefreshMovementSpeedModifiers(performer);
+            return true;
+        }
+
+        caster.SpeedModifiers.Remove(speedModifier);
+        Dirty(performer, caster);
+        _speedModifierSystem.RefreshMovementSpeedModifiers(performer);
+        RaiseSpellCastFailed(action, performer);
+        return false;
     }
 
     protected MedievalSpellData GetSpellData(MedievalSpellDoAfterEvent ev)

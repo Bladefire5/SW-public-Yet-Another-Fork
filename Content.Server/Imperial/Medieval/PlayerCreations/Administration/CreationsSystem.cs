@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Content.Server.Database;
 using Robust.Shared.Network;
+using Robust.Shared.Player;
 using System.Threading.Tasks;
 using Content.Shared.Imperial.Medieval.PlayerCreations;
 
@@ -12,6 +13,8 @@ public sealed partial class CreationsSystem : EntitySystem
 
 
     private readonly List<CreationsPanelEui> _activeEuis = new();
+    private readonly HashSet<Guid> _paintingSubmissions = new();
+    private readonly HashSet<Guid> _bookSubmissions = new();
 
     public void RegisterEui(CreationsPanelEui eui)
     {
@@ -117,19 +120,32 @@ public sealed partial class CreationsSystem : EntitySystem
 
     private async Task<bool> AddIncoming<T>(
         T creation,
+        Guid senderUserId,
+        HashSet<Guid> submissions,
+        Func<Guid, Task<bool>> hasPending,
         Func<T, Task<bool>> existsCheck,
         Func<T, Task> addToDb,
         Action<CreationsPanelEui, T> notifyEui)
     {
-        if (await existsCheck(creation))
+        if (!submissions.Add(senderUserId))
             return false;
 
-        await addToDb(creation);
+        try
+        {
+            if (await hasPending(senderUserId) || await existsCheck(creation))
+                return false;
 
-        foreach (var eui in _activeEuis)
-            notifyEui(eui, creation);
+            await addToDb(creation);
 
-        return true;
+            foreach (var eui in _activeEuis)
+                notifyEui(eui, creation);
+
+            return true;
+        }
+        finally
+        {
+            submissions.Remove(senderUserId);
+        }
     }
 
     private async Task ProcessIncoming<T>(
@@ -149,17 +165,19 @@ public sealed partial class CreationsSystem : EntitySystem
     #region Paintings
     private async void OnSendPainting(SendCreationPaintingEvent args)
     {
-        if (!ValidatePaintingInput(args.Painting, args.Name, args.Description))
+        if (!ValidatePaintingInput(args.Painting, args.Name, args.Description) ||
+            !TryComp<ActorComponent>(args.Sender, out var actor))
             return;
 
-        var authorName = await GetPlayerName(args.SenderPlayer);
+        var sender = actor.PlayerSession.UserId;
+        var authorName = await GetPlayerName(sender);
 
         var paintingMessage = new CreationPaintingMessage(
             args.Painting,
             args.Name,
             args.Description,
             args.Author,
-            args.SenderPlayer,
+            sender,
             DateTime.UtcNow,
             authorName
         );
@@ -183,6 +201,9 @@ public sealed partial class CreationsSystem : EntitySystem
 
     public async Task<bool> AddIncomingPainting(CreationPaintingMessage painting)
         => await AddIncoming(painting,
+            painting.SenderUserId,
+            _paintingSubmissions,
+            async id => await _db.HasPendingPainting(id),
             async p => await _db.GetPainting(p.Painting) != null,
             async p => await _db.AddPainting(p.Painting,
                 p.Name,
@@ -231,18 +252,19 @@ public sealed partial class CreationsSystem : EntitySystem
 
 
     #region Books
-    private async void OnSendBook(SendCreationBookEvent args)
+    private async void OnSendBook(SendCreationBookEvent args, EntitySessionEventArgs sessionArgs)
     {
         if (!ValidateBookInput(args.Text, args.Name, args.Description))
             return;
 
-        var authorName = await GetPlayerName(args.SenderPlayer);
+        var sender = sessionArgs.SenderSession.UserId;
+        var authorName = await GetPlayerName(sender);
 
         var book = new CreationBook(args.Text,
             args.Name,
             args.Description,
             args.Author,
-            args.SenderPlayer,
+            sender,
             DateTime.UtcNow,
             authorName
         );
@@ -267,6 +289,9 @@ public sealed partial class CreationsSystem : EntitySystem
     public async Task<bool> AddIncomingBook(CreationBook book)
         => await AddIncoming(
             book,
+            book.SenderUserId,
+            _bookSubmissions,
+            async id => await _db.HasPendingBook(id),
             async b => await _db.GetBook(b.Text) != null,
             async b => await _db.AddBook(
                 b.Text,

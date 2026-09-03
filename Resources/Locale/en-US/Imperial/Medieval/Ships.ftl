@@ -44,6 +44,7 @@ Megaphone-menu-other-pump-water = PUMP the water!
 
 examine-carthographer-table-show-rotation = Current ship rotation:
 medieval-cartographer-table-window-title = Navigation Map
+medieval-cartographer-table-coordinates = X {$x}, Y {$y}
 
 Megaphone-menu-combat-board-prepare = Prepare to board!
 

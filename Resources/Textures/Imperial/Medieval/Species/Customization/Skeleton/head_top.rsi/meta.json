@@ -1,0 +1,43 @@
+{
+    "version": 1,
+    "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
+    "copyright": "Made by @fortengamer, skeleton_crystall_2 by @lavovy_skelet, skeleton_crystall_3 by @tulen0687_08845, arrow by @timur",
+    "size": {
+      "x": 32,
+      "y": 32
+    },
+    "states": [
+      {
+        "name": "skeleton_crystall_1",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_horns_1",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_horns_2",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_mushroom",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_crystall_2",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_crystall_3",
+        "directions": 4
+      },
+      {
+        "name": "arrow",
+        "directions": 4
+      },
+      {
+        "name": "damaged",
+        "directions": 4
+      }
+    ]
+  }

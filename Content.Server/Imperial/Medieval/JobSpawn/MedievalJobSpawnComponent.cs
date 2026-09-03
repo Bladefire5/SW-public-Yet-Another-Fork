@@ -10,6 +10,21 @@ namespace Content.Server.MedievalJobSpawn.Components
         [DataField]
         public bool Enabled = true;
     }
+    [RegisterComponent]
+    public sealed partial class MedievalTravellerComponent : Component
+    {
+        [DataField]
+        public bool Enabled = true;
+    }
+    [RegisterComponent]
+    public sealed partial class MedievalJobSpawnTravellerComponent : Component
+    {
+        [DataField]
+        public string SpawnType = "Rebel";
+
+        [DataField]
+        public bool Enabled = true;
+    }
 
     [RegisterComponent]
     public sealed partial class MedievalJobPointComponent : Component

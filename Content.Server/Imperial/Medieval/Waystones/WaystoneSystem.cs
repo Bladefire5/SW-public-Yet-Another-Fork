@@ -194,12 +194,10 @@ public sealed class WaystoneSystem : EntitySystem
 
             var targetFaction = entityTarget.Comp.Faction;
 
-            bool isEnemy = _factionsSystem.IsRelationEnemy(faction, targetFaction);
+            bool isEnemy = false;
 
-            if (!isEnemy && member is not null)
-            {
+            if (member is not null)
                 isEnemy = _factionsSystem.IsRelationEnemy(member.Faction, targetFaction);
-            }
 
             infoList.Add(new WaystoneInfo(
                 GetNetEntity(entityTarget),
@@ -248,8 +246,7 @@ public sealed class WaystoneSystem : EntitySystem
         TryComp<MedievalFactionMemberComponent>(args.Actor, out var member);
         var targetFaction = targetComp.Faction;
         var faction = entity.Comp.Faction;
-        if (_factionsSystem.IsRelationEnemy(faction, targetFaction))
-            return;
+
         if (member is not null &&
             (_factionsSystem.IsRelationEnemy(member.Faction, targetFaction) ||
             _factionsSystem.IsRelationEnemy(member.Faction, faction)))
@@ -308,12 +305,6 @@ public sealed class WaystoneSystem : EntitySystem
 
     private void PrepareToTeleport(Entity<WaystoneComponent> entity, EntityUid user)
     {
-        _chat.TrySendInGameICMessage(entity, Loc.GetString("waystone-message-ritual-started"), InGameICChatType.Speak, true);
-        entity.Comp.BookedTime = _timing.CurTime + TimeSpan.FromSeconds(entity.Comp.TimeToTeleport + 1f);
-
-        _audioSystem.Stop(entity.Comp.BookedAudioStream);
-        entity.Comp.BookedAudioStream = _audioSystem.PlayPvs(new SoundPathSpecifier("/Audio/Imperial/Medieval/cat_purring2.ogg"), Transform(entity).Coordinates)?.Entity;
-
         var doAfterArgs = new DoAfterArgs(EntityManager, user, TimeSpan.FromSeconds(entity.Comp.TimeToTeleport), new WaystoneTeleportDoAfterEvent(), entity.Owner, target: entity.Owner)
         {
             BreakOnMove = false,
@@ -321,8 +312,21 @@ public sealed class WaystoneSystem : EntitySystem
             NeedHand = false,
             CancelDuplicate = true
         };
-        _doAfterSystem.TryStartDoAfter(doAfterArgs, out var doAfterId);
-        entity.Comp.ActiveDoAfterId = doAfterId;
+
+        if (_doAfterSystem.TryStartDoAfter(doAfterArgs, out var doAfterId))
+        {
+            _chat.TrySendInGameICMessage(entity, Loc.GetString("waystone-message-ritual-started"), InGameICChatType.Speak, true);
+            entity.Comp.BookedTime = _timing.CurTime + TimeSpan.FromSeconds(entity.Comp.TimeToTeleport + 1f);
+
+            _audioSystem.Stop(entity.Comp.BookedAudioStream);
+            var audioParams = AudioParams.Default.WithLoop(true);
+            entity.Comp.BookedAudioStream = _audioSystem.PlayPvs(new SoundPathSpecifier("/Audio/Imperial/Medieval/cat_purring2.ogg"), Transform(entity).Coordinates, audioParams)?.Entity;
+
+            entity.Comp.ActiveDoAfterId = doAfterId;
+
+            entity.Comp.TeleportationMoney[0] = CountDeparturePrice(entity, user);
+            entity.Comp.TeleportationMoney[1] = CountArrivalPrice(entity, user);
+        }
     }
 
     private void OnDoAfter(Entity<WaystoneComponent> entity, ref WaystoneTeleportDoAfterEvent args)
@@ -370,8 +374,8 @@ public sealed class WaystoneSystem : EntitySystem
 
         _transform.SetCoordinates(user, xform.Coordinates.Offset(offset));
 
-        entity.Comp.CollectedMoney += CountDeparturePrice(entity, user);
-        entityTarget.Comp.CollectedMoney += CountArrivalPrice(entityTarget, user);
+        entity.Comp.CollectedMoney += entity.Comp.TeleportationMoney[0];
+        entityTarget.Comp.CollectedMoney += entity.Comp.TeleportationMoney[1];
 
         entity.Comp.CurrentPaid = 0;
 
@@ -392,6 +396,9 @@ public sealed class WaystoneSystem : EntitySystem
 
         _audioSystem.Stop(entity.Comp.BookedAudioStream);
         entity.Comp.BookedAudioStream = null;
+
+        entity.Comp.TeleportationMoney[0] = 0;
+        entity.Comp.TeleportationMoney[1] = 0;
 
         DispenseMoney(entity, coords);
     }
@@ -455,34 +462,18 @@ public sealed class WaystoneSystem : EntitySystem
 
     private void DispenseMoney(Entity<WaystoneComponent> entity, EntityCoordinates? coords)
     {
-        var comp = entity.Comp;
-        var amount = comp.CurrentPaid;
+        var amount = entity.Comp.CurrentPaid;
+        if (amount <= 0) return;
 
-        if (amount <= 0)
-            return;
-
-        comp.CurrentPaid = 0;
+        entity.Comp.CurrentPaid = 0;
+        var spawnCoords = coords ?? Transform(entity).Coordinates;
 
         while (amount > 0)
         {
             int toSpawn = Math.Min(amount, 100);
-
-            if (coords is not { } playerCoords)
-            {
-                var revent = Spawn("MedievalRevent", Transform(entity).Coordinates);
-
-                _stack.SetCount(revent, toSpawn);
-
-                amount -= toSpawn;
-            }
-            else
-            {
-                var revent = Spawn("MedievalRevent", playerCoords);
-
-                _stack.SetCount(revent, toSpawn);
-
-                amount -= toSpawn;
-            }
+            var revent = Spawn("MedievalRevent", spawnCoords);
+            _stack.SetCount(revent, toSpawn);
+            amount -= toSpawn;
         }
 
         _audioSystem.PlayPvs(new SoundPathSpecifier("/Audio/Imperial/Medieval/coin_out.ogg"), Transform(entity).Coordinates);

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
-  "copyright": "map, Box, bed, bed2, bags1, bags2, bags3, bags4, bags5, open, jar1, jar2, jar3, jar4, scroll1, scroll2, scroll3, sign_1, sign_2, sign_3, sign_7, sign_9, danger, danger2, danger3, kolka, ohapka, trapdoor, ladder, rack, torch, torch_colone created by @pyrolizz from Discord and others created for imperial space",
+  "copyright": "map, Box, bed, bed2, bags1, bags2, bags3, bags4, bags5, open, jar1, jar2, jar3, jar4, scroll1, scroll2, scroll3, sign_1, sign_2, sign_3, sign_7, sign_9, danger, danger2, danger3, kolka, ohapka, trapdoor, ladder, rack, torch, torch_colone created by @pyrolizz from Discord and others created for imperial space, ore_silver by fortengamer",
   "size": {
     "x": 32,
     "y": 32
@@ -235,6 +235,9 @@
     },
     {
       "name": "kolka"
+    },
+    {
+      "name": "ore_silver"
     }
   ]
 }

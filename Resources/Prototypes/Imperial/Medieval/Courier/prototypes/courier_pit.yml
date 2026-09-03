@@ -95,6 +95,7 @@
     - id: MedievalClothingHeadHelmetShapel
     - id: MedievalIronIngot10
     - id: MedievalIngotGold
+    - id: MedievalIngotSilver
     - id: MedievalClothingOuterArmorFur
     - id: MedievalAdam
     - id: MedievalReliefStoneWeak
@@ -193,6 +194,7 @@
   table: !type:GroupSelector
     children:
     - id: MedievalIngotGold10
+    - id: MedievalIngotSilver10
     - id: MedievalFireSerdolick10
     - id: MedievalTopaz10
     - id: MedievalAdam10

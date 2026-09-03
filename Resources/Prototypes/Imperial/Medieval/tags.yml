@@ -141,3 +141,6 @@
 
 - type: Tag
   id: CourierLetter
+
+- type: Tag
+  id: MedievalSilverOre

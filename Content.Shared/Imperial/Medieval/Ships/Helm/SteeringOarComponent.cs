@@ -1,5 +1,3 @@
-using System.Runtime.Serialization;
-
 namespace Content.Shared.Imperial.Medieval.Ships.Helm;
 
 /// <summary>

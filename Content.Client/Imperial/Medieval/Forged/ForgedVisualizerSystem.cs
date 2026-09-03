@@ -20,7 +20,8 @@ public sealed class ForgedVisualizerSystem : VisualizerSystem<ForgedComponent>
     {
         foreach (ForgedVisuals visualKey in Enum.GetValues(typeof(ForgedVisuals)))
         {
-            if (AppearanceSystem.TryGetData<ForgedVisualsPacket>(uid, visualKey, out var packet, appearance)) SetLayer(uid, visualKey, packet, sprite);
+            if (AppearanceSystem.TryGetData<ForgedVisualsPacket>(uid, visualKey, out var packet, appearance))
+                SetLayer(uid, visualKey, packet, sprite);
         }
     }
 
@@ -40,32 +41,42 @@ public sealed class ForgedVisualizerSystem : VisualizerSystem<ForgedComponent>
                 ForgedVisuals.left_hand  => HumanoidVisualLayers.LHand,
                 ForgedVisuals.right_leg  => HumanoidVisualLayers.RLeg,
                 ForgedVisuals.left_leg   => HumanoidVisualLayers.LLeg,
-                ForgedVisuals.right_foot  => HumanoidVisualLayers.RFoot,
-                ForgedVisuals.left_foot   => HumanoidVisualLayers.LFoot,
-
+                ForgedVisuals.right_foot => HumanoidVisualLayers.RFoot,
+                ForgedVisuals.left_foot  => HumanoidVisualLayers.LFoot,
                 _ => null
             };
 
             if (targetLayer == null)
                 return;
 
-            if (packet.State == "blank" || string.IsNullOrEmpty(packet.State))
-                return;
-    
             if (_sprite.LayerMapTryGet((uid, sprite), targetLayer.Value, out var index, false))
             {
-                _sprite.LayerSetRsi((uid, sprite), index, packet.RsiPath);
-                _sprite.LayerSetRsiState((uid, sprite), index, packet.State);
-                _sprite.LayerSetVisible((uid, sprite), index, true);
+                if (string.IsNullOrEmpty(packet.State) || packet.State == "blank")
+                {
+                    _sprite.LayerSetVisible((uid, sprite), index, false);
+                }
+                else
+                {
+                    _sprite.LayerSetRsi((uid, sprite), index, packet.RsiPath);
+                    _sprite.LayerSetRsiState((uid, sprite), index, packet.State);
+                    _sprite.LayerSetVisible((uid, sprite), index, true);
+                }
             }
         }
         else
         {
             if (_sprite.LayerMapTryGet((uid, sprite), partKey.ToString(), out var index, false))
             {
-                _sprite.LayerSetRsi((uid, sprite), index, packet.RsiPath);
-                _sprite.LayerSetRsiState((uid, sprite), index, packet.State);
-                _sprite.LayerSetVisible((uid, sprite), index, true);
+                if (string.IsNullOrEmpty(packet.State) || packet.State == "blank")
+                {
+                    _sprite.LayerSetVisible((uid, sprite), index, false);
+                }
+                else
+                {
+                    _sprite.LayerSetRsi((uid, sprite), index, packet.RsiPath);
+                    _sprite.LayerSetRsiState((uid, sprite), index, packet.State);
+                    _sprite.LayerSetVisible((uid, sprite), index, true);
+                }
             }
         }
     }

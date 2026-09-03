@@ -23,7 +23,7 @@
   - type: Sharp
   - type: MeleeWeapon
     wideAnimationRotation: -140
-    attackRate: 0.5
+    attackRate: 0.8
     range: 2.15
     damage:
       types:
@@ -99,8 +99,8 @@
     range: 1
     damage:
       types:
-        Slash: 9
-        Caustic: 3
+        Slash: 11
+        Caustic: 1
         ParryAble: 1
     resetOnHandSelected: false
     soundHit:
@@ -156,8 +156,8 @@
     range: 1.15
     damage:
       types:
-        Slash: 16
-        Caustic: 3
+        Slash: 17.5
+        Caustic: 1.5
         ParryAble: 1
     resetOnHandSelected: false
     soundHit:
@@ -246,13 +246,13 @@
     parryChanse: 0.45
   - type: MeleeWeapon
     wideAnimationRotation: -140
-    attackRate: 0.65
+    attackRate: 0.8
     clickDamageModifier: 1.28
     range: 2.4
     damage:
       types:
-        Piercing: 15
-        Caustic: 4
+        Piercing: 17
+        Caustic: 2
         ParryAble: 1
     angle: 0
     animation: CP14WeaponArcThrust
@@ -346,68 +346,6 @@
     damage: 2 #2 dagger, 5 spear, 4 sword, 5 mace, 8 halberd, 6 sekir, 18 hammer
 
 - type: entity
-  name: falshion
-  parent: [ BaseItem, BaseOneHandedCharged ]
-  id: MedievalWoodenSword
-  description: An ancient war blade.
-  components:
-  - type: RDWeight
-    value: 2
-  # - type: Sharp
-  - type: Sprite
-    sprite: Imperial/Medieval/Melee/wooden_sword.rsi
-    state: icon
-  - type: MeleeParry
-    parryEffectSuccess: MedievalEffectSuccessParryWooden
-  - type: MeleeParryStamina
-  - type: MeleeWeapon
-    clickDamageModifier: 2
-    wideAnimationRotation: -140
-    attackRate: 0.9
-    damage:
-      types:
-        Blunt: 0.5
-        ParryAble: 1
-    soundHit:
-      path: /Audio/Imperial/Medieval/wooden-hit.ogg
-    animation: CP14WeaponArcThrust
-    wideAnimation: CP14WeaponArcSlash
-    cPSwingBeverage: true
-    cPAnimationOffset: 1
-  - type: MedievalMeleeResource
-    resourceWaste: 0.2
-  - type: Item
-    size: Normal
-  - type: Clothing
-    sprite: Imperial/Medieval/Melee/wooden_sword.rsi
-    slots:
-    - back
-    - suitStorage
-    - belt
-    quickEquip: false
-  - type: DisarmMalus
-  - type: DamageOtherOnHit
-    damage:
-      types:
-        Blunt: 0.5
-  - type: StaminaDamageOnHit
-    damage: 6
-  #- type: QualityOfItem
-  #  qualityWeights:
-  #    0: 0
-  #    1: 0
-  #    2: 0
-  #    3: 10
-  #    4: 0
-  #    5: 0
-  #    6: 0
-  - type: MeleeThrowOnHit
-    distance: 0.7
-    speed: 5
-  - type: TrashClear
-    safe: true
-
-- type: entity
   name: MedievalBanjoInstrument
   parent: [ BanjoInstrument, BaseCrushingCharged ]
   id: MedievalBanjoInstrument
@@ -481,12 +419,12 @@
   - type: MeleeWeapon
     clickDamageModifier: 1.26
     wideAnimationRotation: -140
-    attackRate: 1.2
+    attackRate: 0.8
     damage:
       types:
-        Blunt: 7.5
-        Piercing: 6
-        Caustic: 3.5
+        Blunt: 8.5
+        Piercing: 7
+        Caustic: 1.5
         ParryAble: 1
     animation: CP14WeaponArcThrust
     wideAnimation: CP14WeaponArcSlash
@@ -1438,6 +1376,7 @@
     resourceCount: 1
   - type: Item
     size: Large
+  - type: TreasureDigger
 
 - type: entity
   name: falshion
@@ -1749,7 +1688,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 14
+        Piercing: 14
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -1801,7 +1740,7 @@
   - type: MeleeWeapon
     clickDamageModifier: 1.28
     wideAnimationRotation: -140
-    attackRate: 0.65
+    attackRate: 0.8
     range: 2.4
     damage:
       types:
@@ -1897,7 +1836,7 @@
   - type: MeleeWeapon
     clickDamageModifier: 1.28
     wideAnimationRotation: -140
-    attackRate: 0.65
+    attackRate: 0.8
     range: 2.25
     damage:
       types:
@@ -1989,7 +1928,7 @@
   - type: MeleeWeapon
     clickDamageModifier: 1.26
     wideAnimationRotation: -140
-    attackRate: 1.1
+    attackRate: 0.8
     animation: CP14WeaponArcThrust
     wideAnimation: CP14WeaponArcSlash
     cPSwingBeverage: true
@@ -2056,7 +1995,7 @@
   - type: MeleeWeapon
     clickDamageModifier: 1.26
     wideAnimationRotation: -140
-    attackRate: 1.1
+    attackRate: 0.8
     animation: CP14WeaponArcThrust
     wideAnimation: CP14WeaponArcSlash
     cPSwingBeverage: true
@@ -3394,7 +3333,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 14
+        Piercing: 16
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -3441,7 +3380,7 @@
   - type: MeleeWeapon
     clickDamageModifier: 1.28
     wideAnimationRotation: -140
-    attackRate: 0.6
+    attackRate: 0.8
     range: 2.4
     damage:
       types:
@@ -3474,7 +3413,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 21
+        Piercing: 25
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -3542,7 +3481,7 @@
     cPAnimationOffset: 1
     clickDamageModifier: 1.26
     wideAnimationRotation: -140
-    attackRate: 1.1
+    attackRate: 0.8
     damage:
       types:
         Blunt: 7.5
@@ -4095,8 +4034,8 @@
     range: 1
     damage:
       types:
-        Slash: 6
-        Poison: 3
+        Slash: 8.5
+        Poison: 0.5
         ParryAble: 1
     soundHit:
       path: /Audio/Imperial/Medieval/ES_Knife_Stab_2_-_SFX_Producer.ogg
@@ -4104,7 +4043,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 14
+        Piercing: 14
         Poison: 3
   #- type: QualityOfItem
   #  qualityWeights:
@@ -4337,7 +4276,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 17
+        Piercing: 17
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -4420,7 +4359,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 13
+        Piercing: 13
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -4565,7 +4504,7 @@
   - type: DamageOtherOnHit
     damage:
       types:
-        Slash: 19
+        Piercing: 19
   #- type: QualityOfItem
   #  qualityWeights:
   #    0: 0
@@ -5097,14 +5036,12 @@
     state: parry_window
     drawdepth: Overlays
   - type: TimedDespawn
-    lifetime: 0.525
+    lifetime: 0.75
   - type: Tag
     tags:
       - HideContextMenu
-  - type: EmitSoundOnSpawn
-    sound:
-      collection: MeleeParryWindow
   - type: MeleeParryEffect
+    phaseControlled: true
 
 - type: entity
   id: MedievalEffectSuccessParry
@@ -5643,3 +5580,258 @@
     sprite: Imperial/Medieval/Melee/bib_spear.rsi
     netsync: false
     state: spear
+
+- type: entity
+  name: dragonslayer
+  parent: [ BaseItem, BaseTwoHandedCharged ]
+  id: MedievalDragonslayer
+  description: Dragonslayer.
+  components:
+  - type: RDWeight
+    value: 25
+  - type: QuestItem
+    contractName: "любое двуручное оружие"
+  - type: EmitSoundOnLand
+    sound:
+      collection: MedievalIronDrop
+      params:
+        variation: 0.02
+        volume: 1
+  - type: Sharp
+  - type: MeleeParry
+    parryChanse: 0.55
+  - type: MeleeWeapon
+    angle: 140
+    animation: CP14WeaponArcThrust
+    wideAnimation: CP14WeaponArcSlash
+    cPSwingBeverage: true
+    cPAnimationOffset: 1
+    clickDamageModifier: 2.5
+    wideAnimationRotation: 45
+    attackRate: 0.15
+    range: 2.2
+    damage:
+      types:
+        Piercing: 32
+        Blunt: 59
+        Structural: 85
+        Slash: 52
+        ParryAble: 1
+    soundHit:
+      path: /Audio/Weapons/bladeslice.ogg
+  - type: MedievalMeleeResource
+    resourceWaste: 0.05
+    safeToHitGroup: structure
+  - type: MultiHandedItem
+  - type: Item
+    size: Ginormous
+    sprite: Imperial/Medieval/Melee/dragonslayer.rsi
+  - type: DamageOtherOnHit
+    damage:
+      types:
+        Piercing: 7
+        Slash: 15
+        Blunt: 39
+  #- type: EmbeddableProjectile
+    #offset: 0.15,0.15
+  - type: MeleeRequiresWield
+  #- type: QualityOfItem
+  #  qualityWeights:
+  #    0: 0
+  #    1: 0
+  #    2: 0
+  #    3: 10
+  #    4: 0
+  #    5: 0
+  #    6: 0
+  - type: MeleeThrowOnHit
+    distance: 1.2
+    speed: 5
+  - type: Meltable
+    resourceCount: 15
+  - type: HeldSpeedModifier
+    walkModifier: 0.65
+    sprintModifier: 0.65
+  - type: Clothing
+    equipDelay: 4.6
+    unequipDelay: 2.6
+    sprite: Imperial/Medieval/Melee/dragonslayer.rsi
+    slots:
+    - back
+    - suitStorage
+  - type: Sprite
+    sprite: Imperial/Medieval/Melee/dragonslayer.rsi
+    state: icon
+  - type: StaminaDamageOnHit
+    damage: 35 #2 dagger, 5 spear, 4 sword, 5 mace, 8 halberd, 6 sekir, 18 hammer
+  - type: Blocking
+    passiveBlockFraction: 0.25
+    activeBlockFraction: 0.7
+    passiveBlockModifier: #PassiveMedievalWoodenShieldBlock
+      coefficients:
+        Blunt: 0.95
+        Slash: 0.9
+        Piercing: 0.9
+        Heat: 0.9
+    activeBlockModifier: #ActiveMedievalWoodenShieldBlock
+      coefficients:
+        Blunt: 0.85
+        Slash: 0.8
+        Piercing: 0.8
+        Heat: 0.8
+  - type: HealthExaminable
+    examinableTypes:
+    - Blunt
+    - Slash
+    - Piercing
+    - Heat
+    locPrefix: shield
+  - type: Damageable
+    damageContainer: Shield
+  - type: Destructible
+    thresholds:
+      - trigger:
+          !type:DamageTrigger
+          damage: 10000
+        behaviors:
+          - !type:DoActsBehavior
+            acts: [ "Destruction" ]
+          - !type:PlaySoundBehavior
+            sound:
+              path: /Audio/Effects/metalbreak.ogg
+  - type: ChargedAttack
+    maxAttackTime: 4.0
+    staticModifier: 3
+    staminaDamage: 20
+    speedModifer: 0.4
+    effectProtoId: AttackEffect4s
+  - type: StaminaResistance
+    damageCoefficient: 0.85
+  - type: Armor
+    modifiers:
+      coefficients:
+        Blunt: 0.85
+        Slash: 0.85
+        Piercing: 0.85
+        Heat: 0.85
+
+- type: entity
+  name: falshion
+  parent: MedievalFalshionT3
+  id: MedievalFalshionT3Silver
+  description: An ancient war blade.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Melee/silver_sword.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/Melee/silver_sword.rsi
+  - type: MedievalSpecialDamageDealer
+    damage:
+      types:
+        Slash: 20
+    targetType: Werewolf
+  - type: Meltable
+    resourceCount: 2
+    resourceName: MedievalIngotSilver
+
+- type: entity
+  name: dagger
+  parent: MedievalDaggerT3
+  id: MedievalDaggerT3Silver
+  description: A deadly knife intended for melee confrontations.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Melee/silver_dagger.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/Melee/silver_dagger.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/Melee/silver_dagger.rsi
+    slots:
+    - belt
+    quickEquip: false
+  - type: MedievalSpecialDamageDealer
+    damage:
+      types:
+        Slash: 15
+    targetType: Werewolf
+  - type: Meltable
+    resourceCount: 1
+    resourceName: MedievalIngotSilver
+
+- type: entity
+  name: medieval spear
+  parent: MedievalSpearT3
+  id: MedievalSpearT3Silver
+  description: Definition of a Classic. Keeping murder affordable since 200,000 BCE.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Melee/silver_spear.rsi
+    netsync: false
+    state: spear
+  - type: MedievalSpecialDamageDealer
+    damage:
+      types:
+        Piercing: 20
+    targetType: Werewolf
+  - type: Meltable
+    resourceCount: 3
+    resourceName: MedievalIngotSilver
+
+- type: entity
+  name: dagger
+  parent: MedievalSaber
+  id: MedievalSaberSilver
+  description: A deadly knife intended for melee confrontations.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Melee/silver_saber.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Normal
+    sprite: Imperial/Medieval/Melee/silver_saber.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/Melee/silver_saber.rsi
+    slots:
+    - back
+    - suitStorage
+    - belt
+    quickEquip: false
+  - type: MedievalSpecialDamageDealer
+    damage:
+      types:
+        Slash: 20
+    targetType: Werewolf
+  - type: Meltable
+    resourceCount: 3
+    resourceName: MedievalIngotSilver
+
+- type: entity
+  name: iron claymore
+  parent: MedievalIronClaymore
+  id: MedievalIronClaymoreSilver
+  description: A medieval claymore.
+  components:
+  - type: Item
+    size: Huge
+    sprite: Imperial/Medieval/Melee/silver_claymore_inhand.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/Melee/silver_claymore_inhand.rsi
+    slots:
+    - back
+    - suitStorage
+  - type: Sprite
+    sprite: Imperial/Medieval/Melee/silver_claymor.rsi
+    state: icon
+  - type: MedievalSpecialDamageDealer
+    damage:
+      types:
+        Slash: 25
+        Piercing: 5
+    targetType: Werewolf
+  - type: Meltable
+    resourceCount: 6
+    resourceName: MedievalIngotSilver

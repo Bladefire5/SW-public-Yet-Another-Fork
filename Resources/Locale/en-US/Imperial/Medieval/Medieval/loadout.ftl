@@ -11,6 +11,7 @@ loadout-group-armor-mdv = Armor
 loadout-group-lock-mdv = Locks
 loadout-group-key-mdv = Key
 loadout-group-weapons-mdv = Weapons
+loadout-group-stash-village = Job
 loadout-group-repair-mdv = Repairs
 materials-blacksmith-kit = blacksmith's kit
 materials-sewing-kit = sewing kit

@@ -8,9 +8,15 @@
         <BoxContainer HorizontalExpand="True" VerticalExpand="True" Orientation="Horizontal">
             <GridContainer HorizontalExpand="True" VerticalExpand="True" Columns="2">
                 <!-- Crafts container -->
-                <ScrollContainer HorizontalExpand="True" VerticalExpand="True" MinSize="0 200">
-                    <BoxContainer Name="CraftsContainer" Orientation="Vertical" HorizontalExpand="True"/>
-                </ScrollContainer>
+                <BoxContainer Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
+                    <LineEdit Name="SearchBar"
+                              PlaceHolder="{Loc 'construction-menu-search'}"
+                              HorizontalExpand="True"
+                              Margin="0 0 0 4"/>
+                    <ScrollContainer HorizontalExpand="True" VerticalExpand="True" MinSize="0 200">
+                        <BoxContainer Name="CraftsContainer" Orientation="Vertical" HorizontalExpand="True"/>
+                    </ScrollContainer>
+                </BoxContainer>
 
                 <!-- Craft view -->
                 <BoxContainer HorizontalExpand="True" VerticalExpand="True" Orientation="Vertical">

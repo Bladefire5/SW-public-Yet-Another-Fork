@@ -1,7 +1,7 @@
 - type: imperialListing
   id: MedievalSpellCursedFetter
-  name: ent-MedievalActionCursedFetter
-  description: ent-MedievalActionCursedFetter
+  name: medieval-spell-speach-cursed-fetter-beginner-name
+  description: medieval-spell-speach-cursed-fetter-beginner-desc
   productAction: MedievalActionCursedFetter
   priority: 7
   productUpgradeId:

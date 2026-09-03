@@ -1,4 +1,6 @@
 using System.Numerics;
+using System.Collections.Generic;
+using Content.Server.Imperial.Medieval.Ships;
 using Content.Server.Shuttles.Components;
 using Content.Server.Shuttles.Systems;
 using Content.Shared.Examine;
@@ -24,11 +26,15 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
     [Dependency] private readonly ShuttleSystem _shuttle = default!;
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedSkillsSystem _skills = default!;
+    [Dependency] private readonly MedievalAnchorSystem _anchor = default!;
     [Dependency] private readonly AppearanceSystem _appearance = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly TransformSystem _transform = default!;
     [Dependency] private readonly IMapManager _mapManager = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
+    [Dependency] private readonly ShipGridSystem _shipGrid = default!;
+
+    private readonly HashSet<EntityUid> _shipsStoppedByAnchors = new();
 
     public override void Initialize()
     {
@@ -36,6 +42,8 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
         SubscribeLocalEvent<MedievalAnchorComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<MedievalAnchorComponent, ToggleAnchorEvent>(OnToggleAnchor);
         SubscribeLocalEvent<MedievalAnchorComponent, ExaminedEvent>(OnExamine);
+        SubscribeLocalEvent<ShipGridComponent, ShipAnchorStateChangedEvent>(OnShipAnchorStateChanged);
+        SubscribeLocalEvent<ShipGridComponent, ComponentShutdown>(OnShipGridShutdown);
     }
 
     private void OnStartup(EntityUid uid, MedievalAnchorComponent component, ComponentStartup args)
@@ -45,14 +53,12 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
 
     private void OnMapInit(EntityUid uid, MedievalAnchorComponent component, MapInitEvent args)
     {
-        if (!TryGetShip(uid, out var ship, out var shuttle, out var body))
+        if (!TryGetShip(uid, out var ship, out _, out _))
             return;
 
-        var drowning = EnsureComp<ShipDrowningComponent>(ship);
-        SetWaveProtection(uid, component, drowning, component.Lowered);
-
-        if (component.Lowered)
-            StopShip(ship, shuttle, body);
+        EnsureComp<ShipDrowningComponent>(ship);
+        SetWaveProtection(uid, component, component.Lowered);
+        _shipGrid.NotifyAnchorChanged(uid, component);
     }
 
     private void OnToggleAnchor(EntityUid uid, MedievalAnchorComponent component, ToggleAnchorEvent args)
@@ -62,43 +68,68 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
             if (args.Cancelled ||
                 args.Handled ||
                 args.Target != uid ||
-                component.ActiveUser != args.User ||
+                _anchor.GetActiveUser(uid) != args.User ||
                 !_skills.HasSkill(args.User, SharedSkillsSystem.StrengthId))
             {
                 return;
             }
 
-            if (!TryGetShip(uid, out var ship, out var shuttle, out var body))
+            if (!TryGetShip(uid, out var ship, out _, out _))
                 return;
 
-            var drowning = EnsureComp<ShipDrowningComponent>(ship);
-            SetLowered(uid, component, ship, shuttle, body, drowning, !component.Lowered);
+            EnsureComp<ShipDrowningComponent>(ship);
+            SetLowered(uid, component, !component.Lowered);
             _audio.PlayPvs(MedievalShipSounds.AnchorUse, uid);
             args.Handled = true;
         }
         finally
         {
-            ClearActiveUser(uid, component);
+            _anchor.ClearActiveUser(uid);
         }
     }
 
     private void SetLowered(
         EntityUid anchor,
         MedievalAnchorComponent component,
-        EntityUid ship,
-        ShuttleComponent shuttle,
-        PhysicsComponent body,
-        ShipDrowningComponent drowning,
         bool lowered)
     {
-        if (lowered)
-            StopShip(ship, shuttle, body);
-        else
-            StartShip(ship, shuttle, body);
-
         component.Lowered = lowered;
-        SetWaveProtection(anchor, component, drowning, lowered);
+        Dirty(anchor, component);
+        SetWaveProtection(anchor, component, lowered);
         UpdateVisuals(anchor, component);
+        _shipGrid.NotifyAnchorChanged(anchor, component);
+    }
+
+    private void OnShipAnchorStateChanged(
+        Entity<ShipGridComponent> entity,
+        ref ShipAnchorStateChangedEvent args)
+    {
+        if (TerminatingOrDeleted(entity))
+            return;
+
+        if (!TryComp<ShuttleComponent>(entity, out var shuttle) ||
+            !TryComp<PhysicsComponent>(entity, out var body))
+        {
+            return;
+        }
+
+        if (args.HasLoweredAnchors)
+        {
+            if (!shuttle.Enabled)
+                return;
+
+            StopShip(entity, shuttle, body);
+            _shipsStoppedByAnchors.Add(entity);
+        }
+        else if (_shipsStoppedByAnchors.Remove(entity))
+        {
+            StartShip(entity, shuttle, body);
+        }
+    }
+
+    private void OnShipGridShutdown(Entity<ShipGridComponent> entity, ref ComponentShutdown args)
+    {
+        _shipsStoppedByAnchors.Remove(entity);
     }
 
     private void StopShip(EntityUid ship, ShuttleComponent shuttle, PhysicsComponent body)
@@ -120,15 +151,16 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
     private void SetWaveProtection(
         EntityUid anchor,
         MedievalAnchorComponent component,
-        ShipDrowningComponent drowning,
         bool lowered)
     {
         TimeSpan? disabledAt = null;
+        var waveDisableDelay = float.IsFinite(component.WaveDisableDelay)
+            ? MathF.Max(0f, component.WaveDisableDelay)
+            : 0f;
         if (lowered && IsIslandInRange(anchor, component.IslandSearchRange))
-            disabledAt = _timing.CurTime + TimeSpan.FromSeconds(MathF.Max(0f, component.WaveDisableDelay));
+            disabledAt = _timing.CurTime + TimeSpan.FromSeconds(waveDisableDelay);
 
-        component.WavesDisabledAt = disabledAt;
-        drowning.WavesDisabledAt = disabledAt;
+        _shipGrid.SetAnchorWaveProtection(anchor, disabledAt);
     }
 
     private bool TryGetShip(
@@ -158,7 +190,7 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
 
     private bool IsIslandInRange(EntityUid anchor, float range)
     {
-        if (range <= 0f)
+        if (!float.IsFinite(range) || range <= 0f)
             return false;
 
         var transform = Transform(anchor);
@@ -199,7 +231,7 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
             return;
         }
 
-        if (component.WavesDisabledAt is not { } disabledAt)
+        if (_shipGrid.GetAnchorWaveProtection(uid) is not { } disabledAt)
         {
             args.PushMarkup(Loc.GetString("examine-anchor-waves-will-not-disable"));
             return;
@@ -222,12 +254,4 @@ public sealed class ServerMedievalAnchorSystem : EntitySystem
         _appearance.SetData(uid, MedievalAnchorVisuals.Lowered, component.Lowered);
     }
 
-    private void ClearActiveUser(EntityUid uid, MedievalAnchorComponent component)
-    {
-        if (component.ActiveUser == null)
-            return;
-
-        component.ActiveUser = null;
-        Dirty(uid, component);
-    }
 }

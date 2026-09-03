@@ -40,6 +40,9 @@ medieval-store-spells-light-magic-light-beginner-desc = Summon a small glowing s
 
 medieval-store-spells-magic-light-flash-beginner-name = Magic light
 
+medieval-store-spells-light-magic-light-middle-name = Light sphere
+medieval-store-spells-light-magic-light-middle-desc = Summons a bright glowing sphere that orbits around you.
+
 # Lightning
 
 medieval-spell-speech-lightning = T̵̷̹̳͙͒͊͂͝O̧̙̗͌̓ͤ̀͝Ň͕͖ͮ̚I̴̢̨͈͖̜T͕̯̞͊̑ͣ́R̸̍̄̉̚U̬̞͈̽́S̷̫ͧͤͬ̑͞

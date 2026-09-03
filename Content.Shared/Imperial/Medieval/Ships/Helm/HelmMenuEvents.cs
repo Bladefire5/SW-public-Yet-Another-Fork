@@ -1,51 +1,50 @@
 using System;
-using Content.Shared.DoAfter;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Imperial.Medieval.Ships.Helm;
 
 [Serializable, NetSerializable]
-public enum HelmMenuAction : byte
-{
-    RotateLeft,
-    Center,
-    RotateRight
-}
-
-[Serializable, NetSerializable]
 public enum HelmUiKey : byte { Key }
 
 [Serializable, NetSerializable]
-public sealed class HelmBoundUserInterfaceState : BoundUserInterfaceState
+public sealed class HelmBoundUserInterfaceState : BoundUserInterfaceState, IEquatable<HelmBoundUserInterfaceState>
 {
     public float HelmRotation;
+    public float RotationStep;
 
-    public HelmBoundUserInterfaceState(float helmRotation)
+    public HelmBoundUserInterfaceState(float helmRotation, float rotationStep)
     {
         HelmRotation = helmRotation;
+        RotationStep = rotationStep;
+    }
+
+    public bool Equals(HelmBoundUserInterfaceState? other)
+    {
+        return other != null &&
+               HelmRotation.Equals(other.HelmRotation) &&
+               RotationStep.Equals(other.RotationStep);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is HelmBoundUserInterfaceState other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(HelmRotation, RotationStep);
     }
 }
 
 [Serializable, NetSerializable]
-public sealed class HelmMenuActionMessage : BoundUserInterfaceMessage
+public sealed class HelmRotationChangeMessage : BoundUserInterfaceMessage
 {
-    public HelmMenuAction Action;
+    public float HelmRotation;
+    public bool Turning;
 
-    public HelmMenuActionMessage(HelmMenuAction action)
+    public HelmRotationChangeMessage(float helmRotation, bool turning)
     {
-        Action = action;
+        HelmRotation = helmRotation;
+        Turning = turning;
     }
-}
-
-[Serializable, NetSerializable]
-public sealed partial class HelmActionDoAfterEvent : DoAfterEvent
-{
-    public HelmMenuAction Action;
-
-    public HelmActionDoAfterEvent(HelmMenuAction action)
-    {
-        Action = action;
-    }
-
-    public override DoAfterEvent Clone() => new HelmActionDoAfterEvent(Action);
 }

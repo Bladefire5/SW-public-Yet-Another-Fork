@@ -21,4 +21,7 @@ public sealed partial class ICCVars
     public static readonly CVarDef<int> SetHeightFlavorImages = CVarDef.Create("medieval.flavor_images_height", 256, CVar.REPLICATED | CVar.SERVER);
     public static readonly CVarDef<int> FlavorPlaytimeRequirement = CVarDef.Create("medieval.flavor_playtime_requirement", 4 * 60 * 60);
     // Imperial Medieval Flavor Images End
+
+    public static readonly CVarDef<int> PraisesPerRound = CVarDef.Create("medieval.praises_per_round", 3, CVar.SERVER);
+    public static readonly CVarDef<TimeSpan> PraiseCooldown = CVarDef.Create("medieval.praises_cooldown", TimeSpan.FromHours(3), CVar.SERVER);
 }

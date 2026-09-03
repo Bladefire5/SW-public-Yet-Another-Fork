@@ -140,7 +140,7 @@ public sealed class HealingSystem : EntitySystem
 
         // Update our self heal delay so it shortens as we heal more damage.
         if (args.User == target.Owner)
-            args.Args.Delay = healing.Delay * GetScaledHealingPenalty(target.Owner, healing.SelfHealPenaltyMultiplier);
+            args.Args.Delay = GetHealingDelay(args.User, target.Owner, healing); // imperial medieval edit
     }
 
     private bool HasDamage(Entity<HealingComponent> healing, Entity<DamageableComponent> target)
@@ -226,16 +226,7 @@ public sealed class HealingSystem : EntitySystem
             var msg = Loc.GetString("medical-item-popup-target", ("user", Identity.Entity(user, EntityManager)), ("item", healing.Owner));
             _popupSystem.PopupEntity(msg, target, target, PopupType.Medium);
         }
-        // Medieval Imperial Edit start
-        var healingSkill = 0f;
-        if (TryComp<SkillsComponent>(user, out var skills))
-        {
-            healingSkill = (skills.Levels["Intelligence"]-10)*0.25f;
-        }
-        var delay = isNotSelf
-            ? healing.Comp.Delay-TimeSpan.FromSeconds(healingSkill)
-            : healing.Comp.Delay * GetScaledHealingPenalty(target, healing.Comp.SelfHealPenaltyMultiplier)-TimeSpan.FromSeconds(healingSkill);
-        // Medieval Imperial Edit end
+        var delay = GetHealingDelay(user, target.Owner, healing.Comp);  // imperial medieval intelligence delay
         var doAfterEventArgs =
             new DoAfterArgs(EntityManager, user, delay, new HealingDoAfterEvent(), target, target: target, used: healing)
             {
@@ -248,6 +239,18 @@ public sealed class HealingSystem : EntitySystem
 
         _doAfter.TryStartDoAfter(doAfterEventArgs);
         return true;
+    }
+
+    private TimeSpan GetHealingDelay(EntityUid user, EntityUid target, HealingComponent healing) // imperial medieval method
+    {
+        var delay = user != target
+            ? healing.Delay
+            : healing.Delay * GetScaledHealingPenalty(target, healing.SelfHealPenaltyMultiplier);
+
+        if (TryComp<SkillsComponent>(user, out var skills))
+            delay -= TimeSpan.FromSeconds((skills.Levels["Intelligence"] - 10) * 0.25f);
+
+        return delay;
     }
 
     /// <summary>

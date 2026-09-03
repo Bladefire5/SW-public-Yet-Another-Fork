@@ -4,6 +4,9 @@
 ent-MercContract = Контракт: устранение
 
 merc-contract-description = Устраните {$name} по профессии {$job}. Оплата за работу: {$payout}
+merc-contract-target-window-title = Цель контракта
+merc-contract-target-window-title-with-name = Цель контракта: {$name}
+merc-contract-target-missing = Цель контракта не указана.
 
 trait-medieval-bounty = Награда за голову
 trait-medieval-bounty-desc = Вы обокрали одного человека и смогли унести его ревенты с собой на остров, однако он узнал это и объявил награду за вашу голову. Повышенный стартовый капитал, шанс появиться на доске розыска у наемников

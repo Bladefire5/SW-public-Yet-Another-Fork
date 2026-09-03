@@ -73,6 +73,41 @@
   result: MedievalWoodenSword
 
 - type: CP14Recipe
+  id: MedievalWoodenDagger
+  craftTime: 5
+  stacks:
+    WoodPlank: 2
+  result: MedievalWoodenDagger
+
+- type: CP14Recipe
+  id: MedievalWoodenClaymore
+  craftTime: 5
+  stacks:
+    WoodPlank: 4
+  result: MedievalWoodenClaymore
+
+- type: CP14Recipe
+  id: MedievalWoodenMace
+  craftTime: 5
+  stacks:
+    WoodPlank: 3
+  result: MedievalWoodenMace
+
+- type: CP14Recipe
+  id: MedievalWoodenMaceHeavy
+  craftTime: 5
+  stacks:
+    WoodPlank: 3
+  result: MedievalWoodenMaceHeavy
+
+- type: CP14Recipe
+  id: MedievalWoodenSpear
+  craftTime: 5
+  stacks:
+    WoodPlank: 3
+  result: MedievalWoodenSpear
+
+- type: CP14Recipe
   id: MedievalDecorMogila1Craft
   craftTime: 5
   stacks:
@@ -379,6 +414,24 @@
     MedievalCoal: 10
     MedievalGlinaFormaReady: 10
   result: MedievalIngotGold10
+
+- type: CP14Recipe
+  id: MedievalSilverOre
+  craftTime: 2
+  stacks:
+    MedievalSilverOre: 2
+    MedievalCoal: 1
+    MedievalGlinaFormaReady: 1
+  result: MedievalIngotSilver
+
+- type: CP14Recipe
+  id: MedievalSilverOre10
+  craftTime: 20
+  stacks:
+    MedievalSilverOre: 20
+    MedievalCoal: 10
+    MedievalGlinaFormaReady: 10
+  result: MedievalIngotSilver10
 
 
 
@@ -1205,7 +1258,7 @@
   id: MedievalSilverCup
   craftTime: 15
   stacks:
-    MedievalIronIngot: 2
+    MedievalSilver: 2
   result: MedievalSilverCup
 
 - type: CP14Recipe
@@ -1613,6 +1666,15 @@
   result: MedievalHammerBlacksmith
 
 - type: CP14Recipe
+  id: MedievalBoardingHook
+  craftTime: 3
+  iconOverride: MedievalBoardingHook
+  stacks:
+    MedievalRope: 2
+    MedievalIronIngot: 2
+  result: MedievalBoardingHook
+
+- type: CP14Recipe
   id: MedievalSewingNeedle
   craftTime: 5
   iconOverride: MedievalSewingNeedle
@@ -1765,6 +1827,17 @@
     MedievalSteelIngot: 31
     WoodPlank: 6
   result: WorkpieceMedievalIronZweihanderSteel
+
+- type: CP14Recipe
+  id: MedievalIronClaymoreSilver
+  craftTime: 22
+  iconOverride: MedievalIronClaymoreSilver
+  stacks:
+    MedievalGold: 1
+    MedievalSilver: 11
+    MedievalIronIngot: 20
+    WoodPlank: 6
+  result: WorkpieceMedievalIronClaymoreSilver
 
 - type: CP14Recipe
   id: MedievalStoneWallCraft

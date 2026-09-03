@@ -229,7 +229,7 @@
   roundStart: true
   prototype: MobDarkElf
   sprites: MobDarkElfSprites
-  markingLimits: MobHumanMarkingLimits
+  markingLimits: MobDarkElfMarkingLimits
   dollPrototype: MobDarkElfDummy
   skinColoration: DarkElfColors
 
@@ -242,6 +242,7 @@
     Snout: MobHumanoidAnyMarking
     Chest: MobDarkElfTorso
     Eyes: MobHumanoidEyes
+    HeadTop: MobHumanoidAnyMarking
     LArm: MobDarkElfLArm
     RArm: MobDarkElfRArm
     LHand: MobDarkElfLHand
@@ -252,6 +253,26 @@
     RFoot: MobDarkElfRFoot
     #Tail: MobHumanoidAnyMarking # imperial HairAndTail
     #HeadTop: MobHumanoidAnyMarking # imperial HairAndTail
+
+    # Special: MobHumanoidAnyMarking
+    # Head: MobHumanHead
+    # Hair: MobHumanoidAnyMarking
+    # FacialHair: MobHumanoidAnyMarking
+    # Snout: MobHumanoidAnyMarking
+    # UndergarmentTop: MobHumanoidAnyMarking
+    # UndergarmentBottom: MobHumanoidAnyMarking
+    # Chest: MobHumanTorso
+    # Eyes: MobHumanoidEyes
+    # HeadTop: MobHumanoidAnyMarking
+    # LArm: MobHumanLArm
+    # RArm: MobHumanRArm
+    # LHand: MobHumanLHand
+    # RHand: MobHumanRHand
+    # LLeg: MobHumanLLeg
+    # RLeg: MobHumanRLeg
+    # LFoot: MobHumanLFoot
+    # RFoot: MobHumanRFoot
+    # Tail: MobHumanoidAnyMarking # imperial HairAndTail
 
 - type: humanoidBaseSprite
   id: MobDarkElfHead

@@ -5,6 +5,7 @@
   id: MedievalMotherBossBaseDragon
   description: big dragon
   components:
+    - type: ForcedSleepImmune
     - type: Hands
       hands:
         hand_left:

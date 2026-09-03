@@ -1,7 +1,7 @@
 using System.Linq;
 using Content.Server.Ghost.Roles.Components;
+using Content.Server.Imperial.Medieval.Recipient;
 using Content.Server.Mind;
-using Content.Server.Roles.Jobs;
 using Content.Server.Station.Systems;
 using Content.Server.Storage.Components;
 using Content.Server.Stack;
@@ -14,13 +14,12 @@ using Content.Shared.Hands;
 using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Humanoid;
-using Content.Shared.Humanoid.Markings;
 using Content.Shared.Imperial.Medieval.Courier;
+using Content.Shared.Imperial.Medieval.Recipient;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Inventory.Events;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Popups;
-using Content.Shared.Preferences;
 using Content.Shared.Roles.Components;
 using Content.Shared.Storage;
 using Content.Shared.UserInterface;
@@ -48,7 +47,7 @@ public sealed class CourierSystem : EntitySystem
     [Dependency] private readonly AudioSystem _audio = default!;
     [Dependency] private readonly SharedPopupSystem _popup = default!;
     [Dependency] private readonly MindSystem _mind = default!;
-    [Dependency] private readonly JobSystem _job = default!;
+    [Dependency] private readonly RecipientDataSystem _recipientData = default!;
     [Dependency] private readonly StationSystem _station = default!;
     [Dependency] private readonly StationJobsSystem _stationJobs = default!;
     private TimeSpan _nextMinuteCheck;
@@ -303,75 +302,9 @@ public sealed class CourierSystem : EntitySystem
         _ui.OpenUi(uid, LetterRecipientUiKey.Key, user);
     }
 
-    private LetterRecipientData? GetLetterRecipientData(LetterComponent letter)
+    private RecipientData? GetLetterRecipientData(LetterComponent letter)
     {
         return letter.Recipient is null ? null : letter.RecipientData;
-    }
-
-    private LetterRecipientData? BuildRecipientData(EntityUid recipient)
-    {
-        var profile = BuildRecipientProfile(recipient);
-        if (profile == null)
-            return null;
-
-        var jobName = Loc.GetString("job-name-unknown");
-        string? jobId = null;
-
-        if (_mind.TryGetMind(recipient, out var mindUid, out _))
-        {
-            if (_job.MindTryGetJobName(mindUid, out var recipientJobName) &&
-                !string.IsNullOrWhiteSpace(recipientJobName))
-            {
-                jobName = recipientJobName;
-            }
-
-            if (_job.MindTryGetJobId(mindUid, out var recipientJobId) &&
-                recipientJobId != null)
-            {
-                jobId = recipientJobId.Value.ToString();
-            }
-        }
-
-        return new LetterRecipientData(profile, jobName, jobId);
-    }
-
-    private HumanoidCharacterProfile? BuildRecipientProfile(EntityUid recipient)
-    {
-        if (!TryComp<HumanoidAppearanceComponent>(recipient, out var humanoid))
-            return null;
-
-        var appearance = new HumanoidCharacterAppearance
-        {
-            EyeColor = humanoid.EyeColor,
-            SkinColor = humanoid.SkinColor,
-            Markings = humanoid.MarkingSet.GetForwardEnumerator().ToList(),
-        };
-
-        if (humanoid.MarkingSet.TryGetCategory(MarkingCategories.Hair, out var hairMarkings) &&
-            hairMarkings.Count > 0)
-        {
-            var hair = hairMarkings[0];
-            appearance = appearance.WithHairStyleName(hair.MarkingId);
-            if (hair.MarkingColors.Count > 0)
-                appearance = appearance.WithHairColor(hair.MarkingColors[0]);
-        }
-
-        if (humanoid.MarkingSet.TryGetCategory(MarkingCategories.FacialHair, out var facialHairMarkings) &&
-            facialHairMarkings.Count > 0)
-        {
-            var facialHair = facialHairMarkings[0];
-            appearance = appearance.WithFacialHairStyleName(facialHair.MarkingId);
-            if (facialHair.MarkingColors.Count > 0)
-                appearance = appearance.WithFacialHairColor(facialHair.MarkingColors[0]);
-        }
-
-        return new HumanoidCharacterProfile()
-            .WithCharacterAppearance(appearance)
-            .WithSpecies(humanoid.Species)
-            .WithSex(humanoid.Sex)
-            .WithGender(humanoid.Gender)
-            .WithAge(humanoid.Age)
-            .WithName(Name(recipient));
     }
 
     private void SetLastCourierHeld(EntityUid uid, EntityUid courierUid)
@@ -447,7 +380,7 @@ public sealed class CourierSystem : EntitySystem
         CourierTradeOffer offer,
         EntityUid buyerUid,
         EntityUid recipient,
-        LetterRecipientData recipientData,
+        RecipientData recipientData,
         CourierPitComponent pit)
     {
         letter.FreeMailBuyBack = offer.FreeMailsCost;
@@ -541,7 +474,7 @@ public sealed class CourierSystem : EntitySystem
         }
     }
 
-    private (EntityUid Entity, LetterRecipientData Data)? AssignRecipient(CourierPitComponent pit)
+    private (EntityUid Entity, RecipientData Data)? AssignRecipient(CourierPitComponent pit)
     {
         var activeCandidates = GetActiveRecipientCandidates();
 
@@ -568,7 +501,7 @@ public sealed class CourierSystem : EntitySystem
                 pit.Weight[candidate] = Math.Max(1, pit.Weight[candidate] + 1);
         }
 
-        var data = BuildRecipientData(winner);
+        var data = _recipientData.GetRecipientData(winner);
         return data == null ? null : (winner, data);
     }
 

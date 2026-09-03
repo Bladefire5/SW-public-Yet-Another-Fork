@@ -27,6 +27,34 @@
       muzzleFlash: null
 
 - type: entity
+  id: MedievalProjectileAcidSmallDragon
+  parent: BaseBulletTrigger
+  name: fireball
+  description: You better GITTAH WEIGH.
+  categories: [ HideSpawnMenu ]
+  components:
+    - type: Projectile
+      damage:
+        types:
+          Caustic: 20
+    - type: Sprite
+      sprite: /Textures/Imperial/Medieval/Myrmex/Structures/Turret/myrmex_acid.rsi
+      layers:
+        - state: myrmex_acid
+    - type: SingularityDistortion
+      falloffPower: 3
+      intensity: 100
+    - type: SmokeOnTrigger
+      duration: 35
+      spreadAmount: 9
+      solution:
+        reagents:
+        - ReagentId: MedievalMyrmexPoison
+          Quantity: 60
+    - type: Ammo
+      muzzleFlash: null
+
+- type: entity
   id: MedievalProjectileThunderDragon
   parent: BaseBulletTrigger
   name: fireball
@@ -37,6 +65,32 @@
       damage:
         types:
           Shock: 18
+    - type: Sprite
+      sprite: /Textures/Imperial/Medieval/Myrmex/Structures/Turret/myrmex_acid.rsi
+      layers:
+        - state: myrmex_acid
+    - type: SingularityDistortion
+      falloffPower: 3
+      intensity: 100
+    - type: ExplodeOnTrigger
+    - type: Explosive
+      explosionType: LightningRune
+    - type: SpawnOnTrigger
+      proto: MedievalLightningEffect
+    - type: Ammo
+      muzzleFlash: null
+
+- type: entity
+  id: MedievalProjectileThunderSmallDragon
+  parent: BaseBulletTrigger
+  name: fireball
+  description: You better GITTAH WEIGH.
+  categories: [ HideSpawnMenu ]
+  components:
+    - type: Projectile
+      damage:
+        types:
+          Shock: 12
     - type: Sprite
       sprite: /Textures/Imperial/Medieval/Myrmex/Structures/Turret/myrmex_acid.rsi
       layers:
@@ -67,3 +121,33 @@
   impactFlash:
     sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
     state: impact_omni
+
+- type: hitscan
+  id: MedievalProjectileWaterSphereSmallDragon
+  damage:
+    types:
+      Cold: 12
+  muzzleFlash:
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
+    state: muzzle_blue
+  travelFlash:
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
+    state: beam_blue
+  impactFlash:
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
+    state: impact_blue
+
+- type: hitscan
+  id: MedievalProjectileWaterSphereIceDragon
+  damage:
+    types:
+      Cold: 25
+  muzzleFlash:
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
+    state: muzzle_blue
+  travelFlash:
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
+    state: beam_blue
+  impactFlash:
+    sprite: Objects/Weapons/Guns/Projectiles/projectiles.rsi
+    state: impact_blue

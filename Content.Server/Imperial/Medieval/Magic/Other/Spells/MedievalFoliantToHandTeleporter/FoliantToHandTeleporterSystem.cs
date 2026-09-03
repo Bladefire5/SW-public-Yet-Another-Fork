@@ -1,11 +1,13 @@
 using Content.Server.Imperial.Medieval.Magic.BindStoreOnEquip;
+using Content.Server.Imperial.Medieval.Magic.MedievalSpawnInFreeSlot;
 using Content.Shared.Imperial.Medieval.Magic;
-using Content.Shared.Hands.EntitySystems;
 
 namespace Content.Server.Imperial.Medieval.Magic.MedievalFoliantToHandTeleporter;
+
 public sealed partial class FoliantToHandTeleporterSystem : EntitySystem
 {
-    [Dependency] private readonly SharedHandsSystem _handsSystem = default!;
+    [Dependency] private readonly MedievalSpawnInFreeSlotSystem _placementSystem = default!;
+    [Dependency] private readonly BindStoreOnEquipSystem _grimoireSystem = default!;
 
     public override void Initialize()
     {
@@ -15,16 +17,23 @@ public sealed partial class FoliantToHandTeleporterSystem : EntitySystem
 
     private void FindFoliant(EntityUid uid, FoliantToHandTeleporterComponent component, MedievalAfterSpawnEntityBySpellEvent args)
     {
-        EntityUid playerUid = args.Performer;
-        var query = EntityQueryEnumerator<BindStoreOnEquipComponent>();
+        var playerUid = args.Performer;
+        if (!TryComp<GrimoireOwnerComponent>(playerUid, out var owner))
+            return;
 
-        while (query.MoveNext(out var folliantUID, out var bindComp))
+        var foliantUid = owner.GrimoireUid;
+        if (TerminatingOrDeleted(foliantUid) ||
+            !TryComp<BindStoreOnEquipComponent>(foliantUid, out var grimoire) ||
+            grimoire.OwnerUid != playerUid)
         {
-            if (bindComp.BindedEntity == playerUid)
+            foliantUid = Spawn(owner.GrimoirePrototype, Transform(playerUid).Coordinates);
+            if (!_grimoireSystem.TryRestoreGrimoire(playerUid, foliantUid, owner))
             {
-                _handsSystem.TryForcePickupAnyHand(playerUid, folliantUID);
-                break;
+                QueueDel(foliantUid);
+                return;
             }
         }
+
+        _placementSystem.TryPlaceInFreeSlot(playerUid, foliantUid);
     }
 }

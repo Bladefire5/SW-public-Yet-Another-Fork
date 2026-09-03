@@ -1,5 +1,5 @@
 using Content.Shared.Store;
-using Content.Shared.Preferences;
+using Content.Shared.Imperial.Medieval.Recipient;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
@@ -91,27 +91,23 @@ public enum LetterRecipientUiKey : byte
 }
 
 [Serializable, NetSerializable]
-public sealed class LetterRecipientBoundUserInterfaceState : BoundUserInterfaceState
+public enum LetterRecipientUiMode : byte
 {
-    public readonly LetterRecipientData? Recipient;
-
-    public LetterRecipientBoundUserInterfaceState(LetterRecipientData? recipient)
-    {
-        Recipient = recipient;
-    }
+    Letter,
+    Contract,
 }
 
 [Serializable, NetSerializable]
-public sealed class LetterRecipientData
+public sealed class LetterRecipientBoundUserInterfaceState : BoundUserInterfaceState
 {
-    public readonly HumanoidCharacterProfile Profile;
-    public readonly string JobName;
-    public readonly string? JobId;
+    public readonly RecipientData? Recipient;
+    public readonly LetterRecipientUiMode Mode;
 
-    public LetterRecipientData(HumanoidCharacterProfile profile, string jobName, string? jobId)
+    public LetterRecipientBoundUserInterfaceState(
+        RecipientData? recipient,
+        LetterRecipientUiMode mode = LetterRecipientUiMode.Letter)
     {
-        Profile = profile;
-        JobName = jobName;
-        JobId = jobId;
+        Recipient = recipient;
+        Mode = mode;
     }
 }

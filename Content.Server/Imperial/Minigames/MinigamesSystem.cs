@@ -64,6 +64,15 @@ public sealed class MinigamesSystem : SharedMinigamesSystem
         RemComp<T>(player);
     }
 
+    public bool TryWinMinigame(EntityUid player, InMinigameComponent? component = null)
+    {
+        if (!Resolve(player, ref component)) return false;
+        if (component.ActiveMinigame == null) return false;
+
+        SetWinner(player, component.ActiveMinigame);
+        return true;
+    }
+
     #region Minigames Start
 
     public override bool TryStartMinigame(EntityUid player, string minigameId)

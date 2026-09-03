@@ -1,4 +1,5 @@
 using System;
+using Content.Shared.Stacks;
 using Content.Shared.Store;
 using Robust.Shared.Prototypes;
 
@@ -21,6 +22,9 @@ public sealed partial class ShipBuyTerminalComponent : Component
 
     [DataField]
     public ProtoId<CurrencyPrototype> Currency = "Revent";
+
+    [DataField]
+    public ProtoId<StackPrototype> CurrencyStack = "MedievalRevent";
 
     public TimeSpan PurchaseLockedUntil;
 }

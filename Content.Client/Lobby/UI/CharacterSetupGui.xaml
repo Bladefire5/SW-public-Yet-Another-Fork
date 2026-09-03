@@ -13,6 +13,9 @@
                        VAlign="Center"
                        StyleClasses="LabelHeadingBigger" />
                 <Control HorizontalExpand="True" />
+                <Button Name="PraisesButton"
+                        Text="{Loc 'praises-window-title'}"
+                        StyleClasses="ButtonBig"/>
                 <Button Name="AchievementsButton"
                         Text="{Loc 'achievement-ui-title'}"
                         StyleClasses="ButtonBig"

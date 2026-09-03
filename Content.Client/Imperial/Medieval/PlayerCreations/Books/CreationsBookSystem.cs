@@ -48,7 +48,7 @@ public sealed class CreationsBookSystem : EntitySystem
     {
         if (_playerManager.LocalUser == null)
             return;
-        var ev = new SendCreationBookEvent(content, name, description, author, _playerManager.LocalUser.Value);
+        var ev = new SendCreationBookEvent(content, name, description, author);
         RaiseNetworkEvent(ev);
     }
 }

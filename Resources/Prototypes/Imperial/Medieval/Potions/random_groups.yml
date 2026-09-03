@@ -161,7 +161,7 @@
   - medievalbestpoison
   - medievalbeststimulant
   reactants: 1
-  potionCount: 1
+  potionCount: 2
   priority: 3
   usedGroups:
   - EasyPack

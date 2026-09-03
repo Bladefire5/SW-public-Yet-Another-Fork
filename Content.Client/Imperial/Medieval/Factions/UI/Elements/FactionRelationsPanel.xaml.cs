@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using Content.Client.Imperial.Medieval.Factions;
-using Content.Client.Stylesheets;
 using Content.Shared.Imperial.Medieval.Factions;
 using Content.Shared.Imperial.Medieval.Factions.Prototypes;
 using Microsoft.Extensions.Logging;
@@ -11,7 +10,6 @@ using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Client.Utility;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 using Serilog;
 using Content.Shared.Imperial.Medieval.Factions.Components;
@@ -21,9 +19,7 @@ namespace Content.Client.Imperial.Medieval.Factions.UI.Elements;
 public sealed partial class FactionRelationsPanel : GridContainer
 {
     [Dependency] private IPrototypeManager _proto = default!;
-    [Dependency] private IGameTiming _timing = default!;
     public Action<ProtoId<MedievalFactionPrototype>>? WarPressed;
-    private (Button, TimeSpan)? _time;
 
     public FactionRelationsPanel(FactionMenuData data)
     {
@@ -77,36 +73,13 @@ public sealed partial class FactionRelationsPanel : GridContainer
                 HorizontalExpand = true,
                 VerticalExpand = true,
                 SizeFlagsStretchRatio = 1,
-                Text = "Война",
+                Text = Loc.GetString("faction-war-button"),
                 Disabled = relations.GetValueOrDefault(userFaction, "Neutral") == "War" || _proto.Index(userFaction).BlockedRelations.Contains(faction),
                 Margin = new(2)
             };
 
-            button.OnPressed += args =>
-            {
-                if (!_time.HasValue)
-                {
-                    button.StyleClasses.Add(StyleNano.StyleClassButtonColorRed);
-                    button.Text = "Подтвердить";
-                    _time = (button, _timing.CurTime + TimeSpan.FromSeconds(3));
-                }
-                else if (_time.Value.Item1 == button)
-                {
-                    button.StyleClasses.Remove(StyleNano.StyleClassButtonColorRed);
-                    button.Text = "Война";
-                    button.Disabled = true;
-                    WarPressed?.Invoke(faction);
-                }
-                else
-                {
-                    _time.Value.Item1.StyleClasses.Remove(StyleNano.StyleClassButtonColorRed);
-                    _time.Value.Item1.Text = "Война";
-
-                    button.StyleClasses.Add(StyleNano.StyleClassButtonColorRed);
-                    button.Text = "Подтвердить";
-                    _time = (button, _timing.CurTime + TimeSpan.FromSeconds(3));
-                }
-            };
+            // DeclareWarMenu fires event when user confirms a war
+            button.OnPressed += _ => WarPressed?.Invoke(faction);
 
             box.AddChild(button);
         }
@@ -245,20 +218,6 @@ public sealed partial class FactionRelationsPanel : GridContainer
 
             handle.DrawLine(leftTop + heightDiff, rightTop + heightDiff, Color.Gray);
             handle.DrawLine(leftTop + widthDiff, leftBottom + widthDiff, Color.Gray);
-        }
-    }
-
-    protected override void FrameUpdate(FrameEventArgs args)
-    {
-        base.FrameUpdate(args);
-        if (!_time.HasValue)
-            return;
-
-        if (_time.Value.Item2 <= _timing.CurTime)
-        {
-            _time.Value.Item1.StyleClasses.Remove(StyleNano.StyleClassButtonColorRed);
-            _time.Value.Item1.Text = "Война";
-            _time = null;
         }
     }
 }

@@ -47,31 +47,43 @@ public sealed class IslandRadialGenerationSystem : EntitySystem
         var grid = new IslandSpatialGrid(cellSize);
         var gen = new IslandRejectionGenerator(config.InterIslandsThreshold, config.MaxPlacementAttempts);
 
-        var placements = new List<IslandPlacement>();
-        placements.AddRange(gen.Generate(
-            new IslandRing(config.LowIslandMinRange, config.MediumIslandMinRange),
-            lowPool,
-            config.LowIslandCount,
-            grid,
-            rng));
-        placements.AddRange(gen.Generate(
-            new IslandRing(config.MediumIslandMinRange, config.HighIslandMinRange),
-            medPool,
-            config.MediumIslandCount,
-            grid,
-            rng));
-        placements.AddRange(gen.Generate(
-            new IslandRing(config.HighIslandMinRange, config.HighIslandMaxRange),
-            highPool,
-            config.HighIslandCount,
-            grid,
-            rng));
+        var placements = new List<(IslandPlacement Placement, IslandGenerationGroup GenerationGroup)>();
+        foreach (var placement in gen.Generate(
+                     new IslandRing(config.LowIslandMinRange, config.MediumIslandMinRange),
+                     lowPool,
+                     config.LowIslandCount,
+                     grid,
+                     rng))
+        {
+            placements.Add((placement, IslandGenerationGroup.Low));
+        }
 
-        foreach (var placement in placements)
+        foreach (var placement in gen.Generate(
+                     new IslandRing(config.MediumIslandMinRange, config.HighIslandMinRange),
+                     medPool,
+                     config.MediumIslandCount,
+                     grid,
+                     rng))
+        {
+            placements.Add((placement, IslandGenerationGroup.Medium));
+        }
+
+        foreach (var placement in gen.Generate(
+                     new IslandRing(config.HighIslandMinRange, config.HighIslandMaxRange),
+                     highPool,
+                     config.HighIslandCount,
+                     grid,
+                     rng))
+        {
+            placements.Add((placement, IslandGenerationGroup.High));
+        }
+
+        foreach (var (placement, generationGroup) in placements)
         {
             if (_mapLoader.TryLoadGrid(mapId, placement.Path, out var island, offset: placement.Pos))
             {
-                EnsureComp<IslandComponent>(island.Value.Owner);
+                var islandComponent = EnsureComp<IslandComponent>(island.Value.Owner);
+                islandComponent.GenerationGroup = generationGroup;
                 RemComp<ImplicitRoofComponent>(island.Value.Owner);
             }
         }

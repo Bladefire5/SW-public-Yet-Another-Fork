@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using Content.Server.Imperial.Medieval.Achievements;
+using Content.Server.Imperial.Medieval.Recipient;
 using Content.Server.Chat.Managers;
 using Content.Server.Mind;
 using Content.Server.Roles.Jobs;
@@ -11,11 +12,15 @@ using Content.Server.Storage.EntitySystems;
 using Content.Shared.Imperial.Medieval.Achievements;
 using Content.Shared.Humanoid;
 using Content.Shared.Imperial.Medieval.BountyBoard;
+using Content.Shared.Imperial.Medieval.Courier;
 using Content.Shared.Interaction;
+using Content.Shared.Interaction.Events;
 using Content.Shared.Inventory;
 using Content.Shared.Mobs.Systems;
 using Content.Shared.Popups;
 using Content.Shared.Storage;
+using Content.Shared.UserInterface;
+using Robust.Server.GameObjects;
 using Robust.Server.Player;
 using Robust.Shared.Collections;
 using Robust.Shared.Random;
@@ -39,12 +44,15 @@ public sealed class BountyBoardSystem : EntitySystem
     [Dependency] private readonly IChatManager _chatManager = default!;
     [Dependency] private readonly IPlayerManager _playerManager = default!;
     [Dependency] private readonly AchievementSystem _achievement = default!;
+    [Dependency] private readonly RecipientDataSystem _recipientData = default!;
+    [Dependency] private readonly UserInterfaceSystem _ui = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<MercenaryTargetComponent, InteractUsingEvent>(OnTargetInteracted);
+        SubscribeLocalEvent<MercenaryContractComponent, UseInHandEvent>(OnContractUseInHand);
 
         SubscribeLocalEvent<MercenaryBountyBoardComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<MercenaryBountyTargetTraitComponent, MapInitEvent>(OnTargetInit);
@@ -114,6 +122,7 @@ public sealed class BountyBoardSystem : EntitySystem
         var contractComp = Comp<MercenaryContractComponent>(contractUid);
 
         contractComp.TargetUid = targetData.Target;
+        contractComp.TargetData = _recipientData.GetRecipientData(targetData.Target);
 
         var payout = _random.Next(contractComp.PayoutRange.X, contractComp.PayoutRange.Y);
         contractComp.Payout = payout;
@@ -126,6 +135,20 @@ public sealed class BountyBoardSystem : EntitySystem
         _metaData.SetEntityDescription(contractUid, description);
 
         return (contractUid, contractComp);
+    }
+
+    private void OnContractUseInHand(Entity<MercenaryContractComponent> ent, ref UseInHandEvent args)
+    {
+        if (args.Handled)
+            return;
+
+        var state = new LetterRecipientBoundUserInterfaceState(
+            ent.Comp.TargetData,
+            LetterRecipientUiMode.Contract);
+
+        _ui.SetUiState(ent.Owner, LetterRecipientUiKey.Key, state);
+        _ui.OpenUi(ent.Owner, LetterRecipientUiKey.Key, args.User);
+        args.Handled = true;
     }
 
     private void OnTargetInteracted(Entity<MercenaryTargetComponent> ent, ref InteractUsingEvent args)

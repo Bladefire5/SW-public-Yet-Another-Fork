@@ -4389,6 +4389,9 @@
           MedievalIngotGold:
             min: 1
             max: 7
+          MedievalIngotSilver:
+            min: 1
+            max: 7
           MedievalMedievalEbonitOreSpawner:
             min: 3
             max: 8

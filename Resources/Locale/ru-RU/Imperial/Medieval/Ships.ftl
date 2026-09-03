@@ -69,8 +69,8 @@ ent-ShipTradeHoleSouth = { ent-ShipTradeHole }
 ent-ShipTradeHoleWest = { ent-ShipTradeHole }
     .desc = { ent-ShipTradeHole.desc }
     .suffix = { "Средневековье, Запад" }
-ent-CaptainShipMegaphone = Корабельный рупор
-    .desc = Рупор для быстрой отдачи команд. Внимание за слишком частое использование команда может взбунтоваться!
+ent-CaptainShipMegaphone = корабельный рупор
+    .desc = Рупор для быстрой отдачи команд. Внимание, за слишком частое использование команда может взбунтоваться!
     .suffix = { "Средневековье" }
 ship-buy-terminal-ui-title = Корабельная верфь
 ship-buy-terminal-currency-name = ревентов
@@ -104,6 +104,7 @@ examine-anchor-waves-will-not-disable = [color=orange]Якорь опущен, �
 
 examine-carthographer-table-show-speed = Текущая скорость корабля:
 examine-carthographer-table-show-rotation = Текущий поворот корабля:
+medieval-cartographer-table-coordinates = X {$x}, Y {$y}
 
 # Главное меню
 Megaphone-menu-nav-combat = Бой

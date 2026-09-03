@@ -12,7 +12,7 @@
     sprite: Imperial/Medieval/Magic/MultiCurrency/Sleep/icons.rsi
     state: middle
   cost:
-    MagicMedievalVodka: 70
+    MagicMedievalVodka: 80
   categories:
   - MedievalVodkaSpells
   conditions:

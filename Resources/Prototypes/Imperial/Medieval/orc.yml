@@ -216,7 +216,7 @@
   roundStart: true
   prototype: MobOrc
   sprites: MobOrcSprites
-  markingLimits: MobHumanMarkingLimits
+  markingLimits: MobOrcMarkingLimits
   dollPrototype: MobOrcDummy
   skinColoration: OrcColors
 

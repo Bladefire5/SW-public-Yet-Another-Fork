@@ -19,6 +19,8 @@ public sealed class HelmBoundUserInterface : BoundUserInterface
         base.Open();
 
         _menu = this.CreateWindow<HelmMenu>();
+        _menu.RotationSyncRequested += OnRotationSyncRequested;
+        _menu.BeforeClose += OnMenuClosing;
     }
 
     protected override void UpdateState(BoundUserInterfaceState state)
@@ -29,5 +31,26 @@ public sealed class HelmBoundUserInterface : BoundUserInterface
             return;
 
         _menu.UpdateState(helmState);
+    }
+
+    private void OnRotationSyncRequested(float rotation, bool turning)
+    {
+        SendMessage(new HelmRotationChangeMessage(rotation, turning));
+    }
+
+    private void OnMenuClosing()
+    {
+        _menu?.SendFinalRotation();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (_menu != null)
+        {
+            _menu.RotationSyncRequested -= OnRotationSyncRequested;
+            _menu.BeforeClose -= OnMenuClosing;
+        }
+
+        base.Dispose(disposing);
     }
 }

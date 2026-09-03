@@ -1,0 +1,129 @@
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto1
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask1.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask1.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto2
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask2.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask2.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto3
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask3.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask3.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto4
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask4.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask4.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto5
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask5.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask5.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto6
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask6.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask6.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto7
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask7.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask7.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto8
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask8.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask8.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto9
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask9.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask9.rsi
+
+- type: entity
+  parent: ClothingMaskPullableBase
+  id: ClothingMaskFestivalEventScarlatto10
+  name: mask
+  description: mask
+  components:
+  - type: Item
+    size: Tiny
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask10.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Mask/mask10.rsi

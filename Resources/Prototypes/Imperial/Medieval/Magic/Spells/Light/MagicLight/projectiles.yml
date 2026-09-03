@@ -69,6 +69,19 @@
     - type: SpawnOnDespawn
       prototype: MedievalLightSphereDespawnEffect
 
+# Middle
+
+- type: entity
+  id: MedievalProjectileLightOrbiter
+  parent: MedievalProjectileLightFollower
+  components:
+    - type: PointLight
+      color: cyan
+      energy: 2
+      radius: 4.5
+    - type: MedievalProjectilePlayerFollower
+      orbitAroundTarget: true
+
 - type: entity
   id: MedievalLightSphereDespawnEffect
   components:

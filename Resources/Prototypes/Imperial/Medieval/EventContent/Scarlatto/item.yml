@@ -515,3 +515,142 @@
   components:
   - type: RDWeight
     value: 0.5
+
+- type: entity
+  parent: BaseStringInstrument
+  id: MedievalViolinInstrument
+  name: violin
+  description: string instrument
+  components:
+  - type: Blocking
+    passiveBlockModifier:
+      coefficients:
+        Blunt: 0.75
+        Slash: 0.5
+        Piercing: 0.5
+        Heat: 0.6
+    activeBlockModifier:
+      coefficients:
+        Blunt: 0.75
+        Slash: 0.5
+        Piercing: 0.5
+        Heat: 0.6
+      flatReductions:
+        Blunt: 1
+        Slash: 1
+        Piercing: 1
+  - type: Destructible
+    thresholds:
+      - trigger:
+          !type:DamageTrigger
+          damage: 12000
+        behaviors:
+          - !type:DoActsBehavior
+            acts: [ "Destruction" ]
+      - trigger:
+          !type:DamageTrigger
+          damage: 12000
+        behaviors:
+          - !type:DoActsBehavior
+            acts: [ "Destruction" ]
+          - !type:PlaySoundBehavior
+            sound:
+              collection: WoodDestroy
+          - !type:SpawnEntitiesBehavior
+            spawn:
+              MaterialWoodPlank:
+                min: 1
+                max: 1
+  - type: Damageable
+    damageContainer: Shield
+  - type: HealthExaminable
+    examinableTypes:
+    - Blunt
+    - Slash
+    - Piercing
+    - Heat
+    locPrefix: shield
+  - type: RDWeight
+    value: 2
+  - type: MeleeWeapon
+    clickDamageModifier: 0.7
+    wideAnimationRotation: -140
+    attackRate: 0.43
+    animation: CP14WeaponArcThrust
+    wideAnimation: CP14WeaponArcSlash
+    cPSwingBeverage: true
+    cPAnimationOffset: 1
+    range: 1.5
+    damage:
+      types:
+        Blunt: 18
+    resetOnHandSelected: false
+  - type: MeleeThrowOnHit
+    distance: 0.9
+    speed: 5
+  - type: DamageOtherOnHit
+    damage:
+      types:
+        Slash: 16
+  - type: StaminaDamageOnHit
+    damage: 5
+  - type: Instrument
+    program: 41
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Instruments/violin.rsi
+  - type: UseDelayAroundCursor
+  - type: ChargedAttack
+    maxAttackTime: 2.5
+    staticModifier: 3
+    staminaDamage: 12
+    speedModifer: 0.43
+    effectProtoId: AttackEffect1dot5s
+  - type: MedievalWeaponSkillCategory
+    skill: OneHandedBlunt
+  - type: DisarmMalus
+
+- type: entity
+  name: dagger
+  parent: BaseItem
+  id: MedievalBowInstrument
+  description: A deadly knife intended for melee confrontations.
+  components:
+  - type: Sharp
+  - type: DisarmMalus
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Instruments/bow.rsi
+    size: Small
+    state: icon
+  - type: Item
+    size: Small
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Instruments/bow.rsi
+  - type: MeleeWeapon
+    animation: CP14WeaponArcThrust
+    wideAnimation: CP14WeaponArcSlash
+    cPSwingBeverage: true
+    cPAnimationOffset: 0.8
+    clickDamageModifier: 1.24
+    resetOnHandSelected: false
+    attackRate: 1.34
+    range: 1
+    damage:
+      types:
+        Slash: 13
+    soundHit:
+      path: /Audio/Imperial/Medieval/ES_Knife_Stab_2_-_SFX_Producer.ogg
+  - type: DamageOtherOnHit
+    damage:
+      types:
+        Slash: 20
+  - type: MeleeThrowOnHit
+    distance: 0.3
+    speed: 5
+  - type: UseDelayAroundCursor
+  - type: ChargedAttack
+    maxAttackTime: 1.2
+    staticModifier: 3.5
+    staminaDamage: 6
+    speedModifer: 1.34
+    effectProtoId: AttackEffect1dot5s
+  - type: MedievalWeaponSkillCategory
+    skill: OneHandedSlashLarge

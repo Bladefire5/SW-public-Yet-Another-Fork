@@ -35,16 +35,16 @@ public sealed partial class OneHandedBluntSkillComponent : Component
     [DataField("staminaDamage")] public float StaminaDamage = 1f;
 
     [DataField("bypassType")] public string BypassType = "Blunt";
-    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 2f;
+    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 1f;
 }
 
 [RegisterComponent, NetworkedComponent]
 public sealed partial class OneHandedBluntLightSkillComponent : Component
 {
     [DataField("damageMult")] public float DamageMult = 1.10f;
-    [DataField("staminaDamage")] public float StaminaDamage = 1f;
+    [DataField("staminaDamage")] public float StaminaDamage = 0.5f;
     [DataField("bypassType")] public string BypassType = "Blunt";
-    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 1f;
+    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 0.5f;
 }
 
 [RegisterComponent, NetworkedComponent]
@@ -52,7 +52,7 @@ public sealed partial class OneHandedSmallSlashSkillComponent : Component
 {
     [DataField("damageMult")] public float DamageMult = 1.15f;
     [DataField("bypassType")] public string BypassType = "Piercing";
-    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 1.8f;
+    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 0.5f;
 }
 
 [RegisterComponent, NetworkedComponent]
@@ -65,7 +65,7 @@ public sealed partial class OneHandedLargeSlashSkillComponent : Component
 public sealed partial class SpearSkillComponent : Component
 {
     [DataField("bonusType")] public string BonusType = "Piercing";
-    [DataField("bonusAmount")] public FixedPoint2 BonusAmount = 5f;
+    [DataField("bonusAmount")] public FixedPoint2 BonusAmount = 8f;
     [DataField("dismountChance")]
     public float DismountChance = 1.0f;
 }
@@ -74,15 +74,15 @@ public sealed partial class SpearSkillComponent : Component
 public sealed partial class TwoHandedSkillComponent : Component
 {
     [DataField("throwOnHitMult")] public float ThrowOnHitMult = 1.5f;
-    [DataField("helmetKnockChance")] public float HelmetKnockChance = 0.6f;
+    [DataField("helmetKnockChance")] public float HelmetKnockChance = 0.7f;
 }
 
 [RegisterComponent, NetworkedComponent]
 public sealed partial class CrossbowSkillComponent : Component
 {
-    [DataField("staminaOnHit")] public float StaminaOnHit = 12f;
+    [DataField("staminaOnHit")] public float StaminaOnHit = 11f;
     [DataField("bypassType")] public string BypassType = "Piercing";
-    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 6f;
+    [DataField("bypassAmount")] public FixedPoint2 BypassAmount = 5f;
 }
 
 [RegisterComponent, NetworkedComponent]

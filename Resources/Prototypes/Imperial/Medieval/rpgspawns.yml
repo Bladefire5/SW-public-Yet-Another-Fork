@@ -1397,6 +1397,7 @@
     #- MedievalOreIron
     #- MedievalOreIron
     - MedievalOreGold
+    - MedievalOreSilver
     - MedievalOreIron
     - MedievalOreCoal
     - MedievalOreIron
@@ -1491,6 +1492,7 @@
     - MedievalOreIron
     - MedievalOreIron
     - MedievalOreGold
+    - MedievalOreSilver
     - MedievalOreIron
     - MedievalOreCoal
     - MedievalOreIron
@@ -1508,6 +1510,8 @@
     - MedievalOreIron
     - MedievalOreIron
     - MedievalOreGold
+    - MedievalOreSilver
+    - MedievalOreSilver
     - MedievalOreTopaz
     - MedievalOreSerd
     - MedievalOreAdam
@@ -1794,6 +1798,7 @@
     price:
       Revent: 12
   - type: Food
+    requiresSpecialDigestion: true
   - type: SolutionContainerManager
     solutions:
       food:
@@ -1840,9 +1845,6 @@
       types:
         Blunt: 2
   - type: Currency
-    price:
-      Revent: 2
-  - type: MedievalCurrency
     price:
       Revent: 2
 
@@ -2721,3 +2723,54 @@
     - MedievalMushroomTree4
     chance: 1
     offset: 0
+
+- type: entity
+  id: MedievalOreSilver
+  parent: BannerBase
+  name: nanotrasen banner
+  description: A banner displaying the Nanotrasen logo. It looks rather cheap.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Decor/medieval_decor.rsi
+    state: ore_silver
+  - type: Physics
+    bodyType: Static
+  - type: Damageable
+  - type: Destructible
+    thresholds:
+    - trigger: !type:DamageTrigger
+        damage: 150
+      behaviors:
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
+      - !type:PlaySoundBehavior
+        sound:
+          path: /Audio/Effects/break_stone.ogg
+          params:
+            volume: -6
+      - !type:SpawnEntitiesBehavior
+        offset: 0.3
+        spawn:
+          MedievalSilverOre:
+            min: 2
+            max: 4
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape: !type:PhysShapeCircle
+          radius: 0.35
+        density: 190
+        mask:
+        - MachineMask
+        layer:
+        - Opaque
+        - MidImpassable
+        - HighImpassable
+        - BulletImpassable
+  - type: TimedDespawn
+    lifetime: 500
+  - type: MedievalDiggAble
+  - type: MedievalMeleeBadTarget # imperial medieval
+    safeToHitGroup: ore # imperial medieval
+    breakMultiplier: 10
+

@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Content.Shared.Imperial.Medieval.Ships.Hull;
+using Content.Server.Imperial.Medieval.Ships;
 using Content.Shared.Imperial.Medieval.Ships.ShipDrowning;
 using Content.Shared.Movement.Components;
 using Content.Shared.Maps;
 using Robust.Shared.Map;
-using Robust.Shared.Map.Components;
 using Robust.Shared.Maths;
 using Robust.Shared.Timing;
-using Content.Shared._RD.Weight.Systems;
-using Content.Server.Imperial.Medieval.Ships.Sail;
-using Content.Shared.Imperial.Medieval.Ships.Sail;
 using Robust.Shared.Configuration;
 using Content.Shared.Imperial.Medieval.Administration.Ships;
 
@@ -21,19 +17,19 @@ public sealed class ShipDrowningSystem : EntitySystem
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly SharedShipHullSystem _shipHull = default!;
-    [Dependency] private readonly RDWeightSystem _rdWeight = default!;
-    [Dependency] private readonly SailSystem _sail = default!;
+    [Dependency] private readonly ShipGridSystem _shipGrid = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
 
     private const float UpdateDelaySeconds = 1f;
 
     private readonly List<EntityUid> _gridChildren = new();
     private TimeSpan _nextCheckTime;
+    private TimeSpan _lastUpdateTime;
 
     public override void Initialize()
     {
         _nextCheckTime = _timing.CurTime + TimeSpan.FromSeconds(UpdateDelaySeconds);
+        _lastUpdateTime = _timing.CurTime;
         SubscribeLocalEvent<ShipDrowningComponent, EntityTerminatingEvent>(OnShipTerminating);
     }
 
@@ -44,38 +40,39 @@ public sealed class ShipDrowningSystem : EntitySystem
             return;
 
         _nextCheckTime = curTime + TimeSpan.FromSeconds(UpdateDelaySeconds);
+        var elapsedSeconds = Math.Max(0f, (float) (curTime - _lastUpdateTime).TotalSeconds);
+        _lastUpdateTime = curTime;
 
-        var enumerator = EntityQueryEnumerator<ShipDrowningComponent, MapGridComponent, TransformComponent>();
-        while (enumerator.MoveNext(out var uid, out var drowning, out var mapGrid, out _))
+        var enumerator = EntityQueryEnumerator<ShipDrowningComponent, ShipGridComponent>();
+        while (enumerator.MoveNext(out var uid, out var drowning, out var grid))
         {
+            if (!float.IsFinite(drowning.DrownLevel))
+                drowning.DrownLevel = 0f;
+
             var previousDrownLevel = drowning.DrownLevel;
             var previousDrownMaxLevel = drowning.DrownMaxLevel;
-            var totalTiles = 0;
-            var floodContribution = 0;
-            var allTiles = _map.GetAllTilesEnumerator(uid, mapGrid);
-
-            while (allTiles.MoveNext(out var tile))
-            {
-                totalTiles++;
-                floodContribution += _shipHull.GetFloodContribution(tile.Value.Tile.TypeId);
-            }
-
-            if (totalTiles == 0)
+            if (grid.TileCount == 0 || drowning.MaxFloodPerTile <= 0)
                 continue;
 
-            var weight = _rdWeight.GetTotalOnGrid(uid);
-            float maxWeight = ShipWeightHelper.GetMaxWeight(uid, mapGrid, _map, EntityManager, _cfg);
+            var maxWeight = _shipGrid.GetMaxWeight(uid, grid);
 
-            if (weight > maxWeight * 3)
-                drowning.DrownLevel += _cfg.GetCVar(ShipsCCVars.OverloadDrownRate) * frameTime;
+            if (grid.TotalWeight > maxWeight * 3f)
+            {
+                var configuredRate = _cfg.GetCVar(ShipsCCVars.OverloadDrownRate);
+                var overloadRate = float.IsFinite(configuredRate) ? MathF.Max(0f, configuredRate) : 0f;
+                drowning.DrownLevel += overloadRate * elapsedSeconds;
+            }
 
-            drowning.DrownMaxLevel = totalTiles * drowning.MaxFloodPerTile;
-            drowning.DrownLevel += floodContribution * drowning.FloodPerDamageStage;
+            drowning.DrownMaxLevel = (float) grid.TileCount * drowning.MaxFloodPerTile;
+            var floodPerStage = float.IsFinite(drowning.FloodPerDamageStage)
+                ? MathF.Max(0f, drowning.FloodPerDamageStage)
+                : 0f;
+            drowning.DrownLevel += grid.FloodContribution * floodPerStage;
 
             if (drowning.DrownLevel < drowning.DrownMaxLevel * 0.5f)
-                drowning.DrownLevel -= drowning.PassiveDrainPerTick;
+                drowning.DrownLevel -= Math.Max(0, drowning.PassiveDrainPerTick);
             else
-                drowning.DrownLevel += drowning.PassiveRisePerTick;
+                drowning.DrownLevel += Math.Max(0, drowning.PassiveRisePerTick);
 
             drowning.DrownLevel = Math.Max(0, drowning.DrownLevel);
 

@@ -1,0 +1,75 @@
+{
+    "version": 1,
+    "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
+    "copyright": "Made by lavovy_skelet, skeleton_crack and skeleton_eyes by fortengamer",
+    "size": {
+      "x": 32,
+      "y": 32
+    },
+    "states": [
+      {
+        "name": "avatar",
+        "directions": 4
+      },
+      {
+        "name": "caesar",
+        "directions": 4
+      },
+      {
+        "name": "calavera",
+        "directions": 4
+      },
+      {
+        "name": "chandelier",
+        "directions": 4
+      },
+      {
+        "name": "gloomy",
+        "directions": 4
+      },
+      {
+        "name": "god_of_war",
+        "directions": 4
+      },
+      {
+        "name": "indian",
+        "directions": 4
+      },
+      {
+        "name": "leader",
+        "directions": 4
+      },
+      {
+        "name": "planet",
+        "directions": 4
+      },
+      {
+        "name": "treasure_map",
+        "directions": 4
+      },
+      {
+        "name": "vertebra",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_crack_1",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_crack_2",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_eyes_1",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_eyes_2",
+        "directions": 4
+      },
+      {
+        "name": "skeleton_eyes_3",
+        "directions": 4
+      }
+    ]
+  }

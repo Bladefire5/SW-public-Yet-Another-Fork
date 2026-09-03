@@ -39,6 +39,9 @@ medieval-store-spells-light-magic-light-beginner-name = Магический с�
 medieval-store-spells-light-magic-light-beginner-desc = Призовите себе в помощники маленькую светящуюся сферу. Давайте не думать о том, что это простой сгусток манны, а скрасим ваше одиночество новым другом.
 medieval-store-spells-magic-light-flash-beginner-name = Магический свет
 
+medieval-store-spells-light-magic-light-middle-name = Магическая сфера
+medieval-store-spells-light-magic-light-middle-desc = Призывает яркую светящуюся сферу, которая кружится вокруг вас.
+
 # Lighting
 
 medieval-spell-speach-lightning = T̵̷̹̳͙͒͊͂͝O̧̙̗͌̓ͤ̀͝Ň͕͖ͮ̚I̴̢̨͈͖̜T͕̯̞͊̑ͣ́R̸̍̄̉̚U̬̞͈̽́S̷̫ͧͤͬ̑͞

@@ -158,6 +158,12 @@ public sealed class ChargeableAnnounceSystem : EntitySystem
         });
     }
 
+    public void SendCommsCrystalWhisper(EntityUid crystal, EntityUid sender, string originalMessage)
+    {
+        var language = _language.GetCurrentLanguage(sender);
+        SendCommsCrystalWhisper(crystal, sender, originalMessage, language);
+    }
+
     private void SendCommsCrystalWhisper(
         EntityUid crystal,
         EntityUid sender,

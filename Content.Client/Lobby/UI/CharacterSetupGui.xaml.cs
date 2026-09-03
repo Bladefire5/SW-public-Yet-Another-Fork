@@ -13,6 +13,8 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 using Robust.Shared.Configuration;
 using Robust.Shared.Prototypes;
+using Content.Client.Imperial.Medieval.Praises;
+using Robust.Client.Player;
 
 namespace Content.Client.Lobby.UI
 {
@@ -22,6 +24,7 @@ namespace Content.Client.Lobby.UI
     [GenerateTypedNameReferences]
     public sealed partial class CharacterSetupGui : Control
     {
+        [Dependency] private readonly IPlayerManager _playerMan = default!;
         [Dependency] private readonly IClientPreferencesManager _preferencesManager = default!;
         [Dependency] private readonly IEntityManager _entManager = default!;
         [Dependency] private readonly IPrototypeManager _protomanager = default!;
@@ -69,6 +72,9 @@ namespace Content.Client.Lobby.UI
 
             var achievementController = UserInterfaceManager.GetUIController<AchievementUIController>();
             AchievementsButton.OnPressed += _ => achievementController.ToggleMenu();
+
+            var praiseSys = _entManager.EntitySysManager.GetEntitySystem<PraiseSystem>();
+            PraisesButton.OnPressed += _ => { if (_playerMan.LocalSession != null) praiseSys.OpenView(_playerMan.LocalSession.UserId); };
 
             _cfg.OnValueChanged(CCVars.SeeOwnNotes, p => AdminRemarksButton.Visible = p, true);
         }

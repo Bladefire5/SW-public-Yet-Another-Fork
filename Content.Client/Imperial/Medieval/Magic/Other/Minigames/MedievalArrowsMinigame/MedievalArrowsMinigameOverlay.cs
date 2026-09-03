@@ -1,9 +1,12 @@
 using System.Linq;
 using System.Numerics;
+using Content.Client.UserInterface.Screens;
 using Content.Shared.Imperial.ColorHelper;
 using Content.Shared.Imperial.Medieval.Magic.Minigames;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
+using Robust.Client.UserInterface;
+using Robust.Client.UserInterface.Controls;
 using Robust.Shared;
 using Robust.Shared.Configuration;
 using Robust.Shared.Enums;
@@ -23,6 +26,7 @@ public sealed class MedievalArrowsMinigameOverlay : Overlay
     [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
     [Dependency] private readonly IClyde _clyde = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
+    [Dependency] private readonly IUserInterfaceManager _uiManager = default!;
     private readonly SpriteSystem _spriteSystem;
 
 
@@ -41,7 +45,8 @@ public sealed class MedievalArrowsMinigameOverlay : Overlay
     public Color InvalidColor = Color.FromHex("#A60000");
     public float RightPadding = 0.05f;
     public float LeftPadding = 0.05f;
-    public float BottomPadding = 0.15f;
+    public float VerticalPosition = 0.55f;
+    public float VerticalRowSpacing = 0.15f;
     public float MaxAnimationStep = 10.0f;
     public float ReversedAnimationPoint = 0.5f;
 
@@ -69,15 +74,23 @@ public sealed class MedievalArrowsMinigameOverlay : Overlay
 
     protected override void Draw(in OverlayDrawArgs args)
     {
-        if (_eyeManager.MainViewport.Window == null) return;
+        var window = _eyeManager.MainViewport.Window;
+        if (window == null) return;
 
         var screen = args.ScreenHandle;
         var scale = _configurationManager.GetCVar(CVars.DisplayUIScale);
         scale = scale == 0 ? 1 : scale;
 
-        var leftPadding = _eyeManager.MainViewport.Window.Size.X * (LeftPadding * scale);
-        var rightPadding = _eyeManager.MainViewport.Window.Size.X * (RightPadding * scale);
-        var horizontalSize = _eyeManager.MainViewport.Window.Size.X - rightPadding - leftPadding;
+        var layoutWidth = (float) window.Size.X;
+        if (_uiManager.ActiveScreen is SeparatedChatGameScreen separatedScreen)
+        {
+            var viewportContainer = separatedScreen.FindControl<LayoutContainer>("ViewportContainer");
+            layoutWidth = viewportContainer.PixelSize.X;
+        }
+
+        var leftPadding = layoutWidth * (LeftPadding * scale);
+        var rightPadding = layoutWidth * (RightPadding * scale);
+        var horizontalSize = layoutWidth - rightPadding - leftPadding;
 
         var scaleMatrix = Matrix3Helpers.CreateScale(new Vector2(scale));
         var matrix = Matrix3x2.Multiply(Matrix3x2.Identity, scaleMatrix);
@@ -144,7 +157,7 @@ public sealed class MedievalArrowsMinigameOverlay : Overlay
 
             var position = new Vector2(
                 horizontalSize - textureSize.X * i - textureSize.X + sizeInOneHorizontalLine * y + leftPadding - lineAlignment,
-                _eyeManager.MainViewport.Window!.Size.Y - _eyeManager.MainViewport.Window!.Size.Y * BottomPadding * scale * (y + 1)
+                window.Size.Y * (VerticalPosition - VerticalRowSpacing * y)
             ) + animationPosition;
 
             screen.DrawTexture(buffer.Texture, position / scale);

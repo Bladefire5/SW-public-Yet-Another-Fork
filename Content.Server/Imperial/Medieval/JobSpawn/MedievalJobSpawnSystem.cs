@@ -29,6 +29,7 @@ namespace Content.Server.MagicPotionsMaker
         {
             if (!component.Enabled)
                 return;
+            if (TryComp<MedievalJobSpawnTravellerComponent>(uid, out var travelPriority) && HasComp<MedievalTravellerComponent>(uid)) component.SpawnType = travelPriority.SpawnType;
             var spawns = EntityManager.EntityQuery<MedievalJobPointComponent>().ToList();
             _random.Shuffle(spawns);
             foreach (var spawn in spawns)

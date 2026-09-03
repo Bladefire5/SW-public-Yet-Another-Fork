@@ -10,8 +10,8 @@
     partSlot: head
     layerState: forstone_head
     rsiPath: Imperial/Medieval/Forged/forstone.rsi
-    resistanceModifier: 0.05
-    speedModifier: -0.05
+    resistanceModifier: 0.08
+    speedModifier: -0.04
 
 - type: entity
   id: ForgedForstoneTorso
@@ -57,8 +57,8 @@
     partSlot: torso
     layerState: forstone_torso
     rsiPath: Imperial/Medieval/Forged/forstone.rsi
-    resistanceModifier: 0.20
-    speedModifier: -0.15
+    resistanceModifier: 0.35
+    speedModifier: -0.14
 
 - type: entity
   id: ForgedForstoneRArm
@@ -73,8 +73,8 @@
     partSlot: right_arm
     layerState: forstone_right_arm
     rsiPath: Imperial/Medieval/Forged/forstone.rsi
-    resistanceModifier: 0.05
-    speedModifier: -0.025
+    resistanceModifier: 0.06
+    speedModifier: -0.01
 
 - type: entity
   id: ForgedForstoneLArm
@@ -90,8 +90,8 @@
     partSlot: left_arm
     layerState: forstone_left_arm
     rsiPath: Imperial/Medieval/Forged/forstone.rsi
-    resistanceModifier: 0.05
-    speedModifier: -0.025
+    resistanceModifier: 0.06
+    speedModifier: -0.01
 
 - type: entity
   id: ForgedForstoneRLeg
@@ -106,8 +106,8 @@
     partSlot: right_leg
     layerState: forstone_right_leg
     rsiPath: Imperial/Medieval/Forged/forstone.rsi
-    resistanceModifier: 0.075
-    speedModifier: 0.125
+    resistanceModifier: 0.05
+    speedModifier: 0.10
 
 - type: entity
   id: ForgedForstoneLLeg
@@ -123,5 +123,5 @@
     partSlot: left_leg
     layerState: forstone_left_leg
     rsiPath: Imperial/Medieval/Forged/forstone.rsi
-    resistanceModifier: 0.075
-    speedModifier: 0.125
+    resistanceModifier: 0.05
+    speedModifier: 0.10

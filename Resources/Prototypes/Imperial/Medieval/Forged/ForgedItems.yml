@@ -5,6 +5,10 @@
   parent: BaseItem
   id: MedievalMagicDust
   components:
+    - type: FishingBaitBlacklist
+    - type: Tag
+      tags:
+        - Meat
     - type: Sprite
       sprite: Imperial/Medieval/Forged/items.rsi
       state: magicDust

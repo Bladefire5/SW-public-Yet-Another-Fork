@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
+using Content.Server.Imperial.Medieval.Ships;
 using Content.Shared.Imperial.Medieval.Administration.Ships;
 using Content.Shared.Imperial.Medieval.Ships.Sea;
 using Content.Shared.Imperial.Medieval.Ships.ShipDrowning;
@@ -14,14 +16,16 @@ namespace Content.Server.Imperial.Medieval.Ships.Wave.Spawn;
 
 public sealed class SpawnWindWaveSystem : EntitySystem
 {
+    private const int MaxWavesPerShip = 64;
+
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly IMapManager _mapManager = default!;
     [Dependency] private readonly WaveSystem _wave = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
     private TimeSpan _nextCheckTime;
+    private readonly HashSet<MapId> _activeSeaMaps = new();
 
     public override void Update(float frameTime)
     {
@@ -31,48 +35,66 @@ public sealed class SpawnWindWaveSystem : EntitySystem
         if (curTime <= _nextCheckTime)
             return;
 
-        _nextCheckTime = curTime + TimeSpan.FromSeconds(_cfg.GetCVar(ShipsCCVars.WaveDelay));
+        var configuredDelay = _cfg.GetCVar(ShipsCCVars.WaveDelay);
+        var delay = float.IsFinite(configuredDelay) ? MathF.Max(0.1f, configuredDelay) : 1f;
+        _nextCheckTime = curTime + TimeSpan.FromSeconds(delay);
+
+        var configuredStormLevel = _cfg.GetCVar(ShipsCCVars.StormLevel);
+        var stormLevel = float.IsFinite(configuredStormLevel)
+            ? Math.Clamp(configuredStormLevel, 0f, MaxWavesPerShip)
+            : 0f;
+        var maxWaves = Math.Clamp((int) MathF.Ceiling(stormLevel), 0, MaxWavesPerShip);
+        var configuredWaveForce = _cfg.GetCVar(ShipsCCVars.WaveForce);
+        var waveForce = float.IsFinite(configuredWaveForce) ? MathF.Max(0f, configuredWaveForce) : 0f;
+
+        _activeSeaMaps.Clear();
         foreach (var seaComponent in EntityManager.EntityQuery<SeaComponent>())
         {
             if (seaComponent.Disabled)
                 continue;
-            var sea = seaComponent.Owner;
-            var seaMapId = _transform.GetMapId(sea);
-            var ships = new HashSet<Entity<ShipDrowningComponent>>();
-            _lookup.GetEntitiesOnMap(seaMapId, ships);
 
-            foreach (var shipComp in ships)
+            _activeSeaMaps.Add(_transform.GetMapId(seaComponent.Owner));
+        }
+
+        var ships = EntityQueryEnumerator<ShipGridComponent, ShipDrowningComponent, MapGridComponent>();
+        while (ships.MoveNext(out var ship, out var shipGrid, out _, out var grid))
+        {
+            var seaMapId = _transform.GetMapId(ship);
+            if (!_activeSeaMaps.Contains(seaMapId) ||
+                shipGrid.WavesDisabledAt is { } disabledAt && disabledAt <= curTime)
             {
-                if (shipComp.Comp.WavesDisabledAt is { } disabledAt && disabledAt <= _timing.CurTime)
+                continue;
+            }
+
+            var waveCount = _random.Next(0, maxWaves + 1);
+            var shipCenter = _transform.ToMapCoordinates(new EntityCoordinates(ship, grid.LocalAABB.Center));
+            var shipRadius = grid.LocalAABB.Size.Length() * 0.5f;
+
+            for (var i = 0; i < waveCount; i++)
+            {
+                var waveOffset = GenerateWave();
+                var offsetLength = waveOffset.Length();
+                if (offsetLength <= 0f)
                     continue;
 
-                var ship = shipComp.Owner;
-                if (!TryComp<MapGridComponent>(ship, out var grid))
+                var windDirection = waveOffset / offsetLength;
+                var spawnDirection = -windDirection;
+                var configuredMinDistance = _cfg.GetCVar(ShipsCCVars.WaveMinSpawnDistance);
+                var minDistance = float.IsFinite(configuredMinDistance)
+                    ? MathF.Max(0f, configuredMinDistance)
+                    : 0f;
+                var spawnDistance = shipRadius + minDistance + offsetLength;
+                if (!TryFindValidSpawnPosition(seaMapId, shipCenter.Position, spawnDirection, spawnDistance, out var waveCoords))
                     continue;
 
-                var maxWaves = Math.Max(0, (int) MathF.Ceiling(_cfg.GetCVar(ShipsCCVars.StormLevel)));
-                var waveCount = _random.Next(0, maxWaves + 1);
-                var shipCenter = _transform.ToMapCoordinates(new EntityCoordinates(ship, grid.LocalAABB.Center));
-                var shipRadius = grid.LocalAABB.Size.Length() * 0.5f;
+                var wavePosition = waveCoords.Position;
+                var velocityDirection = shipCenter.Position - wavePosition;
+                var velocityLengthSquared = velocityDirection.LengthSquared();
+                if (!float.IsFinite(velocityLengthSquared) || velocityLengthSquared <= 0.0001f)
+                    continue;
 
-                for (var i = 0; i < waveCount; i++)
-                {
-                    var waveOffset = GenerateWave();
-                    var offsetLength = waveOffset.Length();
-                    if (offsetLength <= 0f)
-                        continue;
-
-                    var windDirection = waveOffset / offsetLength;
-                    var spawnDirection = -windDirection;
-                    var spawnDistance = shipRadius + _cfg.GetCVar(ShipsCCVars.WaveMinSpawnDistance) + offsetLength;
-                    if (!TryFindValidSpawnPosition(seaMapId, shipCenter.Position, spawnDirection, spawnDistance, out var waveCoords))
-                        continue;
-
-                    var wavePosition = waveCoords.Position;
-                    var velocityDirection = shipCenter.Position - wavePosition;
-                    var velocity = velocityDirection.Normalized() * _cfg.GetCVar(ShipsCCVars.WaveForce);
-                    _wave.SpawnWave(waveCoords, velocity);
-                }
+                var velocity = velocityDirection / MathF.Sqrt(velocityLengthSquared) * waveForce;
+                _wave.SpawnWave(waveCoords, velocity);
             }
         }
     }
@@ -98,9 +120,17 @@ public sealed class SpawnWindWaveSystem : EntitySystem
 
     private Vector2 GenerateWave()
     {
-        var radius = _cfg.GetCVar(ShipsCCVars.WaveSpawnRange);
-        var targetAngle = Angle.FromDegrees(_cfg.GetCVar(ShipsCCVars.WindRotation));
-        var halfAngle = _cfg.GetCVar(ShipsCCVars.WaveSpawnAngle) * _cfg.GetCVar(ShipsCCVars.StormLevel);
+        var configuredRadius = _cfg.GetCVar(ShipsCCVars.WaveSpawnRange);
+        var radius = float.IsFinite(configuredRadius) ? MathF.Max(0f, configuredRadius) : 0f;
+        var configuredRotation = _cfg.GetCVar(ShipsCCVars.WindRotation);
+        var targetAngle = Angle.FromDegrees(float.IsFinite(configuredRotation) ? configuredRotation : 0f);
+        var configuredAngle = _cfg.GetCVar(ShipsCCVars.WaveSpawnAngle);
+        var configuredStorm = _cfg.GetCVar(ShipsCCVars.StormLevel);
+        var angle = float.IsFinite(configuredAngle) ? MathF.Abs(configuredAngle) : 0f;
+        var storm = float.IsFinite(configuredStorm)
+            ? Math.Clamp(configuredStorm, 0f, MaxWavesPerShip)
+            : 0f;
+        var halfAngle = MathF.Min(360f, angle * storm);
 
         var rho = radius * MathF.Sqrt(_random.NextFloat());
         var angleOffset = Angle.FromDegrees(_random.NextFloat(-halfAngle, halfAngle));

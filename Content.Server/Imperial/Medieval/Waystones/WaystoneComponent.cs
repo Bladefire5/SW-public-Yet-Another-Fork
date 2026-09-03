@@ -6,7 +6,7 @@ using Robust.Shared.Prototypes;
 public sealed partial class WaystoneComponent : Component
 {
     [DataField]
-    public string Name = "Путеводный камень";
+    public string Name = "Waystone";
 
     [DataField]
     public ProtoId<MedievalFactionPrototype> Faction { get; set; } = string.Empty;
@@ -15,12 +15,12 @@ public sealed partial class WaystoneComponent : Component
     public string LinkId = string.Empty;
 
     [DataField]
-    public float TimeToTeleport = 5f;
+    public float TimeToTeleport = 30f;
 
     [DataField]
-    public int DeparturePrice = 15;
+    public int DeparturePrice = 12;
     [DataField]
-    public int ArrivalPrice = 5;
+    public int ArrivalPrice = 6;
 
     [DataField]
     public bool IsEnable = true;
@@ -56,10 +56,15 @@ public sealed partial class WaystoneComponent : Component
     public float EnergyPrice = 30f;
 
     [DataField]
-    public float EnergyRegenRate = 0.3f;
+    public float EnergyRegenRate = 0.25f;
 
     [DataField]
     public string LinkedCircle = string.Empty;
 
     public TimeSpan LastMessageTime = TimeSpan.Zero;
+
+    /// <summary>
+    /// First array element - Departy, Second - Arrival
+    /// </summary>
+    public int[] TeleportationMoney = new int[2];
 }

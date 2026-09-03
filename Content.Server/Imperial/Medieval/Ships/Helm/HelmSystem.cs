@@ -1,78 +1,49 @@
 using System;
+using System.Collections.Generic;
+using Content.Server.Imperial.Medieval.Ships;
 using Content.Server.Shuttles.Components;
-using Content.Shared._RD.Weight.Systems;
 using Content.Shared.ActionBlocker;
-using Content.Shared.DoAfter;
+using Content.Shared.Examine;
 using Content.Shared.Imperial.Medieval.Administration.Ships;
 using Content.Shared.Imperial.Medieval.Ships.Helm;
-using Content.Shared.Imperial.Medieval.Ships.Sail;
-using Content.Shared.Examine;
 using Content.Shared.Interaction;
-using Content.Shared.Maps;
-using Content.Shared.UserInterface;
-using Robust.Server.GameObjects;
-using Robust.Shared.Configuration;
-using Robust.Shared.Map.Components;
-using Robust.Shared.Physics.Components;
-using Robust.Shared.Physics.Systems;
-using Robust.Shared.Player;
-using Robust.Shared.Timing;
 using Content.Shared.Movement.Events;
 using Content.Shared.Movement.Systems;
+using Content.Shared.UserInterface;
 using Robust.Server.Audio;
+using Robust.Server.GameObjects;
 using Robust.Shared.Audio;
+using Robust.Shared.Configuration;
+using Robust.Shared.Physics.Components;
+using Robust.Shared.Physics.Systems;
+using Robust.Shared.Timing;
 
 namespace Content.Server.Imperial.Medieval.Ships.Helm;
 
 public sealed class HelmSystem : EntitySystem
 {
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
-    [Dependency] private readonly RDWeightSystem _rdWeight = default!;
+    [Dependency] private readonly ShipGridSystem _shipGrid = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly SharedInteractionSystem _interaction = default!;
     [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
-    [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
-    [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly UserInterfaceSystem _ui = default!;
     [Dependency] private readonly AudioSystem _audio = default!;
 
     private TimeSpan _nextCheckTime;
+    private readonly Dictionary<EntityUid, PilotState> _pilots = new();
 
     public override void Initialize()
     {
         SubscribeLocalEvent<HelmComponent, ComponentStartup>(OnStartup);
         SubscribeLocalEvent<HelmComponent, ExaminedEvent>(OnExamine);
-        SubscribeLocalEvent<HelmComponent, HelmActionDoAfterEvent>(OnHelmActionDoAfter);
         SubscribeLocalEvent<HelmComponent, BeforeActivatableUIOpenEvent>(OnBeforeUiOpen);
         SubscribeLocalEvent<HelmComponent, BoundUIClosedEvent>(OnAfterUiClosed);
-        SubscribeLocalEvent<HelmComponent, HelmMenuActionMessage>(OnMenuActionMessage);
+        SubscribeLocalEvent<HelmComponent, HelmRotationChangeMessage>(OnRotationChangeMessage);
 
-        SubscribeLocalEvent<MedievalPilotComponent, MoveInputEvent>(OnPilotMoveInput);
         SubscribeLocalEvent<MedievalPilotComponent, UpdateCanMoveEvent>(OnUpdateCanMove);
-    }
-
-    private void OnPilotMoveInput(EntityUid uid, MedievalPilotComponent component, ref MoveInputEvent args)
-    {
-        var mover = args.Entity.Comp;
-        float newTurning = 0f;
-
-        if ((mover.HeldMoveButtons & MoveButtons.Left) != MoveButtons.None)
-            newTurning = -1f;
-
-        if ((mover.HeldMoveButtons & MoveButtons.Right) != MoveButtons.None)
-            newTurning = 1f;
-
-        component.Turning = newTurning;
-
-        if (component.HelmEntity is { } helmUid && TryComp<HelmComponent>(helmUid, out var helmComponent))
-        {
-            if (newTurning == 0 && helmComponent.HelmRotation < 5f && helmComponent.HelmRotation > -5f)
-                helmComponent.HelmRotation = 0;
-
-            UpdateUi(helmUid, helmComponent);
-        }
+        SubscribeLocalEvent<MedievalPilotComponent, ComponentShutdown>(OnPilotShutdown);
     }
 
     private void OnUpdateCanMove(EntityUid uid, MedievalPilotComponent component, ref UpdateCanMoveEvent args)
@@ -87,8 +58,11 @@ public sealed class HelmSystem : EntitySystem
 
     private void OnBeforeUiOpen(EntityUid uid, HelmComponent component, BeforeActivatableUIOpenEvent args)
     {
-        var pilotComp = EnsureComp<MedievalPilotComponent>(args.User);
-        pilotComp.HelmEntity = uid;
+        EnsureComp<MedievalPilotComponent>(args.User);
+        if (_pilots.Remove(args.User, out var previous))
+            StopUsingSound(previous);
+
+        _pilots[args.User] = new PilotState(uid, _timing.CurTime);
         _actionBlocker.UpdateCanMove(args.User);
 
         UpdateUi(uid, component);
@@ -96,21 +70,70 @@ public sealed class HelmSystem : EntitySystem
 
     private void OnAfterUiClosed(EntityUid uid, HelmComponent component, BoundUIClosedEvent args)
     {
-        RemComp<MedievalPilotComponent>(args.Actor);
-        _actionBlocker.UpdateCanMove(args.Actor);
-
-        UpdateUi(uid, component);
-    }
-
-    private void OnMenuActionMessage(EntityUid uid, HelmComponent component, HelmMenuActionMessage msg)
-    {
-        var player = msg.Actor;
-        if (!_actionBlocker.CanInteract(player, uid) ||
-            !_actionBlocker.CanComplexInteract(player) ||
-            !_interaction.InRangeAndAccessible(player, uid))
+        if (!_pilots.TryGetValue(args.Actor, out var pilot) || pilot.Helm != uid)
             return;
 
-        TryStartHelmActionDoAfter(player, uid, msg.Action);
+        RemComp<MedievalPilotComponent>(args.Actor);
+        _actionBlocker.UpdateCanMove(args.Actor);
+    }
+
+    private void OnPilotShutdown(Entity<MedievalPilotComponent> entity, ref ComponentShutdown args)
+    {
+        if (_pilots.Remove(entity, out var pilot))
+            StopUsingSound(pilot);
+    }
+
+    private void OnRotationChangeMessage(EntityUid uid, HelmComponent component, HelmRotationChangeMessage msg)
+    {
+        var player = msg.Actor;
+        if (!HasComp<MedievalPilotComponent>(player) ||
+            !_pilots.TryGetValue(player, out var pilot) ||
+            pilot.Helm != uid ||
+            !_actionBlocker.CanInteract(player, uid) ||
+            !_actionBlocker.CanComplexInteract(player) ||
+            !_interaction.InRangeAndAccessible(player, uid) ||
+            !float.IsFinite(msg.HelmRotation))
+        {
+            return;
+        }
+
+        var curTime = _timing.CurTime;
+        var elapsed = Math.Max(0f, (float) (curTime - pilot.LastRotationUpdate).TotalSeconds);
+        var rotationStep = float.IsFinite(component.RotationStep) ? MathF.Abs(component.RotationStep) : 0f;
+        var budgetSeconds = float.IsFinite(component.RotationSyncMaxBudgetSeconds)
+            ? MathF.Max(0f, component.RotationSyncMaxBudgetSeconds)
+            : 0f;
+        var maxBudget = rotationStep * budgetSeconds;
+        pilot.RotationBudget = MathF.Min(maxBudget, pilot.RotationBudget + rotationStep * elapsed);
+        pilot.LastRotationUpdate = curTime;
+
+        var requestedRotation = Math.Clamp(msg.HelmRotation, -180f, 180f);
+        var requestedDelta = requestedRotation - component.HelmRotation;
+        var appliedDelta = Math.Clamp(requestedDelta, -pilot.RotationBudget, pilot.RotationBudget);
+        component.HelmRotation = Math.Clamp(component.HelmRotation + appliedDelta, -180f, 180f);
+        pilot.RotationBudget = MathF.Max(0f, pilot.RotationBudget - MathF.Abs(appliedDelta));
+
+        if (msg.Turning && MathF.Abs(appliedDelta) >= 0.001f)
+            StartUsingSound(uid, pilot);
+        else
+            StopUsingSound(pilot);
+    }
+
+    private void StartUsingSound(EntityUid helm, PilotState pilot)
+    {
+        if (pilot.UsingSound != null)
+            return;
+
+        var audioParams = AudioParams.Default.WithLoop(true);
+        pilot.UsingSound = _audio.PlayPvs(
+            new SoundPathSpecifier("/Audio/Imperial/Medieval/hitting_wood_4times.ogg"),
+            helm,
+            audioParams)?.Entity;
+    }
+
+    private void StopUsingSound(PilotState pilot)
+    {
+        pilot.UsingSound = _audio.Stop(pilot.UsingSound);
     }
 
     private void OnExamine(EntityUid uid, HelmComponent component, ExaminedEvent args)
@@ -131,9 +154,14 @@ public sealed class HelmSystem : EntitySystem
                 args.PushMarkup(Loc.GetString("helm-examine-left", ("degrees", degrees)));
         }
 
-        args.PushMarkup(Loc.GetString("helm-examine-sails-efficiency", ("efficiency", FormatEfficiency(GetSailsEfficiency(uid)))));
+        var sailsEfficiency = _shipGrid.TryGetHelmGrid(uid, out _, out var shipGrid)
+                ? shipGrid.SailsEfficiency
+                : 0f;
+        args.PushMarkup(Loc.GetString(
+            "helm-examine-sails-efficiency",
+            ("efficiency", FormatEfficiency(sailsEfficiency))));
 
-        if (TryGetShipLoad(uid, component, out var weight, out var overloadCeil))
+        if (TryGetShipLoad(uid, out var weight, out var overloadCeil))
         {
             args.PushMarkup(Loc.GetString(
                 "helm-examine-ship-load",
@@ -142,134 +170,76 @@ public sealed class HelmSystem : EntitySystem
         }
     }
 
-    private void TryStartHelmActionDoAfter(EntityUid player, EntityUid helm, HelmMenuAction action)
-    {
-        var doAfterArgs = new DoAfterArgs(EntityManager, player, 0.5f, new HelmActionDoAfterEvent(action), helm, helm)
-        {
-            MovementThreshold = 0.5f,
-            BreakOnMove = true,
-            CancelDuplicate = true,
-            DistanceThreshold = 2,
-            BreakOnDamage = true,
-            RequireCanInteract = false,
-            BreakOnDropItem = true,
-            BreakOnHandChange = true,
-            NeedHand = true,
-        };
-
-        _doAfter.TryStartDoAfter(doAfterArgs);
-    }
-
-    private void OnHelmActionDoAfter(EntityUid uid, HelmComponent component, HelmActionDoAfterEvent args)
-    {
-        if (args.Cancelled || args.Handled)
-            return;
-
-        ApplyHelmAction(uid, component, args.Action);
-        args.Handled = true;
-    }
-
-    private void ApplyHelmAction(EntityUid helm, HelmComponent helmComponent, HelmMenuAction action)
-    {
-        switch (action)
-        {
-            case HelmMenuAction.RotateLeft:
-                helmComponent.HelmRotation -= helmComponent.RotationStep;
-                break;
-            case HelmMenuAction.RotateRight:
-                helmComponent.HelmRotation += helmComponent.RotationStep;
-                break;
-            case HelmMenuAction.Center:
-                helmComponent.HelmRotation = 0f;
-                break;
-        }
-
-        helmComponent.HelmRotation = NormalizeHelmRotation(helmComponent.HelmRotation);
-        UpdateUi(helm, helmComponent);
-    }
-
     private void UpdateUi(EntityUid uid, HelmComponent component)
     {
-        _ui.SetUiState(uid, HelmUiKey.Key, new HelmBoundUserInterfaceState(component.HelmRotation));
+        var rotation = NormalizeHelmRotation(component.HelmRotation);
+        var rotationStep = float.IsFinite(component.RotationStep)
+            ? MathF.Abs(component.RotationStep)
+            : 0f;
+
+        _ui.SetUiState(
+            uid,
+            HelmUiKey.Key,
+            new HelmBoundUserInterfaceState(rotation, rotationStep));
     }
 
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
 
-        var curTime = _timing.CurTime;
+        if (_timing.CurTime <= _nextCheckTime)
+            return;
 
-        var pilotQuery = EntityQueryEnumerator<MedievalPilotComponent>();
-        while (pilotQuery.MoveNext(out var uid, out var pilot))
+        _nextCheckTime = _timing.CurTime + GetUpdateDelay();
+        var windEnabled = _cfg.GetCVar(ShipsCCVars.WindEnabled);
+
+        var query = EntityQueryEnumerator<ShipGridComponent>();
+        while (query.MoveNext(out var boat, out var grid))
         {
-            if (pilot.Turning == 0f || pilot.HelmEntity is not { } helmUid)
+            if (grid.Helm is not { } helmUid ||
+                !TryComp<HelmComponent>(helmUid, out var helmComponent))
             {
-                if (pilot.UsingSound != null)
-                {
-                    QueueDel(pilot.UsingSound);
-                    pilot.UsingSound = null;
-                }
                 continue;
             }
 
-            if (!TryComp<HelmComponent>(helmUid, out var helmComponent))
-                continue;
-
-            if (pilot.UsingSound == null)
-            {
-                var audioParams = AudioParams.Default.WithLoop(true);
-                pilot.UsingSound = _audio.PlayPvs(new SoundPathSpecifier("/Audio/Imperial/Medieval/hitting_wood_4times.ogg"), helmUid, audioParams)?.Entity;
-            }
-
-            helmComponent.HelmRotation += pilot.Turning * helmComponent.RotationStep * frameTime;
-            helmComponent.HelmRotation = Math.Clamp(helmComponent.HelmRotation, -180, 180);
-
-            UpdateUi(helmUid, helmComponent);
-        }
-
-        if (curTime <= _nextCheckTime)
-            return;
-
-        _nextCheckTime = curTime + TimeSpan.FromSeconds(_cfg.GetCVar(ShipsCCVars.WindDelay));
-        if (!_cfg.GetCVar(ShipsCCVars.WindEnabled))
-            return;
-
-        var query = EntityQueryEnumerator<HelmComponent>();
-        while (query.MoveNext(out var helmUid, out var helmComponent))
-        {
-            var helm = helmUid;
-            var helmXform = Transform(helm);
-            if (!TryGetGrid(helm, helmXform, out var boat))
-                continue;
-
-            RotateShip(boat, helmComponent);
+            if (windEnabled)
+                RotateShip(boat, grid, helmComponent);
         }
     }
 
-    private void RotateShip(EntityUid boat, HelmComponent helmComponent)
+    private void RotateShip(EntityUid boat, ShipGridComponent grid, HelmComponent helmComponent)
     {
         if (TryComp<ShuttleComponent>(boat, out var shuttle) && !shuttle.Enabled)
             return;
 
-        var steeringPower = GetSteeringPower(boat);
-        if (steeringPower <= 0f)
+        if (grid.HasLoweredAnchor)
+            return;
+
+        var steeringPower = grid.SteeringPower;
+        if (!float.IsFinite(steeringPower) || steeringPower <= 0f)
             return;
 
         if (!TryComp<PhysicsComponent>(boat, out var body))
             return;
 
-        var weight = MathF.Max(helmComponent.MinShipWeight, _rdWeight.GetTotalOnGrid(boat));
-        var weightDivider = 1f + weight * 0.01f;
         var steeringInput = GetSteeringInput(helmComponent);
         if (MathF.Abs(steeringInput) < 0.001f)
         {
+            if (MathF.Abs(body.AngularVelocity) < 0.001f)
+                return;
+
+            var weight = GetShipWeight(helmComponent, grid);
+            var weightDivider = 1f + weight * 0.01f;
             StabilizeShipRotation(boat, helmComponent, steeringPower, weightDivider, body);
             return;
         }
 
-        var angularImpulse = steeringInput * helmComponent.MinMotionFactor * steeringPower * helmComponent.TurnImpulseScalar / weightDivider;
+        var shipWeight = GetShipWeight(helmComponent, grid);
+        var shipWeightDivider = 1f + shipWeight * 0.01f;
+        var angularImpulse = steeringInput * helmComponent.MinMotionFactor * steeringPower * helmComponent.TurnImpulseScalar / shipWeightDivider;
+        if (!float.IsFinite(angularImpulse))
+            return;
 
-        _physics.WakeBody(boat, body: body);
         _physics.ApplyAngularImpulse(boat, angularImpulse, body: body);
     }
 
@@ -281,17 +251,11 @@ public sealed class HelmSystem : EntitySystem
         PhysicsComponent body)
     {
         var angularVelocity = body.AngularVelocity;
-        if (MathF.Abs(angularVelocity) < 0.001f)
-        {
-            _physics.SetAngularVelocity(boat, 0f, body: body);
-            return;
-        }
-
         if (body.InvI <= 0f)
             return;
 
         var stabilizingImpulseMagnitude = helmComponent.MinMotionFactor * steeringPower * helmComponent.StabilizingImpulseScalar / weightDivider;
-        if (stabilizingImpulseMagnitude <= 0f)
+        if (!float.IsFinite(stabilizingImpulseMagnitude) || stabilizingImpulseMagnitude <= 0f)
             return;
 
         var desiredImpulse = -MathF.Sign(angularVelocity) * stabilizingImpulseMagnitude;
@@ -305,79 +269,40 @@ public sealed class HelmSystem : EntitySystem
             _physics.SetAngularVelocity(boat, 0f, body: body);
     }
 
-    private float GetSteeringPower(EntityUid boat)
+    private bool TryGetShipLoad(EntityUid helmUid, out float weight, out float overloadCeil)
     {
-        var power = 0f;
-        var childEnumerator = Transform(boat).ChildEnumerator;
-        while (childEnumerator.MoveNext(out var entity))
+        if (!_shipGrid.TryGetHelmGrid(helmUid, out var gridUid, out var grid))
         {
-            if (!TryComp<SteeringOarComponent>(entity, out var steeringOar))
-                continue;
-
-            power += steeringOar.Power;
-        }
-
-        return power;
-    }
-
-    private float GetSailsEfficiency(EntityUid helm)
-    {
-        var helmXform = Transform(helm);
-        if (!TryGetGrid(helm, helmXform, out var boat))
-            return 0f;
-
-        var efficiency = 0f;
-        var sailEnumerator = EntityQueryEnumerator<SailComponent, TransformComponent>();
-        while (sailEnumerator.MoveNext(out var sailUid, out var sail, out var sailXform))
-        {
-            if (!TryGetGrid(sailUid, sailXform, out var sailGrid) || sailGrid != boat)
-                continue;
-
-            efficiency += sail.LastSailEfficencyMod;
-        }
-
-        return efficiency;
-    }
-
-    private bool TryGetShipLoad(EntityUid helm, HelmComponent helmComponent, out float weight, out float overloadCeil)
-    {
-        weight = 0f;
-        overloadCeil = 0f;
-
-        var helmXform = Transform(helm);
-        if (!TryGetGrid(helm, helmXform, out var boat) || !TryComp<MapGridComponent>(boat, out var mapGrid))
+            weight = 0f;
+            overloadCeil = 0f;
             return false;
-
-        overloadCeil = ShipWeightHelper.GetMaxWeight(boat, mapGrid, _map, EntityManager, _cfg);
-
-        weight = _rdWeight.GetTotalOnGrid(boat);
-        return true;
-    }
-
-    private bool TryGetOverloadCeil(EntityUid gridUid, MapGridComponent mapGrid, float overloadCeilPerTile, out float overloadCeil)
-    {
-        var totalTiles = 0;
-        var allTiles = _map.GetAllTilesEnumerator(gridUid, mapGrid);
-        while (allTiles.MoveNext(out _))
-        {
-            totalTiles++;
         }
 
-        overloadCeil = totalTiles * overloadCeilPerTile;
-        return totalTiles > 0;
-    }
-
-    private bool TryGetGrid(EntityUid uid, TransformComponent xform, out EntityUid grid)
-    {
-        grid = _transform.GetMoverCoordinates(uid, xform).EntityId;
-        return HasComp<MapGridComponent>(grid);
+        weight = grid.TotalWeight;
+        overloadCeil = _shipGrid.GetMaxWeight(gridUid, grid);
+        return true;
     }
 
     private static float GetSteeringInput(HelmComponent helmComponent)
     {
         var diffDegrees = helmComponent.HelmRotation;
-        var maxTurnAngle = MathF.Max(1f, MathF.Abs(helmComponent.SteeringAngleForMaxTurn));
+        var maxTurnAngle = float.IsFinite(helmComponent.SteeringAngleForMaxTurn)
+            ? MathF.Max(1f, MathF.Abs(helmComponent.SteeringAngleForMaxTurn))
+            : 45f;
         return Math.Clamp(-diffDegrees / maxTurnAngle, -1f, 1f);
+    }
+
+    private float GetShipWeight(HelmComponent helm, ShipGridComponent grid)
+    {
+        var minWeight = float.IsFinite(helm.MinShipWeight) ? MathF.Max(0f, helm.MinShipWeight) : 0f;
+        var totalWeight = float.IsFinite(grid.TotalWeight) ? MathF.Max(0f, grid.TotalWeight) : 0f;
+        return MathF.Max(minWeight, totalWeight);
+    }
+
+    private TimeSpan GetUpdateDelay()
+    {
+        var seconds = _cfg.GetCVar(ShipsCCVars.WindDelay);
+        return TimeSpan.FromSeconds(float.IsFinite(seconds) ? MathF.Max(0.1f, seconds) : 1f);
     }
 
     private static string FormatEfficiency(float value)
@@ -392,6 +317,10 @@ public sealed class HelmSystem : EntitySystem
 
     private static float NormalizeHelmRotation(float helmRotation)
     {
+        if (!float.IsFinite(helmRotation))
+            return 0f;
+
+        helmRotation %= 360f;
         if (helmRotation > 180f)
             helmRotation -= 360f;
 
@@ -399,5 +328,13 @@ public sealed class HelmSystem : EntitySystem
             helmRotation += 360f;
 
         return helmRotation;
+    }
+
+    private sealed class PilotState(EntityUid helm, TimeSpan lastRotationUpdate)
+    {
+        public readonly EntityUid Helm = helm;
+        public EntityUid? UsingSound;
+        public TimeSpan LastRotationUpdate = lastRotationUpdate;
+        public float RotationBudget;
     }
 }

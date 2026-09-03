@@ -10,8 +10,8 @@
     partSlot: head
     layerState: iron_head
     rsiPath: Imperial/Medieval/Forged/iron.rsi
-    resistanceModifier: 0.04
-    speedModifier: -0.05
+    resistanceModifier: 0.06
+    speedModifier: -0.04
 
 - type: entity
   id: ForgedIronTorso
@@ -57,8 +57,8 @@
     partSlot: torso
     layerState: iron_torso
     rsiPath: Imperial/Medieval/Forged/iron.rsi
-    resistanceModifier: 0.16
-    speedModifier: -0.2
+    resistanceModifier: 0.26
+    speedModifier: -0.12
 
 - type: entity
   id: ForgedIronLArm
@@ -74,8 +74,8 @@
     partSlot: left_arm
     layerState: iron_left_arm
     rsiPath: Imperial/Medieval/Forged/iron.rsi
-    resistanceModifier: 0.04
-    speedModifier: -0.015
+    resistanceModifier: 0.05
+    speedModifier: -0.01
 
 - type: entity
   id: ForgedIronRArm
@@ -90,8 +90,8 @@
     partSlot: right_arm
     layerState: iron_right_arm
     rsiPath: Imperial/Medieval/Forged/iron.rsi
-    resistanceModifier: 0.04
-    speedModifier: -0.015
+    resistanceModifier: 0.05
+    speedModifier: -0.01
 
 - type: entity
   id: ForgedIronRLeg
@@ -106,7 +106,7 @@
     partSlot: right_leg
     layerState: iron_right_leg
     rsiPath: Imperial/Medieval/Forged/iron.rsi
-    resistanceModifier: 0.06
+    resistanceModifier: 0.04
     speedModifier: 0.04
 
 - type: entity
@@ -123,5 +123,5 @@
     partSlot: left_leg
     layerState: iron_left_leg
     rsiPath: Imperial/Medieval/Forged/iron.rsi
-    resistanceModifier: 0.06
+    resistanceModifier: 0.04
     speedModifier: 0.04

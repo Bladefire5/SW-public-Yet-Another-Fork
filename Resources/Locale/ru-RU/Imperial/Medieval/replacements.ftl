@@ -456,7 +456,7 @@ chatsan-word-221 = спс
 chatsan-replacement-221 = благодарствую
 
 chatsan-word-222 = пж
-chatsan-replacement-222 = будьте добры
+chatsan-replacement-222 = пожалуйста
 
 chatsan-word-223 = ок
 chatsan-replacement-223 = хорошо

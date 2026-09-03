@@ -323,6 +323,49 @@
   #  proto: BandTimer30hours
   equipment:
     outerClothing: MedievalClothingOuterArmorChainMailLight
+###### VILLAGER STASHES
+- type: loadoutGroup
+  id: MedievalVillagerStash
+  name: loadout-group-stash-village
+  minLimit: 0
+  maxLimit: 1
+  loadouts:
+  - MedievalVillagerPresetFarmer
+  - MedievalVillagerPresetBeekeeper
+  - MedievalVillagerPresetDrinker
+  - MedievalVillagerPresetTailor
+  - MedievalVillagerPresetWoodCutter
+
+
+- type: loadout
+  id: MedievalVillagerPresetFarmer
+  storage:
+    back:
+    - MedievalVillagerPresetFarmer
+
+- type: loadout
+  id: MedievalVillagerPresetBeekeeper
+  storage:
+    back:
+    - MedievalVillagerPresetBeekeeper
+
+- type: loadout
+  id: MedievalVillagerPresetDrinker
+  storage:
+    back:
+    - MedievalVillagerPresetDrinker
+
+- type: loadout
+  id: MedievalVillagerPresetTailor
+  storage:
+    back:
+    - MedievalVillagerPresetTailor
+
+- type: loadout
+  id: MedievalVillagerPresetWoodCutter
+  storage:
+    back:
+    - MedievalVillagerPresetWoodCutter
 
 ########## RUSTED WEAPONS
 

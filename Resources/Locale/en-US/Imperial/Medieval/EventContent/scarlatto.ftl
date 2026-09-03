@@ -387,3 +387,64 @@ ent-WoodRailingCornerSmallScarlatto = {ent-WoodRailingScarlatto}
     .desc = {ent-WoodRailingScarlatto.desc}
     .suffix = { "Medieval, Construction, Scarlatto" }
 
+### FESTIVAL EVENT
+
+ent-MedievalClothingUniformJumpsuitFestivalEventScarlatto1 = masquerade servant uniform
+    .desc = A pleasant outfit for night festivities, seems to be worn by the servants of the Nexar Carnival.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-MedievalClothingUniformJumpsuitFestivalEventScarlatto2 = masquerade keeper's attire
+    .desc = Apparently, the wearer of this outfit was burdened with an important task.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+
+ent-ClothingMaskFestivalEventScarlatto1 = masquerade servant mask
+    .desc = By its very appearance, it reminds you that you have only half-risen toward the sun.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto2 = masquerade servant mask
+    .desc = By its very appearance, it reminds you that you have only half-risen toward the moon.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto3 = masquerade mask
+    .desc = A mask with more pronounced features of loveliness and wisdom.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto4 = masquerade mask
+    .desc = A mask with more pronounced features of loveliness and wisdom.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto5 = masquerade mask
+    .desc = A mask with more pronounced features of loveliness and wisdom.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto6 = masquerade keeper's mask
+    .desc = Every gaze that falls upon this mask will be blinded by sunlight.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto7 = tragic mask
+    .desc = How... Tragic!
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto8 = masquerade mask
+    .desc = A mask with more pronounced features of courage and patience.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto9 = masquerade mask
+    .desc = A mask with more pronounced features of courage and patience.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-ClothingMaskFestivalEventScarlatto10 = masquerade mask
+    .desc = A mask with more pronounced features of courage and patience.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+
+ent-MedievalDecorationEventFestivalScarlatto1 = festival pennants
+    .desc = Multicolored pennants that create an atmosphere of carnival and merriment.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-MedievalDecorationEventFestivalScarlatto2 = festival pennants
+    .desc = Multicolored pennants that create an atmosphere of carnival and merriment.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-MedievalDecorationEventFestivalScarlatto3 = festival pennants
+    .desc = Multicolored pennants that create an atmosphere of carnival and merriment.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+ent-MedievalDecorationEventFestivalScarlatto4 = festival pennants
+    .desc = Multicolored pennants that create an atmosphere of carnival and merriment.
+    .suffix = {"Medieval, Scarlatto, Masquerade"}
+
+### FESTIVAL EVENT
+
+ent-MedievalViolinInstrument = violin
+    .desc = They say the violin is the devil's instrument, but you can draw from it not only desperate sighs and cries, but also the music of your own repentance...
+    .suffix = {"Medieval, Scarlatto"}
+ent-MedievalBowInstrument = violin bow
+    .desc = At its tip, your destiny begins.
+    .suffix = {"Medieval, Scarlatto"}

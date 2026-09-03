@@ -74,6 +74,7 @@
       - entity_storage
   - type: TimedDespawn
     lifetime: 600
+  - type: PreserveContentsOnTimedDespawn
 
 - type: entity
   name: Empty Crate Spawner
@@ -833,6 +834,18 @@
           - UniversalLock
   - type: StorageFill
     contents:
+      - id: ForgedCoreSerdolic
+        prob: 0.015
+      - id: ForgedCoreAdam
+        prob: 0.015
+      - id: ForgedCoreTopaz
+        prob: 0.015
+      - id: ForgedTopazEyes
+        prob: 0.015
+      - id: ForgedAdamEyes
+        prob: 0.015
+      - id: ForgedSerdolickEyes
+        prob: 0.015
       - id: MedievalClothingUniformJumpsuitShitCloth24
         prob: 0.02
       - id: MedievalCoinBag
@@ -1360,6 +1373,22 @@
           - UniversalLock
   - type: StorageFill
     contents:
+      - id: ForgedCoreSerdolic
+        prob: 0.075
+      - id: ForgedCoreAdam
+        prob: 0.075
+      - id: ForgedCoreTopaz
+        prob: 0.075
+      - id: ForgedCoreGold
+        prob: 0.075
+      - id: ForgedTopazEyes
+        prob: 0.075
+      - id: ForgedAdamEyes
+        prob: 0.075
+      - id: ForgedSerdolickEyes
+        prob: 0.075
+      - id: ForgedBloodEyes
+        prob: 0.075
       - id: MedievalClothingUniformJumpsuitShitCloth24
         prob: 0.02
       - id: MedievalCoinBag
@@ -1739,6 +1768,16 @@
       - id: MedievalIngotGold
         prob: 0.7
       - id: MedievalIngotGold
+        prob: 0.7
+      - id: MedievalIngotSilver
+        prob: 0.7
+      - id: MedievalIngotSilver
+        prob: 0.7
+      - id: MedievalIngotSilver
+        prob: 0.7
+      - id: MedievalIngotSilver
+        prob: 0.7
+      - id: MedievalIngotSilver
         prob: 0.7
       - id: MedaljonSpeed
         prob: 0.04

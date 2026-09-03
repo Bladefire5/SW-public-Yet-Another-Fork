@@ -1,7 +1,7 @@
 - type: entity
   id: MedievalActionCursedFetter
-  name: ent-MedievalActionCursedFetter
-  description: ent-MedievalActionCursedFetter
+  name: medieval-spell-speach-cursed-fetter-beginner-name
+  description: medieval-spell-speach-cursed-fetter-beginner-desc
   components:
   - type: CastTraining
     trainingResults:
@@ -47,4 +47,3 @@
           color: "#8B008B"
           hideChat: true
   - type: MedievalSpawnOnlyInFreeHands
-

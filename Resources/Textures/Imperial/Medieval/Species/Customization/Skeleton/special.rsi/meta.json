@@ -1,0 +1,85 @@
+{
+    "version": 1,
+    "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
+    "copyright": "fire/mushroom by jopenforde, сoraldust/rot by lavovy_skelet",
+    "size": {
+      "x": 32,
+      "y": 32
+    },
+    "states": [
+      {
+        "name": "fire",
+        "directions": 4,
+        "delays": [
+          [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+		    2.5,
+		    0.2,
+		    0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+		    2.5,
+		    0.2,
+		    0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+		    2.5,
+		    0.2,
+		    0.2
+          ],
+          [
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+            0.2,
+		    2.5,
+		    0.2,
+		    0.2
+          ]
+        ]
+      },
+	  {
+        "name": "mushroom",
+        "directions": 4
+      },
+	  {
+        "name": "rot",
+        "directions": 4
+      },
+	  {
+        "name": "coraldust1",
+        "directions": 4
+      },
+	  {
+        "name": "coraldust2",
+        "directions": 4
+      },
+	  {
+        "name": "coraldust3",
+        "directions": 4
+      },
+	  {
+        "name": "coraldust4",
+        "directions": 4
+      }
+    ]
+  }

@@ -3,7 +3,7 @@ using Robust.Shared.Utility;
 
 namespace Content.Shared.Imperial.Medieval.Forged;
 
-[RegisterComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class ForgedModuleComponent : Component
 {
     /// <summary>
@@ -34,18 +34,24 @@ public sealed partial class ForgedModuleComponent : Component
     /// <summary>
     /// Модификатор скорости кованного.
     /// </summary>
-    [DataField("speedModifier")]
+    [DataField("speedModifier"), AutoNetworkedField]
     public float SpeedModifier = 0;
+    public float BaseSpeedModifier = 0;
 
     /// <summary>
     /// Модификатор резиста кованного.
     /// </summary>
-    [DataField("resistanceModifier")]
+    [DataField("resistanceModifier"), AutoNetworkedField]
     public float ResistanceModifier = 0;
+
+    public float BaseResistanceModifier = 0;
 
     /// <summary>
     /// Будет ли эта деталь давать особые способности.
     /// </summary>
     [DataField("abilityId")]
     public string? AbilityId;
+
+    [DataField]
+    public bool IsReplaceable;
 }

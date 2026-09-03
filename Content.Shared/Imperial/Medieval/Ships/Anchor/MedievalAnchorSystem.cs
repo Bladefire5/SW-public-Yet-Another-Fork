@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Content.Shared.DoAfter;
 using Content.Shared.Imperial.Medieval.Skills;
 using Content.Shared.Interaction;
@@ -10,6 +11,8 @@ public sealed class MedievalAnchorSystem : EntitySystem
     [Dependency] private readonly SharedDoAfterSystem _doAfter = default!;
     [Dependency] private readonly SharedSkillsSystem _skills = default!;
     [Dependency] private readonly INetManager _net = default!;
+
+    private readonly Dictionary<EntityUid, EntityUid> _activeUsers = new();
 
     public override void Initialize()
     {
@@ -26,11 +29,11 @@ public sealed class MedievalAnchorSystem : EntitySystem
 
     private bool TryStartUse(EntityUid uid, MedievalAnchorComponent component, EntityUid user)
     {
-        if (component.ActiveUser != null || !_skills.HasSkill(user, SharedSkillsSystem.StrengthId))
+        if (_activeUsers.ContainsKey(uid) || !_skills.HasSkill(user, SharedSkillsSystem.StrengthId))
             return false;
 
         if (_net.IsServer)
-            SetActiveUser(uid, component, user);
+            _activeUsers[uid] = user;
 
         var doAfter = new DoAfterArgs(EntityManager,
             user,
@@ -54,7 +57,7 @@ public sealed class MedievalAnchorSystem : EntitySystem
             return true;
 
         if (_net.IsServer)
-            SetActiveUser(uid, component, null);
+            _activeUsers.Remove(uid);
 
         return false;
     }
@@ -62,13 +65,25 @@ public sealed class MedievalAnchorSystem : EntitySystem
     private float GetUseTime(EntityUid user, MedievalAnchorComponent component)
     {
         var strength = _skills.GetSkillLevel(user, SharedSkillsSystem.StrengthId);
-        var useTime = MathF.Max(1f, component.BaseUseTime - strength * component.StrengthUseTimeModifier);
-        return component.Lowered ? useTime : useTime * component.LoweringTimeMultiplier;
+        var baseUseTime = float.IsFinite(component.BaseUseTime) ? component.BaseUseTime : 1f;
+        var strengthModifier = float.IsFinite(component.StrengthUseTimeModifier)
+            ? component.StrengthUseTimeModifier
+            : 0f;
+        var loweringMultiplier = float.IsFinite(component.LoweringTimeMultiplier)
+            ? MathF.Max(0f, component.LoweringTimeMultiplier)
+            : 1f;
+        var useTime = MathF.Max(1f, baseUseTime - strength * strengthModifier);
+        return component.Lowered ? useTime : MathF.Max(0.1f, useTime * loweringMultiplier);
     }
 
-    private void SetActiveUser(EntityUid uid, MedievalAnchorComponent component, EntityUid? user)
+    public EntityUid? GetActiveUser(EntityUid uid)
     {
-        component.ActiveUser = user;
-        Dirty(uid, component);
+        return _activeUsers.GetValueOrDefault(uid);
     }
+
+    public void ClearActiveUser(EntityUid uid)
+    {
+        _activeUsers.Remove(uid);
+    }
+
 }

@@ -239,8 +239,15 @@ namespace Content.Shared.MeleeParry
             _useDelay.TryResetDelay((activeItem, useDelay));
             weapon.NextAttack = _timing.CurTime + TimeSpan.FromSeconds(parry.ParryUseDelay);
 
-            if (_netMan.IsServer)
-                Spawn(parry.ParryEffectWindow, Transform(uid).Coordinates);
+            var effectCoordinates = Transform(uid).Coordinates;
+            var effectUid = PredictedSpawnAttachedTo(parry.ParryEffectWindow, effectCoordinates);
+            if (TryComp<MeleeParryEffectComponent>(effectUid, out var effect))
+            {
+                effect.AnimationStartTime = parry.ParriedTime;
+                Dirty(effectUid, effect);
+            }
+
+            _audio.PlayPredicted(parry.ParryWindowSound, effectCoordinates, uid);
 
             Dirty(activeItem, weapon);
             Dirty(activeItem, parry);
@@ -252,72 +259,74 @@ namespace Content.Shared.MeleeParry
             if (args.Cancelled || args.Origin == null)
                 return;
 
-            var attacker = args.Origin.Value;
-            var attackerItem = _hands.GetActiveItem(attacker);
-
-            var weaponEntity = attackerItem ?? attacker;
-
-            if (!TryComp<MeleeWeaponComponent>(weaponEntity, out var meleeWeaponComponent))
-                return;
-
-            var item = _hands.GetActiveItem(uid);
-            if (!TryComp<MeleeParryComponent>(item, out var parry))
-                return;
-
-            if (!meleeWeaponComponent.Damage.DamageDict.TryGetValue("ParryAble", out var parryDMG))
-                return;
-
-            if (attackerItem != null && TryComp<MedievalWeaponSkillCategoryComponent>(attackerItem.Value, out var skillComp))
-                parryDMG *= skillComp.Skill.GetParryData().Able;
-
-
-            if (CheckParryable(uid, (float)parryDMG, out _, out _, out _, out _))
-            {
-
-                Dirty(item.Value, parry);
+            if (TryHandleParry(uid, args.Origin.Value))
                 args.Cancelled = true;
-            }
         }
 
         private void OnDamage(EntityUid uid, MeleeParryAbleComponent component, ref BeforeDamageChangedEvent args)
         {
-            if (args.Origin == null || !args.Damage.DamageDict.TryGetValue("ParryAble", out var parryDMG))
+            if (args.Origin == null || !args.Damage.DamageDict.ContainsKey("ParryAble"))
                 return;
 
-            var attacker = args.Origin.Value;
+            if (TryHandleParry(uid, args.Origin.Value))
+                args.Cancelled = true;
+        }
+
+        private bool TryHandleParry(EntityUid uid, EntityUid attacker)
+        {
             var attackerItem = _hands.GetActiveItem(attacker);
+            var weaponEntity = attackerItem ?? attacker;
+
+            if (!TryComp<MeleeWeaponComponent>(weaponEntity, out var meleeWeapon))
+                return false;
+
+            if (!meleeWeapon.Damage.DamageDict.TryGetValue("ParryAble", out var baseParryDmg))
+                return false;
+
+            var parryDMG = (float)baseParryDmg;
 
             if (attackerItem != null && TryComp<MedievalWeaponSkillCategoryComponent>(attackerItem.Value, out var skillComp))
                 parryDMG *= skillComp.Skill.GetParryData().Able;
 
-            if (CheckParryable(uid, (float)parryDMG, out var item, out var parry, out var parryStorage, out var weapon))
+            if (!CheckParryable(uid, parryDMG, out var item, out var parry, out var parryStorage, out var weapon))
+                return false;
+
+            if (parry.LastParryTime == _timing.CurTime)
+                return true;
+
+            parry.LastParryTime = _timing.CurTime;
+            parry.ParriedTime = TimeSpan.Zero;
+
+            parryStorage.NextParryTime = TimeSpan.Zero;
+            parryStorage.CooldownParry = Math.Clamp(parry.ParryCooldown / (GetAgilityMod(uid) / 10f), 2.5f, 7f);
+            parryStorage.ParryQueued = false;
+
+            var useDelay = EnsureComp<UseDelayComponent>(item);
+            _useDelay.SetLength(item, TimeSpan.Zero);
+            _useDelay.TryResetDelay((item, useDelay));
+            weapon.NextAttack = TimeSpan.Zero;
+
+            var penaltyTime = _timing.CurTime + TimeSpan.FromSeconds(0.5);
+            if (meleeWeapon.NextAttack < penaltyTime)
             {
-                args.Cancelled = true;
-
-                parry.ParriedTime = TimeSpan.Zero;
-
-                parryStorage.NextParryTime = TimeSpan.Zero;
-                parryStorage.CooldownParry = Math.Clamp(parry.ParryCooldown / (GetAgilityMod(uid) / 10f), 2.5f, 7f);
-                parryStorage.ParryQueued = false;
-
-                var useDelay = EnsureComp<UseDelayComponent>(item);
-                _useDelay.SetLength(item, TimeSpan.Zero);
-                _useDelay.TryResetDelay((item, useDelay));
-                weapon.NextAttack = TimeSpan.Zero;
-
-                Dirty(item, weapon);
-                Dirty(uid, parryStorage);
-                Dirty(item, parry);
-
-                float staminaDMGBoost = 1f;
-                if (TryComp<StaminaParryBoosterComponent>(uid, out var booster))
-                    staminaDMGBoost *= booster.StaminaDamageMultiplier;
-
-                var staminaDamage = parry.ParryStaminaDamage * staminaDMGBoost;
-                _stamina.TakeStaminaDamage(args.Origin.Value, staminaDamage);
-
-                Spawn(parry.ParryEffectSuccess, Transform(uid).Coordinates);
+                meleeWeapon.NextAttack = penaltyTime;
+                Dirty(weaponEntity, meleeWeapon);
             }
+
+            Dirty(item, weapon);
+            Dirty(uid, parryStorage);
+            Dirty(item, parry);
+
+            float staminaDMGBoost = 1f;
+            if (TryComp<StaminaParryBoosterComponent>(uid, out var booster))
+                staminaDMGBoost *= booster.StaminaDamageMultiplier;
+
+            var staminaDamage = parry.ParryStaminaDamage * staminaDMGBoost;
+            _stamina.TakeStaminaDamage(attacker, staminaDamage);
+
+            Spawn(parry.ParryEffectSuccess, Transform(uid).Coordinates);
+
+            return true;
         }
 
         public bool CheckParryable(EntityUid uid, float parryDMG, out EntityUid weaponUid, out MeleeParryComponent parry, out MeleeParryStorageComponent parryStorage, out MeleeWeaponComponent weapon)
@@ -331,16 +340,20 @@ namespace Content.Shared.MeleeParry
             if (item == null) return false;
 
             if (TryComp<MeleeParryComponent>(item, out var parryComp) &&
-                parryComp.ParriedTime != TimeSpan.Zero &&
-                CountParryWindowTime((item.Value, parryComp), parryDMG) > _timing.CurTime &&
                 TryComp<MeleeParryStorageComponent>(uid, out var parryStorageComp) &&
                 TryComp<MeleeWeaponComponent>(item, out var weaponComp))
             {
-                weaponUid = item.Value;
-                parry = parryComp;
-                parryStorage = parryStorageComp;
-                weapon = weaponComp;
-                return true;
+                bool isSameTime = parryComp.LastParryTime == _timing.CurTime && _timing.CurTime != TimeSpan.Zero;
+                bool isWithinWindow = parryComp.ParriedTime != TimeSpan.Zero && CountParryWindowTime((item.Value, parryComp), parryDMG) > _timing.CurTime;
+
+                if (isSameTime || isWithinWindow)
+                {
+                    weaponUid = item.Value;
+                    parry = parryComp;
+                    parryStorage = parryStorageComp;
+                    weapon = weaponComp;
+                    return true;
+                }
             }
 
             return false;

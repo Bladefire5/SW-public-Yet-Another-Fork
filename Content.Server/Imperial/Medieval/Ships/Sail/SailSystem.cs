@@ -1,7 +1,8 @@
 using System;
 using System.Numerics;
+using Content.Server.Imperial.Medieval.Ships;
+using Content.Server.Imperial.Medieval.Ships.PlayerDrowning;
 using Content.Server.Shuttles.Components;
-using Content.Shared._RD.Weight.Systems;
 using Content.Shared.ActionBlocker;
 using Content.Shared.DoAfter;
 using Content.Shared.Imperial.Medieval.Administration.Ships;
@@ -30,11 +31,10 @@ public sealed class SailSystem : EntitySystem
 {
     [Dependency] private readonly SharedPhysicsSystem _physics = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
-    [Dependency] private readonly RDWeightSystem _rdWeight = default!;
+    [Dependency] private readonly ShipGridSystem _shipGrid = default!;
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
     [Dependency] private readonly AppearanceSystem _appearance = default!;
-    [Dependency] private readonly SharedMapSystem _map = default!;
     [Dependency] private readonly SharedAudioSystem _audio = default!;
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly ActionBlockerSystem _actionBlocker = default!;
@@ -43,6 +43,7 @@ public sealed class SailSystem : EntitySystem
     [Dependency] private readonly SharedSkillsSystem _skills = default!;
 
     private TimeSpan _nextCheckTime;
+    private bool _windWasEnabled;
 
     public override void Initialize()
     {
@@ -134,7 +135,9 @@ public sealed class SailSystem : EntitySystem
         if (!args.IsInDetailsRange)
             return;
 
-        args.PushMarkup(Loc.GetString("sail-examine-efficiency", ("efficiency", FormatEfficiency(component.LastSailEfficencyMod))));
+        args.PushMarkup(Loc.GetString(
+            "sail-examine-efficiency",
+            ("efficiency", FormatEfficiency(_shipGrid.GetSailEfficiency(uid)))));
         args.PushMarkup(Loc.GetString("sail-examine-wind-strength", ("strength", FormatEfficiency(_cfg.GetCVar(ShipsCCVars.WindPower)))));
     }
 
@@ -161,44 +164,42 @@ public sealed class SailSystem : EntitySystem
         if (curTime <= _nextCheckTime)
             return;
 
-        _nextCheckTime = curTime + TimeSpan.FromSeconds(_cfg.GetCVar(ShipsCCVars.WindDelay));
-        if (!_cfg.GetCVar(ShipsCCVars.WindEnabled))
+        _nextCheckTime = curTime + GetUpdateDelay();
+        var windEnabled = _cfg.GetCVar(ShipsCCVars.WindEnabled);
+        if (!windEnabled)
         {
-            ResetSailEfficiency();
+            if (_windWasEnabled)
+                ResetSailEfficiency();
+
+            _windWasEnabled = false;
             return;
         }
 
-        var windDirection = Angle.FromDegrees(_cfg.GetCVar(ShipsCCVars.WindRotation));
-        var stormLevel = _cfg.GetCVar(ShipsCCVars.StormLevel);
-        var windPower = _cfg.GetCVar(ShipsCCVars.WindPower);
+        _windWasEnabled = true;
 
-        foreach (var sailComponent in EntityManager.EntityQuery<SailComponent>())
+        var windRotation = _cfg.GetCVar(ShipsCCVars.WindRotation);
+        var windDirection = Angle.FromDegrees(float.IsFinite(windRotation) ? windRotation : 0f);
+        var configuredStormLevel = _cfg.GetCVar(ShipsCCVars.StormLevel);
+        var stormLevel = float.IsFinite(configuredStormLevel) ? MathF.Max(0f, configuredStormLevel) : 0f;
+        var configuredWindPower = _cfg.GetCVar(ShipsCCVars.WindPower);
+        var windPower = float.IsFinite(configuredWindPower) ? MathF.Max(0f, configuredWindPower) : 0f;
+
+        var grids = EntityQueryEnumerator<ShipGridComponent>();
+        while (grids.MoveNext(out var boat, out var grid))
         {
-            var sailEntity = sailComponent.Owner;
-            var sailXform = Transform(sailEntity);
-
-            if (!TryGetGrid(sailEntity, sailXform, out var boat))
-            {
-                SetLastSailEfficencyMod(sailEntity, sailComponent, 0f);
+            if (grid.Sails.Count == 0)
                 continue;
-            }
-
-            if (sailComponent.Folded)
-            {
-                SetLastSailEfficencyMod(sailEntity, sailComponent, 0f);
-                continue;
-            }
 
             if (HasComp<IslandComponent>(boat))
             {
-                SetLastSailEfficencyMod(sailEntity, sailComponent, 0f);
+                ResetSailEfficiency(grid);
                 continue;
             }
 
             var mapUid = _transform.GetMap(boat);
             if (!mapUid.HasValue || !TryComp<SeaComponent>(mapUid.Value, out var sea))
             {
-                SetLastSailEfficencyMod(sailEntity, sailComponent, 0f);
+                ResetSailEfficiency(grid);
                 continue;
             }
 
@@ -206,41 +207,53 @@ public sealed class SailSystem : EntitySystem
 
             if (!sea.WindEnabledLocal)
             {
-                SetLastSailEfficencyMod(sailEntity, sailComponent, 0f);
+                ResetSailEfficiency(grid);
                 continue;
             }
 
-            if (!sailComponent.Push)
+            var totalPower = 0f;
+            foreach (var sailEntity in grid.Sails)
             {
-                _transform.SetWorldRotation(sailEntity, windDirection);
-                SetLastSailEfficencyMod(sailEntity, sailComponent, GetForceFactorByAngle(_transform.GetWorldRotation(sailEntity), windDirection));
-                continue;
+                if (!TryComp<SailComponent>(sailEntity, out var sailComponent))
+                    continue;
+
+                if (sailComponent.Folded)
+                {
+                    SetSailEfficiency(sailEntity, 0f);
+                    continue;
+                }
+
+                if (!sailComponent.Push)
+                {
+                    _transform.SetWorldRotation(sailEntity, windDirection);
+                    SetSailEfficiency(
+                        sailEntity,
+                        GetForceFactorByAngle(_transform.GetWorldRotation(sailEntity), windDirection));
+                    continue;
+                }
+
+                var sailDirection = _transform.GetWorldRotation(sailEntity);
+                var forceFactor = GetForceFactorByAngle(sailDirection, windDirection);
+                SetSailEfficiency(sailEntity, forceFactor);
+                var sailSize = float.IsFinite(sailComponent.SailSize) ? MathF.Max(0f, sailComponent.SailSize) : 0f;
+                totalPower += stormLevel * windPower * sailSize * forceFactor;
             }
 
-            var sailDirection = _transform.GetWorldRotation(sailEntity);
-            var forceFactor = GetForceFactorByAngle(sailDirection, windDirection);
-            SetLastSailEfficencyMod(sailEntity, sailComponent, forceFactor);
-
-            if (TryComp<ShuttleComponent>(boat, out var shuttle) && !shuttle.Enabled)
+            if (grid.HasLoweredAnchor || TryComp<ShuttleComponent>(boat, out var shuttle) && !shuttle.Enabled)
                 continue;
 
-            if (GetShipSpeed(boat) >= _cfg.GetCVar(ShipsCCVars.ShipsMaxSpeed))
+            var configuredMaxSpeed = _cfg.GetCVar(ShipsCCVars.ShipsMaxSpeed);
+            var maxSpeed = float.IsFinite(configuredMaxSpeed) ? MathF.Max(0f, configuredMaxSpeed) : 0f;
+            if (GetShipSpeed(boat) >= maxSpeed)
                 continue;
 
             var shipDirection = _transform.GetWorldRotation(boat);
-            if (MathF.Abs(forceFactor) < 0.001f)
+            if (MathF.Abs(totalPower) < 0.001f || grid.TileCount <= 0)
                 continue;
 
-            if (!TryComp<MapGridComponent>(boat, out var mapGrid))
-                continue;
-
-            var overloadCeil = ShipWeightHelper.GetMaxWeight(boat, mapGrid, _map, EntityManager, _cfg);
-            if (overloadCeil < 0)
-                continue;
-
-            var weight = _rdWeight.GetTotalOnGrid(boat);
-            var impulseMagnitude = GetImpulseMagnitude(stormLevel * windPower * sailComponent.SailSize, overloadCeil, weight);
-            var localImpulse = Vector2.UnitY * (impulseMagnitude * forceFactor);
+            var overloadCeil = _shipGrid.GetMaxWeight(boat, grid);
+            var impulseMagnitude = GetImpulseMagnitude(totalPower, overloadCeil, grid.TotalWeight);
+            var localImpulse = Vector2.UnitY * impulseMagnitude;
             var worldImpulse = shipDirection.RotateVec(localImpulse);
 
             if (!TryComp<PhysicsComponent>(boat, out var body))
@@ -253,19 +266,24 @@ public sealed class SailSystem : EntitySystem
 
     private void ResetSailEfficiency()
     {
-        foreach (var sailComponent in EntityManager.EntityQuery<SailComponent>())
+        var grids = EntityQueryEnumerator<ShipGridComponent>();
+        while (grids.MoveNext(out _, out var grid))
         {
-            SetLastSailEfficencyMod(sailComponent.Owner, sailComponent, 0f);
+            ResetSailEfficiency(grid);
         }
     }
 
-    private void SetLastSailEfficencyMod(EntityUid uid, SailComponent component, float mod)
+    private void ResetSailEfficiency(ShipGridComponent grid)
     {
-        if (MathF.Abs(component.LastSailEfficencyMod - mod) < 0.001f)
-            return;
+        foreach (var sailUid in grid.Sails)
+        {
+            SetSailEfficiency(sailUid, 0f);
+        }
+    }
 
-        component.LastSailEfficencyMod = mod;
-        Dirty(uid, component);
+    private void SetSailEfficiency(EntityUid uid, float efficiency)
+    {
+        _shipGrid.SetSailEfficiency(uid, efficiency);
     }
 
     private bool TryGetGrid(EntityUid uid, TransformComponent xform, out EntityUid grid)
@@ -302,10 +320,19 @@ public sealed class SailSystem : EntitySystem
 
     private static float GetImpulseMagnitude(float power, float overloadCeil, float weight)
     {
+        if (!float.IsFinite(power) || !float.IsFinite(overloadCeil) || !float.IsFinite(weight))
+            return 0f;
+
         if (weight <= 0f || weight <= overloadCeil)
             return power;
 
         return power * overloadCeil / weight;
+    }
+
+    private TimeSpan GetUpdateDelay()
+    {
+        var seconds = _cfg.GetCVar(ShipsCCVars.WindDelay);
+        return TimeSpan.FromSeconds(float.IsFinite(seconds) ? MathF.Max(0.1f, seconds) : 1f);
     }
 
     private void OnFold(EntityUid uid, SailComponent component, SailFoldDoAfterEvent args)

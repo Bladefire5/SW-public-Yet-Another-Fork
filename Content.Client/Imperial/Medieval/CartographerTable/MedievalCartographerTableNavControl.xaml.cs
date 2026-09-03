@@ -84,6 +84,7 @@ public sealed partial class MedievalCartographerTableNavControl : BaseShuttleCon
         }
 
         var mapPos = _transform.ToMapCoordinates(_coordinates.Value);
+        DrawWorldCoordinates(handle, mapPos.Position);
         var posMatrix = Matrix3Helpers.CreateTransform(_coordinates.Value.Position, _rotation.Value);
         var ourEntRot = _rotateWithEntity ? _transform.GetWorldRotation(xform) : _rotation.Value;
         var ourEntMatrix = Matrix3Helpers.CreateTransform(_transform.GetWorldPosition(xform), ourEntRot);
@@ -147,6 +148,24 @@ public sealed partial class MedievalCartographerTableNavControl : BaseShuttleCon
         }
 
         DrawRadarMarkers(handle, worldToShuttle, shuttleToView, mapPos.Position);
+    }
+
+    private void DrawWorldCoordinates(DrawingHandleScreen handle, Vector2 position)
+    {
+        var text = Loc.GetString(
+            "medieval-cartographer-table-coordinates",
+            ("x", position.X.ToString("F0")),
+            ("y", position.Y.ToString("F0")));
+        var dimensions = handle.GetDimensions(Font, text, 1f);
+        const float margin = 8f;
+        const float padding = 4f;
+        var textPosition = new Vector2(PixelWidth - dimensions.X - margin, margin);
+        var background = new UIBox2(
+            textPosition - new Vector2(padding),
+            textPosition + dimensions + new Vector2(padding));
+
+        handle.DrawRect(background, Color.Black.WithAlpha(0.65f));
+        handle.DrawString(Font, textPosition, text, Color.White);
     }
 
     private void DrawGridSilhouette(

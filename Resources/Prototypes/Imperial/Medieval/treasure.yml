@@ -1,0 +1,336 @@
+- type: entity
+  id: MedievalTreasureBoard
+  name: treasure map board
+  description: Old maps appear here from time to time.
+  placement:
+    mode: SnapgridCenter
+  components:
+  - type: WallMount
+  - type: Sprite
+    drawdepth: WallMountedItems
+    sprite: Structures/Wallmounts/noticeboard.rsi
+    layers:
+    - state: noticeboard
+    - state: notice-0
+    - map: ["enum.StorageFillLayers.Fill"]
+  - type: StorageFillVisualizer
+    maxFillLevels: 6
+    fillBaseName: notice
+  - type: TreasureBoard
+    minimumSpawnDelay: 10m
+    maximumSpawnDelay: 15m
+  - type: Appearance
+  - type: InteractionOutline
+  - type: Clickable
+  - type: Transform
+    anchored: true
+  - type: Storage
+    grid:
+    - 0,0,3,3
+    maxItemSize: Small
+    whitelist:
+      components:
+      - TreasureMap
+  - type: UserInterface
+    interfaces:
+      enum.StorageUiKey.Key:
+        type: StorageBoundUserInterface
+  - type: ContainerContainer
+    containers:
+      storagebase: !type:Container
+  - type: Tag
+    tags:
+    - Wooden
+  - type: Construction
+    graph: NoticeBoard
+    node: noticeBoard
+
+- type: entity
+  id: MedievalTreasureMap
+  name: treasure map
+  description: A worn sheet covered with lines and faded symbols.
+  parent: BaseItem
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Misc/treasure_map.rsi
+    state: treasure_map
+  - type: Item
+    size: Small
+  - type: TreasureMap
+
+- type: entity
+  id: MedievalTreasureMarker
+  name: treasure marker
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: TreasureMarker
+
+- type: entity
+  id: MedievalTreasureChest
+  name: buried treasure chest
+  description: A heavy chest unearthed from beneath the ground.
+  parent: MedievalCrateGeneric
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Decor/treasure_chest.rsi
+    layers:
+    - state: base
+    - state: closed
+      map: ["enum.StorageVisualLayers.Door"]
+  - type: Icon
+    sprite: Imperial/Medieval/Decor/treasure_chest.rsi
+    state: base
+  - type: Fixtures
+    fixtures:
+      fix1:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.4,-0.4,0.4,0.29"
+        density: 135
+        mask:
+        - LargeMobMask
+        layer:
+        - LargeMobLayer
+  - type: UniversalLockable
+  - type: ResistLocker
+    resistTime: 60
+  - type: Lock
+    locked: false
+    showLockVerbs: false
+    showExamine: false
+    lockOnClick: false
+    unlockOnClick: false
+    useAccess: false
+    unlockingSound: null
+    lockingSound: null
+    breakOnAccessBreaker: false
+  - type: ItemSlots
+    slots:
+      lockSlot:
+        name: Lock
+        ejectOnBreak: true
+        insertSound: null
+        ejectSound: /Audio/Effects/unbuckle.ogg
+        whitelist:
+          components:
+          - UniversalLock
+  - type: EntityTableContainerFill
+    containers:
+      entity_storage: !type:NestedSelector
+        tableId: MedievalTreasureChestLootTable
+
+- type: entityTable
+  id: MedievalTreasureChestLootTable
+  table: !type:AllSelector
+    children:
+    - !type:NestedSelector
+      tableId: MedievalTreasureChestGoldenRoll
+      rolls: 4
+    - id: MedievalRevent25
+      rolls: 20
+      prob: 0.5
+
+- type: entityTable
+  id: MedievalTreasureChestGoldenRoll
+  table: !type:AllSelector
+    children:
+    - id: MedievalSteelIngot
+      amount: !type:BinomialNumberSelector
+        trials: 12
+        chance: 0.7
+    - id: MedievalArrowFire
+      amount: !type:BinomialNumberSelector
+        trials: 8
+        chance: 0.7
+    - id: MedievalAstrolitPiece
+      amount: !type:BinomialNumberSelector
+        trials: 15
+        chance: 0.3
+    - id: MedievalIngotGold
+      amount: !type:BinomialNumberSelector
+        trials: 5
+        chance: 0.7
+    - id: MedievalChemistryRecipe
+      amount: !type:BinomialNumberSelector
+        trials: 5
+        chance: 0.6
+    - id: MedievalForstoneOre
+      amount: !type:BinomialNumberSelector
+        trials: 4
+        chance: 0.7
+    - id: MedievalEbonitOre
+      amount: !type:BinomialNumberSelector
+        trials: 4
+        chance: 0.7
+    - id: MedievalRevent10
+      amount: !type:BinomialNumberSelector
+        trials: 13
+        chance: 0.1923
+    - id: MedievalRevent
+      amount: !type:BinomialNumberSelector
+        trials: 11
+        chance: 0.1
+    - id: MedievalRevent5
+      amount: !type:BinomialNumberSelector
+        trials: 4
+        chance: 0.1
+    - id: ClothingHeadHelmetBone
+      prob: 0.5
+    - id: ClothingEyesEyepatchHudBeer
+      prob: 0.45
+    - id: MedievalIronIngot
+      prob: 0.4
+    - id: MedievalArrowIronPhysics
+      prob: 0.4
+    - id: MedievalWeaponCrossbow
+      prob: 0.35
+    - id: MedievalAdam
+      prob: 0.3
+    - id: MedievalTopaz
+      prob: 0.3
+    - id: MedievalFireSerdolick
+      prob: 0.3
+    - id: MedievalBrutepack
+      prob: 0.25
+    - id: MedievalBolt
+      prob: 0.25
+    - id: ClothingEyesEyepatchHudMedical
+      prob: 0.25
+    - id: MedievalPaper
+      prob: 0.22
+    - id: MedievalHealthChemistryBottle
+      prob: 0.205
+    - id: MedievalGear
+      prob: 0.2
+    - id: MedievalLeather1
+      prob: 0.2
+    - id: MedievalSpiderHair
+      prob: 0.2
+    - id: MedievalRope
+      prob: 0.2
+    - id: MedievalLootAnt
+      prob: 0.2
+    - id: MedievalManaBurnGrenade
+      prob: 0.2
+    - id: DiceBag
+      prob: 0.15
+    - id: MedievalLockpick
+      prob: 0.15
+    - id: MedievalDaggerT3
+      prob: 0.14
+    - id: MedievalHandcuffs
+      prob: 0.12
+    - id: MedievalMaskFace
+      prob: 0.11
+    - id: MedievalClothingOuterArmorStudded
+      prob: 0.1
+    - id: MedievalEssence
+      prob: 0.1
+    - id: MedievalFetter
+      prob: 0.1
+    - id: MedievalScythe
+      prob: 0.1
+    - id: MedievalGrenade
+      prob: 0.1
+    - id: MedievalPen
+      prob: 0.1
+    - id: MedievalBanjoInstrument
+      prob: 0.1
+    - id: ClothingOuterArmorBone
+      prob: 0.1
+    - id: MedievalHolySalt
+      prob: 0.1
+    - id: MedievalClothingHeadArcherHat
+      prob: 0.1
+    - id: MedievalClothingBackpackBox
+      prob: 0.09
+    - id: MedievalClothingOuterArmorLeather
+      prob: 0.09
+    - id: MedievalBeaker
+      prob: 0.09
+    - id: MedievalKnut
+      prob: 0.09
+    - id: MedievalShoesSpeed
+      prob: 0.09
+    - id: MedievalHandheldGPSBasic
+      prob: 0.08
+    - id: MedievalClothingOuterArmorFur
+      prob: 0.075
+    - id: ForgedCoreGold
+      prob: 0.075
+    - id: ForgedTopazEyes
+      prob: 0.075
+    - id: ForgedSerdolickEyes
+      prob: 0.075
+    - id: ForgedAdamEyes
+      prob: 0.075
+    - id: ForgedBloodEyes
+      prob: 0.075
+    - id: ForgedCoreTopaz
+      prob: 0.075
+    - id: ForgedCoreSerdolic
+      prob: 0.075
+    - id: ForgedCoreAdam
+      prob: 0.075
+    - id: MedievalGag
+      prob: 0.072
+    - id: MedievalPickaxe
+      prob: 0.072
+    - id: MedievalClothingBackpackLeather
+      prob: 0.07
+    - id: MedievalHandheldHealthAnalyzer
+      prob: 0.07
+    - id: MedievalAlchemicBelt
+      prob: 0.07
+    - id: MedievalKeyStorage
+      prob: 0.07
+    - id: MedievalClothingHeadHelmetCap
+      prob: 0.07
+    - id: ClothingHeadHatPumpkin
+      prob: 0.07
+    - id: MedievalMaceRusty
+      prob: 0.065
+    - id: MedievalFalshionRusty
+      prob: 0.065
+    - id: MedievalSpearRusty
+      prob: 0.065
+    - id: MedievalShortSwordRusty
+      prob: 0.065
+    - id: MedievalSaberRusty
+      prob: 0.065
+    - id: MedievalClothingBackpackSatchelTraveller
+      prob: 0.06
+    - id: MedievalShieldRepairKit
+      prob: 0.06
+    - !type:GroupSelector
+      rolls: !type:BinomialNumberSelector
+        trials: 10
+        chance: 0.34
+      children:
+      - id: MedievalQuiverSteel
+      - id: MedievalQuiver
+      - id: MedievalHatchet
+      - id: MedievalGeigerCounter
+      - id: MedievalClothingMaskPlague
+      - id: MedievalClothingShoesLeather
+      - id: MedievalClothingHeadHatPlaguedoctor
+      - id: MedievalIronGloves
+      - id: MedievalIronGlovesBear
+      - id: MedievalIronGlovesBrig
+      - id: MedievalRepairStone
+      - id: MedievalClothingHeadHelmetShapel
+      - id: BowImprovised
+      - id: MedievalClothingFeetSteel
+      - id: MedaljonDef
+      - id: MedaljonFlashImmune
+      - id: MedaljonSpeed
+      - id: MedaljonMana
+      - id: MedievalClothingOuterArmorLeatherHeavy
+      - id: MedievalClothingHeadHelmetCrusader
+      - id: MedievalLockpickPack
+      - id: MedievalAlchemicBelt
+      - id: MedievalClothingOuterArmorIron
+      - id: MedievalClothingOuterArmorUpIron
+      - id: MedievalIronShieldBuckler
+      - id: MedievalClothingHeadCrownKing

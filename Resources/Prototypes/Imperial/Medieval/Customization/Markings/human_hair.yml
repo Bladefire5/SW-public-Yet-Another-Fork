@@ -1,0 +1,49 @@
+- type: marking
+  id: HumanHairMonk
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: monk
+- type: marking
+  id: HumanHairMonk2
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: monk2
+- type: marking
+  id: HumanHairMonk3
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: monk3
+- type: marking
+  id: HumanHairChub
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: chub
+- type: marking
+  id: HumanHairHair1
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: hair1
+- type: marking
+  id: HumanHairHair2
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: hair2
+- type: marking
+  id: HumanHairHair5
+  bodyPart: Hair
+  markingCategory: Hair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_hair.rsi
+      state: hair5

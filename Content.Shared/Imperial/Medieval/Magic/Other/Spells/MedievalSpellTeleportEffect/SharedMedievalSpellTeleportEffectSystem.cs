@@ -3,6 +3,7 @@ using Content.Shared.Actions;
 using Content.Shared.Emag.Systems;
 using Content.Shared.Examine;
 using Content.Shared.Imperial.PhaseSpace;
+using Content.Shared.Imperial.Medieval.Magic.Mana;
 using Content.Shared.Interaction;
 using Content.Shared.Maps;
 using Content.Shared.Physics;
@@ -27,7 +28,10 @@ public abstract partial class SharedMedievalSpellTeleportEffectSystem : EntitySy
     {
         base.Initialize();
 
-        SubscribeLocalEvent<MedievalSpellTeleportEffectComponent, MedievalBeforeCastSpellEvent>(OnBeforeCast);
+        SubscribeLocalEvent<MedievalSpellTeleportEffectComponent, MedievalBeforeCastSpellEvent>(
+            OnBeforeCast,
+            before: new[] { typeof(ManaSystem) }
+        );
         SubscribeLocalEvent<MedievalSpellTeleportEffectComponent, MedievalAfterCastSpellEvent>(OnAfterCast);
     }
 

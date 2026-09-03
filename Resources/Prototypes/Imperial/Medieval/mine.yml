@@ -295,6 +295,7 @@
         - MedievalOreIron
         - MedievalOreIron
         - MedievalOreGold
+        - MedievalOreSilver
         - MedievalOreIron
         - MedievalOreCoal
         - MedievalOreIron
@@ -312,6 +313,8 @@
         - MedievalOreIron
         - MedievalOreIron
         - MedievalOreGold
+        - MedievalOreSilver
+        - MedievalOreSilver
         - MedievalOreTopaz
         - MedievalOreSerd
         - MedievalOreAdam

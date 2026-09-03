@@ -6,6 +6,8 @@
   description: medieval-store-spells-light-magic-light-beginner-desc
   productAction: MedievalActionMagicLightBeginner
   priority: 5
+  productUpgradeId:
+    - MedievalSpellMagicLightMiddle
   icon:
     sprite: Imperial/Medieval/Magic/Light/MagicLight/icons.rsi
     state: beginner
@@ -16,3 +18,26 @@
   conditions:
   - !type:ImperialListingLimitedStockCondition
     stock: 1
+
+# Middle
+
+- type: imperialListing
+  id: MedievalSpellMagicLightMiddle
+  name: medieval-store-spells-light-magic-light-middle-name
+  description: medieval-store-spells-light-magic-light-middle-desc
+  priority: 5
+  productUpgradeId:
+    - MedievalSpellMagicLightMiddle
+  icon:
+    sprite: Imperial/Medieval/Magic/Light/MagicLight/light2.rsi
+    state: light2
+  cost:
+    MagicMedievalLight: 20
+  categories:
+  - MedievalLightSpells
+  conditions:
+  - !type:ImperialListingLimitedStockCondition
+    stock: 1
+  - !type:ImperialBuyBeforeCondition
+    whitelist:
+      - MedievalSpellMagicLightBeginner

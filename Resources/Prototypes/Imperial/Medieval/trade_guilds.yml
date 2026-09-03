@@ -1,3 +1,27 @@
+- type: tradingMarketConfig
+  id: MedievalMarket
+  guildTypes:
+  - MagicGuild
+  - WeaponGuild
+  - ArmorGuild
+  - FoodGuild
+  - ClothGuild
+  - BuilderGuild
+  blockedTraderItemTags:
+  - MedievalRevent
+  stepInterval: 30
+  reputationScarcityMinutesPerPoint: 3
+  liquidityReferencePrice: 300
+  liquidityReferenceOfferCount: 20
+  minimumGuildOfferCount: 10
+  maximumGuildOfferCount: 40
+  initialGuildPriceSpread: 0.12
+  initialGuildPriceDepth: 0.18
+  maximumGuildSellOfferCount: 200
+  maximumGuildBuyOrderCount: 100
+  interventionChanceScale: 0.4
+  interventionCorrectionStrength: 0.25
+  guildOfferRemovalChanceScale: 0.01
 - type: guildIcon
   id: MagicGuild1
   texturePath: "/Textures/Imperial/Medieval/GuildsIcons/MagicGuild1.png"
@@ -171,7 +195,7 @@
   - MagicGuild4
   - MagicGuild5
   - MagicGuild6
-  maximumGuilds: 2
+  maximumGuilds: 6
   currency: Revent
   items:
   - productEntity: MedievalReliefStoneWeak
@@ -382,7 +406,7 @@
   - WeaponGuild4
   - WeaponGuild5
   - WeaponGuild6
-  maximumGuilds: 3
+  maximumGuilds: 7
   currency: Revent
   items:
   - productEntity: MedievalRepairStone
@@ -397,6 +421,9 @@
   - productEntity: MedievalHammerBlacksmith
     cost: 20
     reputationForBuying: 0.7
+  - productEntity: MedievalBoardingHook
+    cost: 25
+    reputationForBuying: 1
   - productEntity: MedievalArrowIronPhysics
     cost: 2
     reputationForBuying: 0.1
@@ -493,6 +520,31 @@
   - productEntity: MedievalCatapultAmmoBarrelAp
     cost: 80
     reputationForBuying: 2.7
+    minReputationPlace: 1
+    minReputation: 10
+  - productEntity: MedievalDaggerT3Silver
+    cost: 75
+    reputationForBuying: 2.5
+    minReputationPlace: 1
+    minReputation: 10
+  - productEntity: MedievalSpearT3Silver
+    cost: 270
+    reputationForBuying: 9
+    minReputationPlace: 1
+    minReputation: 10
+  - productEntity: MedievalFalshionT3Silver
+    cost: 145
+    reputationForBuying: 5
+    minReputationPlace: 1
+    minReputation: 10
+  - productEntity: MedievalIronClaymoreSilver
+    cost: 330
+    reputationForBuying: 5
+    minReputationPlace: 1
+    minReputation: 10
+  - productEntity: MedievalSaberSilver
+    cost: 180
+    reputationForBuying: 5.3
     minReputationPlace: 1
     minReputation: 10
   - productEntity: MedievalDaggerT3Steel
@@ -654,7 +706,7 @@
   - ArmorGuild4
   - ArmorGuild5
   - ArmorGuild6
-  maximumGuilds: 3
+  maximumGuilds: 7
   currency: Revent
   items:
   - productEntity: MedievalIronGloves
@@ -819,7 +871,7 @@
   - FoodGuild4
   - FoodGuild5
   - FoodGuild6
-  maximumGuilds: 3
+  maximumGuilds: 7
   currency: Revent
   items:
   - productEntity: MedievalBeaker
@@ -1084,7 +1136,7 @@
   - ClothGuild1
   - ClothGuild2
   - ClothGuild3
-  maximumGuilds: 3
+  maximumGuilds: 7
   currency: Revent
   items:
   - productEntity: MedievalRope
@@ -1510,7 +1562,7 @@
   - BuilderGuild5
   - BuilderGuild6
   - BuilderGuild7
-  maximumGuilds: 3
+  maximumGuilds: 7
   currency: Revent
   items:
   - productEntity: Torch
@@ -1780,4 +1832,3 @@
   - productEntity: PottedPlantRandomSW
     cost: 50
     reputationForBuying: 1.5
-

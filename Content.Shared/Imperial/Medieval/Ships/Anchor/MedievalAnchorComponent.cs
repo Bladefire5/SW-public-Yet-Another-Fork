@@ -30,8 +30,4 @@ public sealed partial class MedievalAnchorComponent : Component
     [DataField]
     public float WaveDisableDelay = 120f;
 
-    public TimeSpan? WavesDisabledAt;
-
-    [AutoNetworkedField]
-    public EntityUid? ActiveUser;
 }

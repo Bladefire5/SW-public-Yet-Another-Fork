@@ -25,6 +25,8 @@ public sealed partial class FightForLifeActionComponent : Component
                 { "Slash", 1 },
                 { "Piercing", 1 },
                 { "Heat", 1 },
+                { "Poison", 0.5f },
+                { "Caustic", 0.5f },
                 { "Bloodloss", 4 },
                 { "Asphyxiation", 5}
             }

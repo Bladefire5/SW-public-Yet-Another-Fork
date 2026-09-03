@@ -368,6 +368,7 @@
   - type: LastWords
   - type: MeleeParryStorage
   - type: AchievementOwner
+  - type: Praise
 # Imperial Medieval End
 
 - type: entity

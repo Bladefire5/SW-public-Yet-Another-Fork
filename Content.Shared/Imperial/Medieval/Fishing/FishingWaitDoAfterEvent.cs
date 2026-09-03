@@ -11,13 +11,13 @@ public sealed partial class FishingWaitDoAfterEvent : DoAfterEvent
     public NetEntity? Bobber { get; private set; }
 
     [DataField]
-    public int CurrentChance { get; set; } = 1;
+    public float CurrentChance { get; set; } = 1f;
 
     private FishingWaitDoAfterEvent()
     {
     }
 
-    public FishingWaitDoAfterEvent(NetEntity? bobber, int currentChance = 1)
+    public FishingWaitDoAfterEvent(NetEntity? bobber, float currentChance = 1f)
     {
         Bobber = bobber;
         CurrentChance = currentChance;

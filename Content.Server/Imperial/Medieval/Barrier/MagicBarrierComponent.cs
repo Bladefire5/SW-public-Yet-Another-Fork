@@ -24,7 +24,7 @@ namespace Content.Server.MagicBarrier.Components
         public float MaxStability = 60f;
 
         [DataField]
-        public float Lose = 0.7f;
+        public float Lose = 0.5f;
 
         [DataField]
         public float Rate = 1.5f;
@@ -49,6 +49,9 @@ namespace Content.Server.MagicBarrier.Components
 
         [DataField]
         public float StarfallRandomise = 10;
+
+        [DataField]
+        public float AncientNocturneEventChance = 17.5f;
 
         [DataField]
         public Dictionary<NetUserId, int> ReviveCount = new();

@@ -3,6 +3,7 @@ medieval-announcement-title-horn = Horn
 medieval-announcement-title-horn-legion = Legion Horn
 medieval-announcement-title-horn-insurgency = Rebel Horn
 medieval-announcement-title-horn-collegium = Collegium Horn
+medieval-horn-account-too-new-popup = Your account is too new to send announcements through the horn
 medieval-charmer-has = Has
 medieval-cahrm-speech-sleep = T̢̯͖͎i̗̦͎̮͢m̫̰̗̥͢e̡͚̩ t̡͍̞̬̦̪o̢̟̠ ş̯̟l̢̮͕̗͇e̮͔͕͓̣͜e̢̮̞̯p̬̮͢!!!
 medieval-cahrm-speech-boost = B̨̙̥̤O̳̩͓͜O̧̖̬S̡̘̱̲T̡̞̖̲!!!

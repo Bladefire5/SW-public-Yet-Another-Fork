@@ -5,7 +5,7 @@
   prototype: MobSkeletonPerson
   sprites: MobSkeletonSprites
   defaultSkinTone: "#fff9e2"
-  markingLimits: MobHumanMarkingLimits
+  markingLimits: MobSkeletonMarkingLimits # imperial medieval
   maleFirstNames: NamesSkeletonFirst
   femaleFirstNames: NamesSkeletonFirst
   dollPrototype: MobSkeletonPersonDummy
@@ -14,8 +14,10 @@
 - type: speciesBaseSprites
   id: MobSkeletonSprites
   sprites:
+    Special: MobHumanoidAnyMarking
     Head: MobSkeletonHead
     Chest: MobSkeletonTorso
+    HeadTop: MobHumanoidAnyMarking
     LArm: MobSkeletonLArm
     RArm: MobSkeletonRArm
     LHand: MobSkeletonLHand

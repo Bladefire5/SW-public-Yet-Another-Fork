@@ -1,0 +1,70 @@
+- type: marking
+  id: HumanFacialHairCossack
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: cossack
+- type: marking
+  id: HumanFacialHairDwarf1
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf1
+- type: marking
+  id: HumanFacialHairDwarf2
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf2
+- type: marking
+  id: HumanFacialHairDwarf3
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf3
+- type: marking
+  id: HumanFacialHairDwarf4
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf4
+- type: marking
+  id: HumanFacialHairDwarf5
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf5
+- type: marking
+  id: HumanFacialHairDwarf6
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf6
+- type: marking
+  id: HumanFacialHairDwarf7
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: dwarf7
+- type: marking
+  id: HumanFacialHairMaster
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: master
+- type: marking
+  id: HumanFacialHairVeryBig
+  bodyPart: FacialHair
+  markingCategory: FacialHair
+  sprites:
+    - sprite: Imperial/Medieval/Species/Customization/human_facial_hair.rsi
+      state: very_big

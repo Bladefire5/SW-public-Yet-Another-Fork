@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Content.Server.Imperial.Medieval.Ships;
 using Content.Server.Imperial.Medieval.Ships.Sea.Generation;
 using Content.Shared.Imperial.Medieval.Administration.Ships;
 using Content.Shared.Imperial.Medieval.Ships.Sea;
@@ -16,10 +18,10 @@ public sealed class ShipTeleportSystem : EntitySystem
 
     [Dependency] private readonly IGameTiming _timing = default!;
     [Dependency] private readonly IConfigurationManager _cfg = default!;
-    [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedTransformSystem _transform = default!;
 
     private TimeSpan _nextCheckTime;
+    private readonly HashSet<MapId> _activeSeaMaps = new();
 
     public override void Update(float frameTime)
     {
@@ -29,25 +31,31 @@ public sealed class ShipTeleportSystem : EntitySystem
         if (curTime <= _nextCheckTime)
             return;
 
-        _nextCheckTime = curTime + TimeSpan.FromSeconds(_cfg.GetCVar(ShipsCCVars.WaveDelay));
+        var configuredDelay = _cfg.GetCVar(ShipsCCVars.WaveDelay);
+        var delay = float.IsFinite(configuredDelay) ? MathF.Max(0.1f, configuredDelay) : 1f;
+        _nextCheckTime = curTime + TimeSpan.FromSeconds(delay);
+
+        _activeSeaMaps.Clear();
         foreach (var seaComponent in EntityManager.EntityQuery<SeaComponent>())
         {
             if (seaComponent.Disabled)
                 continue;
 
-            var sea = seaComponent.Owner;
-            var entities = new HashSet<Entity<MapGridComponent>>();
-            _lookup.GetEntitiesOnMap(_transform.GetMapId(sea), entities);
-            foreach (var shipComp in entities)
-            {
-                var ship = shipComp.Owner;
-                var coords = _transform.GetMapCoordinates(ship);
-                var tpDist = _cfg.GetCVar(ShipsCCVars.MapScale) + _cfg.GetCVar(ShipsCCVars.TeleportRange);
-                if (Math.Abs(coords.X) <= tpDist && Math.Abs(coords.Y) <= tpDist)
-                    continue;
+            _activeSeaMaps.Add(_transform.GetMapId(seaComponent.Owner));
+        }
 
-                TeleportShip(ship, coords);
-            }
+        var ships = EntityQueryEnumerator<ShipGridComponent, MapGridComponent>();
+        while (ships.MoveNext(out var ship, out _, out _))
+        {
+            var coords = _transform.GetMapCoordinates(ship);
+            if (!_activeSeaMaps.Contains(coords.MapId))
+                continue;
+
+            var tpDist = Math.Max(0, _cfg.GetCVar(ShipsCCVars.MapScale) + _cfg.GetCVar(ShipsCCVars.TeleportRange));
+            if (Math.Abs(coords.X) <= tpDist && Math.Abs(coords.Y) <= tpDist)
+                continue;
+
+            TeleportShip(ship, coords);
         }
     }
 

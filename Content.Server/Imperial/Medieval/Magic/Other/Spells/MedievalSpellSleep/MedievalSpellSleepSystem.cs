@@ -1,5 +1,6 @@
 using Content.Server.Imperial.Minigames;
 using Content.Shared.Bed.Sleep;
+using Content.Shared.Imperial.Medieval.Sleep;
 using Content.Shared.Imperial.Minigames.Events;
 using Content.Shared.Mobs.Components;
 using Content.Shared.Projectiles;
@@ -36,12 +37,16 @@ public sealed partial class MedievalSpellSleepSystem : EntitySystem
 
         EnsureComponent(caster, args.OtherEntity, component);
 
-        _minigamesSystem.TryStartMinigameBetween(caster, args.OtherEntity, component.MinigameId);
+        if (!_minigamesSystem.TryStartMinigameBetween(caster, args.OtherEntity, component.MinigameId)) return;
+
+        if (HasComp<ForcedSleepImmuneComponent>(args.OtherEntity))
+            _minigamesSystem.TryWinMinigame(args.OtherEntity);
     }
 
     private void OnLose(EntityUid uid, MedievalSleepTargetComponent component, LoseInMinigameEvent args)
     {
         if (!component.CanPutToSleep) return;
+        if (HasComp<ForcedSleepImmuneComponent>(uid)) return;
 
         var sleepComponent = EnsureComp<SleepingComponent>(uid);
 

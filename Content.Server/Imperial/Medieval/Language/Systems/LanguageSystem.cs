@@ -43,9 +43,12 @@ public sealed partial class LanguageSystem : SharedLanguageSystem
         Seed = Random.Next();
     }
 
-    private void OnLanguageSwitch(LanguageChosenMessage args)
+    private void OnLanguageSwitch(LanguageChosenMessage args, EntitySessionEventArgs eventArgs)
     {
         var uid = GetEntity(args.Uid);
+        if (eventArgs.SenderSession.AttachedEntity != uid)
+            return;
+
         if (!TryComp<LanguageSpeakerComponent>(uid, out var component))
             return;
         if (!GetLanguagesKnowledged(uid, LanguageKnowledge.BadSpeak, out var langs, out _) || !langs.ContainsKey(args.SelectedLanguage))
@@ -229,7 +232,7 @@ public sealed partial class LanguageSystem : SharedLanguageSystem
             return;
         if (!GetLanguages(uid, out _, out var translator, out var current))
             return;
-        if (!_mind.TryGetMind(uid, out _, out var mind) || mind == null || _actor.TryGetSession(mind.OwnedEntity, out var session) || session is null)
+        if (!_mind.TryGetMind(uid, out _, out var mind) || mind == null || !_actor.TryGetSession(mind.OwnedEntity, out var session) || session is null)
             return;
         foreach (var item in langs)
         {

@@ -8,6 +8,7 @@
     state: iron_arm_blade_item1
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: iron_right_arm_blade
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -27,6 +28,7 @@
     drawdepth: Items
     scale: -1, 1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: iron_left_arm_blade
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -46,6 +48,7 @@
     drawdepth: Items
     scale: -1, -1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: iron_righ_arm_crossbow
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -65,6 +68,7 @@
     drawdepth: Items
     scale: 1, -1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: iron_left_arm_crossbow
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -83,6 +87,7 @@
     state: invisibility_nimbus
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: crown
     layerState: invisibility_nimbus
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -101,6 +106,7 @@
     state: self_destruction_item
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: torso_upgrade
     layerState: self_destruction
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -120,6 +126,7 @@
     drawdepth: Items
     scale: -1, 1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: magic_gun_1_rightArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -138,6 +145,7 @@
     state: magic_gun_1_item
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: magic_gun_1_leftArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -157,6 +165,7 @@
     drawdepth: Items
     scale: -1, 1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: magic_gun_2_rightArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -175,6 +184,7 @@
     state: magic_gun_2_item
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: magic_gun_2_leftArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -194,6 +204,7 @@
     drawdepth: Items
     scale: -1, 1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: magic_gun_3_rightArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -212,6 +223,7 @@
     state: magic_gun_3_item
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: magic_gun_3_leftArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -231,6 +243,7 @@
     drawdepth: Items
     scale: -1, 1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: magic_gun_4_rightArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -249,6 +262,7 @@
     state: magic_gun_4_item
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: magic_gun_4_leftArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -268,6 +282,7 @@
     drawdepth: Items
     scale: -1, 1
   - type: ForgedModule
+    isReplaceable: true
     partSlot: right_hand
     layerState: magic_gun_5_rightArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi
@@ -286,6 +301,7 @@
     state: magic_gun_5_item
     drawdepth: Items
   - type: ForgedModule
+    isReplaceable: true
     partSlot: left_hand
     layerState: magic_gun_5_leftArm
     rsiPath: Imperial/Medieval/Forged/upgrades.rsi

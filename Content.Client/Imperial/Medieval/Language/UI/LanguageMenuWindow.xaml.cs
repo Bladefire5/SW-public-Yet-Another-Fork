@@ -109,11 +109,16 @@ public sealed partial class LanguageMenuWindow : FancyWindow
         // Disable the button for the currently chosen language
         foreach (var entry in _entries.Values)
         {
-            entry.SelectButton.Disabled = entry.Language == current || !_language.CanSpeak(Owner, _language.GetLanguage(entry.Language));
-            if (entry.Language == current)
+            var isCurrent = entry.Language == current;
+            var canSpeak = _language.CanSpeak(Owner, _language.GetLanguage(entry.Language));
+
+            entry.SelectButton.Disabled = isCurrent || !canSpeak;
+            if (isCurrent)
                 entry.SelectButton.Text = Loc.GetString("language-choose-button-chosen");
-            if (!_language.CanSpeak(Owner, _language.GetLanguage(entry.Language)))
+            else if (!canSpeak)
                 entry.SelectButton.Text = Loc.GetString("language-choose-button-cannot");
+            else
+                entry.SelectButton.Text = Loc.GetString("language-choose-button");
         }
     }
 

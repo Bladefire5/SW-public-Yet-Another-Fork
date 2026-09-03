@@ -1,0 +1,43 @@
+{
+    "version": 1,
+    "license": "this content is under ICLA licence, read more on https://wiki.imperialspace.net/icla",
+    "copyright": "Made by fortengamer",
+    "size": {
+      "x": 32,
+      "y": 32
+    },
+    "states": [
+      {
+        "name": "war_paint_1",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_2",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_3",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_4",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_5",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_6",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_7",
+        "directions": 4
+      },
+      {
+        "name": "war_paint_8",
+        "directions": 4
+      }
+    ]
+  }

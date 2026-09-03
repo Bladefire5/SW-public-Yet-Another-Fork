@@ -33,7 +33,7 @@ public sealed class EaselSystem : EntitySystem
         if (!TryGetCanvas((uid, comp), out var canvas))
             return;
 
-        RaiseLocalEvent(new SendCreationPaintingEvent(canvas.Texture, args.Name, args.Description, args.Author, args.SenderPlayer));
+        RaiseLocalEvent(new SendCreationPaintingEvent(canvas.Texture, args.Name, args.Description, args.Author, args.Actor));
     }
 
     private void OnSave(EntityUid uid, EaselComponent comp, EaselSaveMessage args)

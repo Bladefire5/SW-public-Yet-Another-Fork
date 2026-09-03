@@ -1,4 +1,6 @@
+using Content.Shared.Weather;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Imperial.Medieval.Ships.Sea;
 
@@ -28,4 +30,10 @@ public sealed partial class SeaComponent : Component
 
     [DataField]
     public int InitStormLevel = 1;
+
+    [DataField]
+    public ProtoId<WeatherPrototype>? RainWeather = "Rain";
+
+    [DataField]
+    public ProtoId<WeatherPrototype>? StormWeather = "Storm";
 }

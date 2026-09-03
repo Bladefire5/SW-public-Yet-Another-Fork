@@ -17,17 +17,30 @@ public sealed partial class LetterRecipientMenu : DefaultWindow
     public void Populate(LetterRecipientBoundUserInterfaceState state)
     {
         Recipients.RemoveAllChildren();
-        Title = Loc.GetString("courier-letter-recipient-window-title");
+
+        var (titleLoc, titleWithNameLoc, missingLoc) = state.Mode switch
+        {
+            LetterRecipientUiMode.Contract => (
+                "merc-contract-target-window-title",
+                "merc-contract-target-window-title-with-name",
+                "merc-contract-target-missing"),
+            _ => (
+                "courier-letter-recipient-window-title",
+                "courier-letter-recipient-window-title-with-name",
+                "courier-letter-recipient-missing"),
+        };
+
+        Title = Loc.GetString(titleLoc);
 
         if (state.Recipient == null)
         {
             var emptyLabel = new RichTextLabel();
-            emptyLabel.SetMessage(Loc.GetString("courier-letter-recipient-missing"));
+            emptyLabel.SetMessage(Loc.GetString(missingLoc));
             Recipients.AddChild(emptyLabel);
             return;
         }
 
-        Title = Loc.GetString("courier-letter-recipient-window-title-with-name", ("name", state.Recipient.Profile.Name));
+        Title = Loc.GetString(titleWithNameLoc, ("name", state.Recipient.Profile.Name));
         Recipients.AddChild(new LetterRecipientEntry(state.Recipient));
     }
 }

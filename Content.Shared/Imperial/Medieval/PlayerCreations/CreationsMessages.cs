@@ -159,15 +159,15 @@ public sealed class SendCreationPaintingEvent : EntityEventArgs
     public string Name;
     public string Description;
     public string Author;
-    public NetUserId SenderPlayer;
+    public EntityUid Sender;
 
-    public SendCreationPaintingEvent(Color[] painting, string name, string description, string author, NetUserId senderPlayer)
+    public SendCreationPaintingEvent(Color[] painting, string name, string description, string author, EntityUid sender)
     {
         Painting = painting;
         Name = name;
         Description = description;
         Author = author;
-        SenderPlayer = senderPlayer;
+        Sender = sender;
     }
 }
 
@@ -342,15 +342,13 @@ public sealed class SendCreationBookEvent : EntityEventArgs
     public string Name;
     public string Description;
     public string Author;
-    public NetUserId SenderPlayer;
 
-    public SendCreationBookEvent(string text, string name, string description, string author, NetUserId senderPlayer)
+    public SendCreationBookEvent(string text, string name, string description, string author)
     {
         Text = text;
         Name = name;
         Description = description;
         Author = author;
-        SenderPlayer = senderPlayer;
     }
 }
 

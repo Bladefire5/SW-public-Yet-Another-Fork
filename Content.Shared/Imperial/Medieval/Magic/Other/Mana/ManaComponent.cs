@@ -8,6 +8,8 @@ namespace Content.Shared.Imperial.Medieval.Magic.Mana;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class ManaComponent : Component
 {
+    public const float DefaultRegenMultiplier = 10f;
+
     [DataField]
     public float RegenRaceModifier = 1f;
 
@@ -22,6 +24,9 @@ public sealed partial class ManaComponent : Component
 
     [DataField, AutoNetworkedField]
     public float Regen = 0.25f;
+
+    [DataField, AutoNetworkedField]
+    public float RegenMultiplier = DefaultRegenMultiplier;
 
 
     [DataField]

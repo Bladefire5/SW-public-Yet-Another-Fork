@@ -1075,3 +1075,45 @@
     MedievalIronIngot: 1
   result: FoodKebabSkewer
 
+- type: CP14Recipe
+  id: MedievalFalshionSilver
+  craftTime: 10
+  iconOverride: MedievalFalshionT3Silver
+  stacks:
+    MedievalGold: 1
+    MedievalSilver: 4
+    MedievalIronIngot: 3
+    WoodPlank: 7
+  result: WorkpieceMedievalFalshionT3Silver
+
+- type: CP14Recipe
+  id: MedievalDaggerSilver
+  craftTime: 4
+  iconOverride: MedievalDaggerT3Silver
+  stacks:
+    MedievalGold: 1
+    MedievalSilver: 2
+    WoodPlank: 1
+  result: WorkpieceMedievalDaggerT3Silver
+
+- type: CP14Recipe
+  id: MedievalSpearSilver
+  craftTime: 11
+  iconOverride: MedievalSpearT3Silver
+  stacks:
+    MedievalGold: 1
+    MedievalSilver: 6
+    MedievalIronIngot: 7
+    WoodPlank: 8
+  result: WorkpieceMedievalSpearT3Silver
+
+- type: CP14Recipe
+  id: MedievalSaberSilver
+  craftTime: 10
+  iconOverride: MedievalSaberSilver
+  stacks:
+    MedievalGold: 1
+    MedievalSilver: 5
+    MedievalIronIngot: 5
+    WoodPlank: 7
+  result: WorkpieceMedievalSaberSilver

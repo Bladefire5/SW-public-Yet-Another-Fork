@@ -1,7 +1,7 @@
 - type: imperialListing
   id: MedievalSpellFireFetter
-  name: ent-MedievalActionFireFetter
-  description: ent-MedievalActionFireFetter
+  name: medieval-spell-speach-fire-fetter-beginner-name
+  description: medieval-spell-speach-fire-fetter-beginner-desc
   productAction: MedievalActionFireFetter
   priority: 10
   productUpgradeId:

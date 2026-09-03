@@ -1,16 +1,14 @@
 using Content.Shared.Examine;
 using Content.Shared.IdentityManagement;
 using Content.Shared.IdentityManagement.Components;
-using Content.Shared.Popups;
 using Content.Shared.Verbs;
+using Robust.Shared.Serialization;
 using Robust.Shared.Utility;
 
 namespace Content.Shared.Imperial.Medieval.IdentityManagement;
 
 public abstract class SharedMedievalIdentitySystem : EntitySystem
 {
-    [Dependency] private readonly SharedPopupSystem _popup = default!;
-
     public override void Initialize()
     {
         base.Initialize();
@@ -22,36 +20,54 @@ public abstract class SharedMedievalIdentitySystem : EntitySystem
 
     private void OnGetVerbs(EntityUid uid, IdentityRequiresKnowledgeComponent component, GetVerbsEvent<AlternativeVerb> args)
     {
-        if (!TryComp<IdentityRequiresKnowledgeComponent>(args.User, out var userComp))
-            return;
-        if (uid == args.User)
-            return;
-        if (component.KnownIds.Contains(userComp.Identifier) || !userComp.HideUnknown)
+        if (!args.CanInteract ||
+            !args.CanAccess ||
+            !CanIntroduce(args.User, uid, component))
             return;
 
         args.Verbs.Add(new AlternativeVerb()
         {
             Act = () =>
             {
-                _popup.PopupPredicted($"Вы представились {Identity.Name(uid, EntityManager, args.User)}.", null, uid, args.User);
-                _popup.PopupPredicted($"{Name(args.User)} представился вам.", null, args.User, uid);
-                component.KnownIds.Add(userComp.Identifier);
-                Dirty(uid, component);
+                RaiseNetworkEvent(new MedievalIntroduceIdentityRequest(GetNetEntity(uid)));
             },
             Icon = new SpriteSpecifier.Rsi(new ResPath("/Textures/Imperial/Medieval/date.rsi"), "date"),
             Priority = 1,
-            Text = "Представиться"
+            Text = Loc.GetString("imperial-hm-identity-intrd")
         });
+    }
+
+    public bool CanIntroduce(EntityUid introducer, EntityUid observer, IdentityRequiresKnowledgeComponent? observerComp = null)
+    {
+        if (introducer == observer ||
+            !Resolve(observer, ref observerComp, false) ||
+            !TryComp<IdentityRequiresKnowledgeComponent>(introducer, out var introducerComp))
+        {
+            return false;
+        }
+
+        return introducerComp.HideUnknown && !observerComp.KnownIds.Contains(introducerComp.Identifier);
     }
 
     private void OnExamined(EntityUid uid, IdentityRequiresKnowledgeComponent component, ExaminedEvent args)
     {
-        args.PushMarkup($"[font=Default size=8][color=gray]Идентификатор игрока:[/color] {component.Identifier}[/font]", -1);
+        args.PushMarkup(Loc.GetString("imperial-hm-identity-id", ("name", component.Identifier)), -1);
     }
     public bool IsIdentityMasked(EntityUid entity)
     {
         var ev = new SeeIdentityAttemptEvent();
         RaiseLocalEvent(entity, ev);
         return ev.Cancelled;  // Если отменено, то идентичность заблокирована (маска или полный coverage)
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class MedievalIntroduceIdentityRequest : EntityEventArgs
+{
+    public NetEntity Observer { get; set; }
+
+    public MedievalIntroduceIdentityRequest(NetEntity observer)
+    {
+        Observer = observer;
     }
 }

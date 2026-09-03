@@ -1,0 +1,23 @@
+- type: entity
+  parent: ClothingUniformBase
+  id: MedievalClothingUniformJumpsuitFestivalEventScarlatto1
+  name: shit cloth
+  description: hoho
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Innerclothing/cloth1.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Innerclothing/cloth1.rsi
+  - type: Insulated
+
+- type: entity
+  parent: ClothingUniformBase
+  id: MedievalClothingUniformJumpsuitFestivalEventScarlatto2
+  name: shit cloth
+  description: hoho
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Innerclothing/cloth2.rsi
+  - type: Clothing
+    sprite: Imperial/Medieval/EventContent/Scarlatto/Festival/Clothing/Innerclothing/cloth2.rsi
+  - type: Insulated

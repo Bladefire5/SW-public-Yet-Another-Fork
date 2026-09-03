@@ -1034,6 +1034,42 @@ namespace Content.Server.Database.Migrations.Postgres
                     b.ToTable("player_achievements_progress", (string)null);
                 });
 
+            modelBuilder.Entity("Content.Server.Database.Praise", b =>
+                {
+                    b.Property<Guid>("GivenTo")
+                        .HasColumnType("uuid")
+                        .HasColumnName("given_to");
+
+                    b.Property<Guid>("GivenBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("given_by");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date");
+
+                    b.Property<string>("GivenByName")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("given_by_name");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("integer")
+                        .HasColumnName("weight");
+
+                    b.HasKey("GivenTo", "GivenBy", "Date")
+                        .HasName("PK_praise");
+
+                    b.ToTable("praise", (string)null);
+                });
+
             modelBuilder.Entity("Content.Server.Database.Preference", b =>
                 {
                     b.Property<int>("Id")

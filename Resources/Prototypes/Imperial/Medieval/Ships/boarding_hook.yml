@@ -1,0 +1,72 @@
+- type: entity
+  parent: BaseItem
+  id: MedievalBoardingHook
+  name: boarding hook
+  description: A heavy iron hook with a sturdy rope, used to pull ships together.
+  components:
+  - type: Sprite
+    sprite: Imperial/Medieval/Ships/BoardingHook.rsi
+    layers:
+    - state: icon
+      map: ["base"]
+  - type: Item
+    size: Large
+    sprite: Imperial/Medieval/Ships/BoardingHook.rsi
+  - type: Wieldable
+    unwieldOnUse: false
+    useDelayOnWield: false
+  - type: GunRequiresWield
+  - type: Gun
+    fireRate: 1
+    projectileSpeed: 12
+    clumsyProof: true
+    soundGunshot: /Audio/Weapons/Guns/Gunshots/harpoon.ogg
+  - type: BasicEntityAmmoProvider
+    proto: MedievalBoardingHookProjectile
+    capacity: 1
+  - type: BoardingHook
+  - type: UseDelay
+    delay: 2
+  - type: Appearance
+  - type: GenericVisualizer
+    visuals:
+      enum.AmmoVisuals.HasAmmo:
+        base:
+          True: { state: icon }
+          False: { state: unwrapped-icon }
+  - type: AmmoCounter
+
+- type: entity
+  id: MedievalBoardingHookProjectile
+  name: thrown boarding hook
+  description: A heavy boarding hook tied to a rope.
+  categories: [ HideSpawnMenu ]
+  components:
+  - type: Clickable
+  - type: InteractionOutline
+  - type: Sprite
+    noRot: false
+    sprite: Objects/Weapons/Guns/Launchers/grappling_gun.rsi
+    layers:
+    - state: hook
+  - type: Physics
+    bodyType: Dynamic
+    linearDamping: 0
+    angularDamping: 0
+  - type: Fixtures
+    fixtures:
+      hook:
+        shape:
+          !type:PhysShapeAabb
+          bounds: "-0.1,-0.1,0.1,0.1"
+        hard: false
+        mask:
+        - Impassable
+        - HighImpassable
+  - type: Ammo
+    muzzleFlash: null
+  - type: BoardingHookProjectile
+  - type: Undrowable
+  - type: RepeatingTrigger
+    delay: 0.1
+    keyOut: boarding-hook-range-check

@@ -12,7 +12,9 @@ using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
 using Content.Shared.Maps;
+using Content.Shared.Shuttles.Components;
 using Content.Shared.Stacks;
+using Content.Shared.Tag;
 using Content.Shared.Throwing;
 using Content.Shared.Wieldable.Components;
 using Robust.Server.GameObjects;
@@ -28,6 +30,9 @@ using Content.Server.Construction;
 using Robust.Shared.Timing;
 using System.Numerics;
 using Content.Shared.Coordinates;
+using Content.Shared.Imperial.Medieval.Ships.Islands;
+using Robust.Shared.Map.Components;
+using Robust.Shared.Physics.Collision.Shapes;
 
 namespace Content.Server.Imperial.Medieval.Fishing;
 
@@ -51,6 +56,8 @@ public sealed partial class FishingSystem : EntitySystem
     [Dependency] private readonly SharedScaleVisualsSystem _scaleVisuals = default!;
     [Dependency] private readonly SharedSolutionContainerSystem _solutionContainer = default!;
     [Dependency] private readonly ITimerManager _timer = default!;
+    [Dependency] private readonly IMapManager _mapManager = default!;
+    [Dependency] private readonly TagSystem _tag = default!;
 
     private readonly List<TaskCompletionSource<float>> _minigameUpdateWaiters = new();
 
@@ -107,7 +114,7 @@ public sealed partial class FishingSystem : EntitySystem
         if (!_interaction.InRangeAndAccessible(args.User, fishingTargetUid, ent.Comp.AfterInteractDistanceThreshold))
             return;
 
-        if (ent.Comp.Bait is not { } baitUid || !TryComp<FishingBaitComponent>(baitUid, out _))
+        if (ent.Comp.Bait is not { } baitUid || !TryGetFishingBaitType(ent.Comp, baitUid, out _))
         {
             if (ent.Comp.Bait != null)
             {
@@ -138,8 +145,10 @@ public sealed partial class FishingSystem : EntitySystem
         if (!_doAfter.TryStartDoAfter(doAfterArgs))
             return;
 
+        var hasNearbyIsland = HasIslandInRange(ent.Owner, ent.Comp.IslandSearchRange);
         StopFishing(ent);
 
+        ent.Comp.HasNearbyIsland = hasNearbyIsland;
         ent.Comp.LastClickedWater = location;
         Dirty(ent);
     }
@@ -275,7 +284,11 @@ public sealed partial class FishingSystem : EntitySystem
 
         var baseChance = Math.Max(1, ent.Comp.BaseFishingChancePercent);
         var maxChance = Math.Max(baseChance, ent.Comp.MaxChance);
-        var currentChance = Math.Clamp(args.CurrentChance, baseChance, maxChance);
+        var maxChanceMultiplier = ent.Comp.HasNearbyIsland
+            ? Math.Clamp(ent.Comp.NearbyIslandMaxChanceMultiplier, 0f, 1f)
+            : 1f;
+        var effectiveMaxChance = Math.Max(baseChance, maxChance * maxChanceMultiplier);
+        var currentChance = Math.Clamp(args.CurrentChance, baseChance, effectiveMaxChance);
 
         if (_random.Prob(currentChance / 100f))
         {
@@ -284,11 +297,36 @@ public sealed partial class FishingSystem : EntitySystem
         }
 
         var increment = Math.Max(0, ent.Comp.IncrementChance);
-        args.CurrentChance = currentChance < maxChance
-            ? Math.Min(maxChance, currentChance + increment)
+        args.CurrentChance = currentChance < effectiveMaxChance
+            ? Math.Min(effectiveMaxChance, currentChance + increment)
             : currentChance;
 
         args.Repeat = true;
+    }
+
+    private bool HasIslandInRange(EntityUid rodUid, float range)
+    {
+        if (range <= 0f)
+            return false;
+
+        var transform = Transform(rodUid);
+        var searchArea = new PhysShapeCircle(range, _transform.GetWorldPosition(transform));
+        var grids = new List<Entity<MapGridComponent>>();
+        _mapManager.FindGridsIntersecting(
+            transform.MapID,
+            searchArea,
+            Robust.Shared.Physics.Transform.Empty,
+            ref grids,
+            approx: false,
+            includeMap: false);
+
+        foreach (var grid in grids)
+        {
+            if (HasComp<IslandComponent>(grid))
+                return true;
+        }
+
+        return false;
     }
 
     private void OnHandsDamageChanged(EntityUid uid, HandsComponent hands, DamageChangedEvent args)
@@ -539,8 +577,10 @@ public sealed partial class FishingSystem : EntitySystem
             ? Transform(bobberUid).Coordinates
             : Transform(rod.Owner).Coordinates;
 
+        var baitQualityBias = GetBaitQualityBias(rod);
         var fish = Spawn(currentFish, spawnCoordinates);
-        GetFishRandomSizeRarity(fish);
+        RemComp<SpaceGarbageComponent>(fish);
+        GetFishRandomSizeRarity(fish, baitQualityBias);
 
         _audio.PlayPvs(rod.Comp.MinigameFishOutSound, spawnCoordinates);
         if (minigameUser is { } userUid && Exists(userUid))
@@ -617,16 +657,16 @@ public sealed partial class FishingSystem : EntitySystem
             return false;
         }
 
-        rod.Comp.CurrentFish = PickWeightedFishPrototype(availableFish);
+        rod.Comp.CurrentFish = PickWeightedFishPrototype(availableFish, GetBaitQualityBias(rod));
         Dirty(rod);
         return true;
     }
 
-    private List<(EntProtoId Prototype, float Weight)> CollectAvailableFish(Entity<FishingRodComponent> rod)
+    private List<(EntProtoId Prototype, float Weight, int Level)> CollectAvailableFish(Entity<FishingRodComponent> rod)
     {
-        var result = new List<(EntProtoId Prototype, float Weight)>();
+        var result = new List<(EntProtoId Prototype, float Weight, int Level)>();
 
-        if (rod.Comp.Bait is not { } baitUid || !TryComp<FishingBaitComponent>(baitUid, out var baitComp))
+        if (rod.Comp.Bait is not { } baitUid || !TryGetFishingBaitType(rod.Comp, baitUid, out var baitType))
             return result;
 
         foreach (var (prototypeId, weight) in rod.Comp.FishWeights)
@@ -646,21 +686,28 @@ public sealed partial class FishingSystem : EntitySystem
             if (fishComponent.Level > rod.Comp.Level)
                 continue;
 
-            if (fishComponent.Bait != baitComp.BaitType)
+            if (GetFishSelectionBaitType(fishComponent.Bait) != GetFishSelectionBaitType(baitType))
                 continue;
 
-            result.Add((prototypeId, weight));
+            result.Add((prototypeId, weight, fishComponent.Level));
         }
 
+        result.Sort((left, right) =>
+        {
+            var levelComparison = left.Level.CompareTo(right.Level);
+            return levelComparison != 0 ? levelComparison : right.Weight.CompareTo(left.Weight);
+        });
         return result;
     }
 
-    private EntProtoId PickWeightedFishPrototype(IReadOnlyList<(EntProtoId Prototype, float Weight)> availableFish)
+    private EntProtoId PickWeightedFishPrototype(
+        IReadOnlyList<(EntProtoId Prototype, float Weight, int Level)> availableFish,
+        float qualityBias)
     {
         var totalWeight = 0f;
-        foreach (var (_, weight) in availableFish)
+        for (var i = 0; i < availableFish.Count; i++)
         {
-            totalWeight += MathF.Max(0f, weight);
+            totalWeight += GetBiasedWeight(availableFish[i].Weight, i, availableFish.Count, qualityBias);
         }
 
         if (totalWeight <= 0f)
@@ -669,15 +716,62 @@ public sealed partial class FishingSystem : EntitySystem
         var roll = _random.NextFloat(totalWeight);
         var cumulative = 0f;
 
-        foreach (var (prototype, weight) in availableFish)
+        for (var i = 0; i < availableFish.Count; i++)
         {
-            cumulative += MathF.Max(0f, weight);
+            var (prototype, weight, _) = availableFish[i];
+            cumulative += GetBiasedWeight(weight, i, availableFish.Count, qualityBias);
             if (roll <= cumulative)
                 return prototype;
         }
 
         return availableFish[^1].Prototype;
     }
+
+    private float GetBaitQualityBias(Entity<FishingRodComponent> rod)
+    {
+        if (rod.Comp.Bait is not { } baitUid || !TryGetFishingBaitType(rod.Comp, baitUid, out var baitType))
+            return 0f;
+
+        return rod.Comp.BaitQualityBiases.TryGetValue(baitType, out var qualityBias)
+            ? Math.Clamp(qualityBias, -1f, 1f)
+            : 0f;
+    }
+
+    public bool TryGetFishingBaitType(FishingRodComponent rod, EntityUid baitUid, out FishingBaitType baitType)
+    {
+        baitType = default;
+
+        if (HasComp<FishingBaitBlacklistComponent>(baitUid))
+            return false;
+
+        if (TryComp<FishingBaitComponent>(baitUid, out var bait))
+        {
+            baitType = bait.BaitType;
+            return true;
+        }
+
+        if (!_tag.HasTag(baitUid, rod.MeatTag))
+            return false;
+
+        baitType = FishingBaitType.Meat;
+        return true;
+    }
+
+    private static float GetBiasedWeight(float weight, int index, int count, float qualityBias)
+    {
+        weight = MathF.Max(0f, weight);
+        qualityBias = Math.Clamp(qualityBias, -1f, 1f);
+
+        if (count <= 1 || qualityBias == 0f)
+            return weight;
+
+        var position = (float) index / (count - 1);
+        var multiplier = 1f + qualityBias * (position * 2f - 1f);
+        return weight * multiplier;
+    }
+
+    private static FishingBaitType GetFishSelectionBaitType(FishingBaitType baitType)
+        => baitType == FishingBaitType.Worm ? FishingBaitType.Meat : baitType;
 
     private float GetFishThrowSpeed(EntityUid fishUid)
     {

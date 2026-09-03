@@ -1,4 +1,3 @@
-using System.Linq;
 using Content.Client.Imperial.Medieval.Factions;
 using Content.Shared.Imperial.Medieval.Factions;
 using Content.Shared.Imperial.Medieval.Factions.Components;
@@ -53,18 +52,17 @@ public sealed class FactionMenuUiController : UIController
         if (_menu == null)
             return;
 
+        var previous = _menu.Data;
         _menu.Data = data;
 
         switch (_menu.Mode)
         {
             case FactionMenu.MenuMode.Goals:
-                if (data.Goals.Select(x => x.Progress).Equals(_menu.Data.Goals.Select(x => x.Progress)))
-                    return;
-
                 _menu.PopulateGoals(data.Goals);
                 break;
             case FactionMenu.MenuMode.Relations:
-                if (data.Relations.Equals(_menu.Data.Relations))
+                // the networked state generator clones Dictionary fields, data.Relations is a fresh instance on every state.
+                if (ReferenceEquals(data.Relations, previous.Relations))
                     return;
 
                 _menu.PopulateRelations(data);
@@ -105,6 +103,7 @@ public sealed class FactionMenuUiController : UIController
         if (_menu == null)
             return;
 
-        _entityManager.RaisePredictiveEvent(new DispatchWarEvent(_menu.Data.Faction, faction));
+        // raises DispatchWarEvent after confirmation
+        UIManager.GetUIController<FactionRelationsUiController>().OpenDeclareWarMenu(_menu.Data.Faction, faction);
     }
 }

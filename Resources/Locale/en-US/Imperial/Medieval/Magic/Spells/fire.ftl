@@ -120,6 +120,12 @@ medieval-spell-speach-spark = snaps fingers
 medieval-store-spells-fire-spark-beginner-name = Magic spark
 medieval-store-spells-fire-spark-beginner-desc = Creates a magical spark in your hand capable of igniting things. Useful if you happen to have forgotten your flint and steel.
 
+# FireFetter
+medieval-spell-speach-fire-fetter = Kɛlɛ faama nɛɛma
+
+medieval-spell-speach-fire-fetter-beginner-name = Fire shackles
+medieval-spell-speach-fire-fetter-beginner-desc = Summons magical fire shackles into the hand. Upon hitting, they deal fire damage and set the target on fire. Costs 35 mana.
+
 medieval-spell-speech-not-enough-mana-fire-spell = Not enough mana...
 medieval-spell-speech-fireball = Į̲̭͜͜͡͝Ṉ̗̭̱̅̄̎̏̉̈C̬̣̉̅͟͟͟͟͜͞͡͝Ḙ̯̰̩̑̃Ǹ̖̯͜D̗̰̯́I̦̲̓̐̅Ǫ̭̤̥̀́̌!
 medieval-spell-speech-critical-mass = Ñ̲̆͜͟͟Ó̗̲̲̆V̯̱̯́̄͞͝Á̯̭̱͜͡͝
@@ -145,4 +151,3 @@ medieval-spell-speech-fire-wall = ͚̟̼̳̗̂͂M̂u̘͓̠͖̿ͧ͑̏r̘͑ͮu̬̹
 medieval-spell-speech-spark = snaps fingers
 medieval-store-spells-fire-swater-beginner-name = Water bubble
 medieval-store-spells-fire-swater-beginner-desc = Creates a magical water bubble in your hand.
-

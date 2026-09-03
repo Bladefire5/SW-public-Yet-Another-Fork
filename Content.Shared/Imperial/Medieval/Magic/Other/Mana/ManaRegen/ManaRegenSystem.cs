@@ -43,7 +43,14 @@ public sealed partial class ManaRegenSystem : EntitySystem
 
     private void OnExamine(EntityUid uid, ManaRegenComponent component, ExaminedEvent args)
     {
-        args.PushMarkup(Loc.GetString(component.ManaRegenMessage, ("regen", Math.Round(component.Regen, 3))));
+        var regenMultiplier = TryComp<ManaComponent>(args.Examiner, out var manaComponent)
+            ? manaComponent.RegenMultiplier
+            : ManaComponent.DefaultRegenMultiplier;
+
+        args.PushMarkup(Loc.GetString(
+            component.ManaRegenMessage,
+            ("regen", Math.Round(component.Regen * regenMultiplier, 3))
+        ));
     }
 
     private void OnEquip(EntityUid uid, ManaRegenComponent component, GotEquippedEvent args)
