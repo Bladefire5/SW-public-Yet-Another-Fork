@@ -100,6 +100,9 @@ namespace Content.Server.MagicBarrier.Components
         public float StarfallRandomise = 10;
 
         [DataField]
+        public float AncientNocturneEventChance = 17.5f;
+
+        [DataField]
         public Dictionary<NetUserId, int> ReviveCount = new();
 
         [DataField]
