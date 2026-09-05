@@ -174,10 +174,13 @@ namespace Content.Server.MagicBarrier
             QueueDel(uid);
             _chat.DispatchGlobalAnnouncement("Проклятый нарост уничтожен, расход стабильности барьера снижен.", playSound: false, colorOverride: Color.LimeGreen, sender: "Барьер");
             foreach (var comp in EntityManager.EntityQuery<MagicBarrierComponent>())
-            {    /* this counts the cursed growths
-                    Подсчитывает проклятые наросты.*/
-                comp.MagicBarrierCursePE++;
-                comp.MagicBarrierCurseEffect += comp.MagicBarrierCurseEM;
+            {
+                var growthCount = EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
+                //comp.MagicBarrierCursePE++;
+                if (growthCount < 10)
+                {
+                    comp.MagicBarrierCurseEffect += comp.MagicBarrierCurseEM;
+                }
                 comp.Stability += 4f;
             }
         }
@@ -185,8 +188,8 @@ namespace Content.Server.MagicBarrier
 
         private void RecalculateLose(MagicBarrierComponent comp)
         {
-            var growthCount = EntityManager.EntityQuery<MagicBarrierCurseComponent>().Count();
-            var riftCount = EntityManager.EntityQuery<MagicBarrierRiftComponent>().Count();
+            var growthCount = EntityQuery<MagicBarrierCurseComponent>().Count();
+            var riftCount = EntityQuery<MagicBarrierRiftComponent>().Count();
 
             comp.Lose = MagicBarrierDrainCalculator.Calculate(comp, growthCount, riftCount);
             comp.LastLoseCalculateTime = _timing.CurTime;

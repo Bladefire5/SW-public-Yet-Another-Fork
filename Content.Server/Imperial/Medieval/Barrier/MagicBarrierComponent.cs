@@ -40,8 +40,8 @@ namespace Content.Server.MagicBarrier.Components
 
         /* Number of Cursed Growths that have been destroyed. This provides persistent escalation.
          Количество уничтоженных Cursed Growths. Это обеспечивает постоянное усиление.*/
-        [DataField]
-        public float MagicBarrierCursePE = 0f;
+        /*[DataField]
+        public float MagicBarrierCursePE = 0f;*/
 
         /* Current persistent-escalation multiplier applied by Cursed Growths. Default (1.1).
          Текущий множитель постоянной эскалации, применяемый Cursed Growths. Значение по умолчанию (1.1).*/
